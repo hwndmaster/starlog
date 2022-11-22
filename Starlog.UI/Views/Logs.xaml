@@ -1,0 +1,19 @@
+<UserControl x:Class="Genius.Starlog.UI.Views.Logs"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
+        mc:Ignorable="d">
+    <Grid>
+        <DataGrid Grid.Row="1" Margin="10"
+                  autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
+                  autogrid:Properties.ItemsSource="{Binding LogItems}"
+                  IsReadOnly="True">
+            <i:Interaction.Behaviors>
+                <autogrid:AttachingBehavior />
+            </i:Interaction.Behaviors>
+        </DataGrid>
+    </Grid>
+</UserControl>

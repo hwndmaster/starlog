@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Starlog.UI", "Starlog.UI\Starlog.UI.csproj", "{DBBDEEEB-36D5-4AE9-8CA5-1B5673008E81}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Starlog.Core", "Starlog.Core\Starlog.Core.csproj", "{6E5EF892-BA64-4DD7-B8D6-200ACAE3CCCF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DBBDEEEB-36D5-4AE9-8CA5-1B5673008E81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBBDEEEB-36D5-4AE9-8CA5-1B5673008E81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBBDEEEB-36D5-4AE9-8CA5-1B5673008E81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBBDEEEB-36D5-4AE9-8CA5-1B5673008E81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E5EF892-BA64-4DD7-B8D6-200ACAE3CCCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E5EF892-BA64-4DD7-B8D6-200ACAE3CCCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E5EF892-BA64-4DD7-B8D6-200ACAE3CCCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E5EF892-BA64-4DD7-B8D6-200ACAE3CCCF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

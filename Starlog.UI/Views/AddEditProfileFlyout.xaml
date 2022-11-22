@@ -1,0 +1,49 @@
+﻿<mah:Flyout x:Class="Genius.Starlog.UI.Views.AddEditProfileFlyout"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
+        mc:Ignorable="d"
+        Header="Add/Edit profile"
+        Position="Right"
+        Width="600">
+
+    <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
+        <DockPanel>
+            <Label>Profile name:</Label>
+            <TextBox Text="{Binding Name}" />
+        </DockPanel>
+        <DockPanel>
+            <Label>Profile path:</Label>
+            <TextBox Text="{Binding Path}" />
+        </DockPanel>
+        <DockPanel>
+            <Label>Log Reader:</Label>
+            <ComboBox SelectedValue="{Binding SelectedLogReader}"
+                      DisplayMemberPath="Name"
+                      ItemsSource="{Binding LogReaders}" />
+        </DockPanel>
+        <DockPanel>
+            <Label>File artifact lines count:</Label>
+            <mah:NumericUpDown Value="{Binding FileArtifactLinesCount}" Minimum="0" Maximum="99" />
+        </DockPanel>
+        <DockPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                        Margin="5" Content="Save"
+                        Background="DarkGreen"
+                        Command="{Binding CommitProfileCommand}" />
+                <Button Grid.Column="1"
+                        Margin="5" Content="Reset"
+                        Command="{Binding ResetCommand}" />
+            </Grid>
+        </DockPanel>
+    </StackPanel>
+</mah:Flyout>

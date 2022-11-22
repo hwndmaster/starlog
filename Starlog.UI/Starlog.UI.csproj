@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Starlog</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>..\build\</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Logo.ico" />
+    <Resource Include="Assets\*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Starlog.Core\Starlog.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Reactive" />
+    <PackageReference Include="ReactiveUI.WPF" />
+    <PackageReference Include="MahApps.Metro" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <Reference Include="Genius.Atom.Data">
+      <HintPath>..\..\atom\Atom.Data\bin\Debug\net7.0\Genius.Atom.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Genius.Atom.Infrastructure">
+      <HintPath>..\..\atom\Atom.Infrastructure\bin\Debug\net7.0\Genius.Atom.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="Genius.Atom.UI.Forms">
+      <HintPath>..\..\atom\Atom.UI.Forms\bin\Debug\net7.0-windows\Genius.Atom.UI.Forms.dll</HintPath>
+    </Reference>
+
+    <!-- 3rd-party dependencies from Atom.UI.Forms -->
+    <Reference Include="DotNetProjects.WpfToolkit.Input">
+      <HintPath>..\..\atom\Atom.UI.Forms.Demo\bin\Debug\net7.0-windows\DotNetProjects.Input.Toolkit.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <PackageReference Include="Genius.Atom.Data" />
+    <PackageReference Include="Genius.Atom.Infrastructure" />
+    <PackageReference Include="Genius.Atom.UI.Forms" />
+  </ItemGroup>
+
+</Project>
