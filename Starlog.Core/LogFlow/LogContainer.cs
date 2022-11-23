@@ -4,6 +4,7 @@ using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Io;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.LogFlow;
 
@@ -19,16 +20,19 @@ internal sealed class LogContainer : ILogContainer
     private readonly ILogReaderContainer _logReaderContainer;
     private readonly FileSystemWatcher _fileWatcher;
     private readonly ISynchronousScheduler _scheduler;
+    private readonly ILogger<LogContainer> _logger;
     private readonly ConcurrentBag<LogRecord> _logs = new();
     private readonly ConcurrentDictionary<string, FileRecord> _files = new();
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
     private readonly ReaderWriterLockSlim _lock = new();
 
-    public LogContainer(IFileService fileService, ILogReaderContainer logReaderContainer, ISynchronousScheduler scheduler)
+    public LogContainer(IFileService fileService, ILogReaderContainer logReaderContainer, ISynchronousScheduler scheduler,
+        ILogger<LogContainer> logger)
     {
         _fileService = fileService.NotNull();
         _logReaderContainer = logReaderContainer.NotNull();
         _scheduler = scheduler.NotNull();
+        _logger = logger.NotNull();
 
         _fileWatcher = new FileSystemWatcher
         {
@@ -42,6 +46,7 @@ internal sealed class LogContainer : ILogContainer
 
     public Task LoadProfileAsync(Profile profile)
     {
+        _logger.LogDebug("Loading profile: {profileId}", profile.Id);
         _fileWatcher.EnableRaisingEvents = false;
 
         Profile = profile.NotNull();
@@ -73,6 +78,8 @@ internal sealed class LogContainer : ILogContainer
 
     private void FileWatcher_CreatedOrChanged(object sender, FileSystemEventArgs e)
     {
+        _logger.LogDebug("File {fullPath} is {changeType}", e.FullPath, e.ChangeType);
+
         if (e.ChangeType == WatcherChangeTypes.Created)
         {
             _scheduler.ScheduleAsync(async () => await LoadFileAsync(e.FullPath));
@@ -117,6 +124,8 @@ internal sealed class LogContainer : ILogContainer
             return;
         }
 
+        var tp = TracePerf.Start<LogContainer>(nameof(ReadLogsAsync));
+
         var logReaderProcessor = _logReaderContainer.CreateLogReaderProcessor(Profile.LogReader);
         var logRecords = (await logReaderProcessor.ReadAsync(Profile, fileRecord, stream)).ToImmutableArray();
 
@@ -126,6 +135,8 @@ internal sealed class LogContainer : ILogContainer
             _logs.Add(record);
         }
         _lock.ExitWriteLock();
+
+        tp.StopAndReport();
 
         _logsAdded.OnNext(logRecords);
     }

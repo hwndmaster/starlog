@@ -11,14 +11,7 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
         using var reader = new StreamReader(stream);
         var readerSettings = (PlainTextProfileLogReader)profile.LogReader;
 
-        var fileArtifactLines = profile.FileArtifactLinesCount == 0
-            ? Array.Empty<string>()
-            : Enumerable.Range(1, profile.FileArtifactLinesCount)
-                .Select(async _ => await reader.ReadLineAsync().ConfigureAwait(false))
-                .Where(x => x.Result is not null)
-                .Select(x => x.Result!)
-                .ToArray();
-        var fileArtifacts = new FileArtifacts(fileArtifactLines);
+        var fileArtifacts = await ReadArtifactsAsync(profile, reader);
 
         // TODO: Move regex to Profile.LogReader (PlainTextProfileLogReader) settings.
         Regex regex = new(@"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w)+\]\s(?<logger>\w+)\s-\s(?<message>.+)");
@@ -81,6 +74,25 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
 
             lastRecordArtifacts.Clear();
         }
+    }
+
+    private async Task<FileArtifacts> ReadArtifactsAsync(Profile profile, StreamReader reader)
+    {
+        if (profile.FileArtifactLinesCount == 0)
+        {
+            return new FileArtifacts(Array.Empty<string>());
+        }
+
+        List<string> artifacts = new();
+        for (var i = 0; i < profile.FileArtifactLinesCount; i++)
+        {
+            var line = await reader.ReadLineAsync().ConfigureAwait(false);
+            if (line is null) break;
+
+            artifacts.Add(line);
+        }
+
+        return new FileArtifacts(artifacts.ToArray());
     }
 
     private static LogLevel ParseLogLevel(string level)
