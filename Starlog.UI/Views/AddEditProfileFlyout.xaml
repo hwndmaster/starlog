@@ -4,12 +4,22 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Genius.Starlog.UI.ViewModels"
+        xmlns:local="clr-namespace:Genius.Starlog.UI.Views"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
         mc:Ignorable="d"
-        Header="Add/Edit profile"
+        Header="{Binding PageTitle}"
         Position="Right"
         Width="600">
+    <mah:Flyout.Resources>
+        <DataTemplate DataType="{x:Type vm:PlainTextLogReaderViewModel}" >
+            <local:PlainTextLogReaderView DataContext="{Binding .}" />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:XmlLogReaderViewModel}" >
+            <local:XmlLogReaderView DataContext="{Binding .}" />
+        </DataTemplate>
+    </mah:Flyout.Resources>
 
     <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
         <DockPanel>
@@ -22,13 +32,20 @@
         </DockPanel>
         <DockPanel>
             <Label>Log Reader:</Label>
-            <ComboBox SelectedValue="{Binding SelectedLogReader}"
+            <ComboBox ItemsSource="{Binding LogReaders}"
+                      SelectedItem="{Binding LogReader}"
                       DisplayMemberPath="Name"
-                      ItemsSource="{Binding LogReaders}" />
+                      Validation.ErrorTemplate="{x:Null}">
+            </ComboBox>
         </DockPanel>
+        <ContentControl Content="{Binding LogReader}"
+                        Validation.ErrorTemplate="{x:Null}" />
         <DockPanel>
             <Label>File artifact lines count:</Label>
-            <mah:NumericUpDown Value="{Binding FileArtifactLinesCount}" Minimum="0" Maximum="99" />
+            <mah:NumericUpDown
+                Value="{Binding FileArtifactLinesCount}"
+                Minimum="0" Maximum="99"
+                Width="70" HorizontalAlignment="Left" />
         </DockPanel>
         <DockPanel>
             <Grid>

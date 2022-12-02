@@ -11,6 +11,7 @@
   "dotnet-test-explorer.autoWatch": true,
   "editor.tabSize": 4,
   "cSpell.words": [
+    "Regexes",
     "Starlog"
   ]
 }

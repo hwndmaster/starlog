@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.UI.Forms;
+using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
@@ -36,7 +37,8 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         IProfileQueryService profileQuery,
         IUserInteraction ui,
         ILogContainer logContainer,
-        ILogReaderContainer logReaderContainer)
+        ILogReaderContainer logReaderContainer,
+        IViewModelFactory vmFactory)
     {
         _commandBus = commandBus.NotNull();
         _controller = controller.NotNull();
@@ -47,9 +49,11 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
         _profile = profile;
 
+        AddValidationRule(nameof(Name), new StringNotNullOrEmptyValidationRule(nameof(Name)));
+
         foreach (var logReader in _logReaderContainer.GetLogReaders())
         {
-            LogReaders.Add(new LogReaderViewModel(_logReaderContainer.CreateProfileLogReader(logReader)));
+            LogReaders.Add(vmFactory.CreateLogReader(logReader, _profile?.LogReader));
         }
 
         InitializeProperties(() =>
@@ -80,16 +84,16 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
         Name = _profile.Name;
         Path = _profile.Path;
-        SelectedLogReader = LogReaders.First(x => x.LogReader.LogReader.Id == _profile.LogReader.LogReader.Id);
+        LogReader = LogReaders.First(x => x.LogReader.LogReader.Id == _profile.LogReader.LogReader.Id);
         FileArtifactLinesCount = _profile.FileArtifactLinesCount;
     }
 
-    private async Task CommitProfile()
+    private async Task<bool> CommitProfile()
     {
-        if (string.IsNullOrEmpty(Name))
+        if (HasErrors || LogReader.HasErrors)
         {
-            _ui.ShowWarning("Profile name cannot be empty.");
-            return;
+            _ui.ShowWarning("Cannot proceed while there are errors in the form.");
+            return false;
         }
 
         if (_profile is null)
@@ -98,7 +102,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             {
                 Name = Name,
                 Path = Path,
-                LogReader = SelectedLogReader.LogReader,
+                LogReader = LogReader.LogReader,
                 FileArtifactLinesCount = FileArtifactLinesCount
             });
             _profile = await _profileQuery.FindByIdAsync(profileId);
@@ -109,18 +113,20 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             {
                 Name = Name,
                 Path = Path,
-                LogReader = SelectedLogReader.LogReader,
+                LogReader = LogReader.LogReader,
                 FileArtifactLinesCount = FileArtifactLinesCount
             });
         }
+
+        return true;
     }
 
     private void ResetForm()
     {
         Name = _profile?.Name ?? Name;
         Path = _profile?.Path ?? Path;
-        SelectedLogReader = _profile is null
-            ? SelectedLogReader
+        LogReader = _profile is null
+            ? LogReader
             : LogReaders.First(x => x.LogReader.LogReader.Id == _profile.LogReader.LogReader.Id);
         FileArtifactLinesCount = _profile?.FileArtifactLinesCount ?? FileArtifactLinesCount;
     }
@@ -129,6 +135,8 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         = new TypedObservableList<LogReaderViewModel, LogReaderViewModel>();
 
     public Guid? Id => _profile?.Id;
+
+    public string PageTitle => _profile is null ? "Add profile" : "Edit profile";
 
     public string Name
     {
@@ -142,7 +150,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
-    public LogReaderViewModel SelectedLogReader
+    public LogReaderViewModel LogReader
     {
         get => GetOrDefault(LogReaders[0]);
         set => RaiseAndSetIfChanged(value);

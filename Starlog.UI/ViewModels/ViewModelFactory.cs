@@ -11,6 +11,7 @@ namespace Genius.Starlog.UI.ViewModels;
 
 public interface IViewModelFactory
 {
+    LogReaderViewModel CreateLogReader(LogReader logReader, ProfileLogReaderBase? profileLogReader);
     IProfileViewModel CreateProfile(Profile? profile);
 }
 
@@ -40,8 +41,22 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _logReaderContainer = logReaderContainer.NotNull();
     }
 
+    public LogReaderViewModel CreateLogReader(LogReader logReader, ProfileLogReaderBase? profileLogReader)
+    {
+        profileLogReader = profileLogReader is not null && logReader.Id == profileLogReader.LogReader.Id
+            ? profileLogReader
+            : _logReaderContainer.CreateProfileLogReader(logReader);
+
+        return profileLogReader switch
+        {
+            PlainTextProfileLogReader plainText => new PlainTextLogReaderViewModel(plainText),
+            XmlProfileLogReader xml => new XmlLogReaderViewModel(xml),
+            _ => throw new InvalidOperationException($"{nameof(profileLogReader)} is of unexpected type {profileLogReader.GetType().Name}")
+        };
+    }
+
     public IProfileViewModel CreateProfile(Profile? profile)
     {
-        return new ProfileViewModel(profile, _commandBus, _mainController, _profileQuery, _ui, _logContainer, _logReaderContainer);
+        return new ProfileViewModel(profile, _commandBus, _mainController, _profileQuery, _ui, _logContainer, _logReaderContainer, this);
     }
 }

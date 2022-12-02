@@ -3,9 +3,9 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.ViewModels;
 
-public sealed class LogReaderViewModel : ViewModelBase
+public abstract class LogReaderViewModel : ViewModelBase
 {
-    public LogReaderViewModel(ProfileLogReaderBase logReader)
+    protected LogReaderViewModel(ProfileLogReaderBase logReader)
     {
         LogReader = logReader.NotNull();
     }

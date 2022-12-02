@@ -7,5 +7,5 @@ public sealed class PlainTextProfileLogReader : ProfileLogReaderBase
     {
     }
 
-    // Reader settings to be placed here
+    public string LineRegex { get; set; } = string.Empty;
 }

@@ -16,7 +16,7 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
     }
 
     public DateTimeOffset DateTime => _record.DateTime;
-    public LogLevel Level => _record.Level;
+    public string Level => _record.Level.Name;
     public string Thread => _record.Thread;
     // TODO: public string File => _record.File.FileName;
     // TODO: public string FileArtifacts => string.Join(Environment.NewLine, _record.FileArtifacts.Artifacts);

@@ -22,6 +22,8 @@ internal sealed class LogContainer : ILogContainer
     private readonly ISynchronousScheduler _scheduler;
     private readonly ILogger<LogContainer> _logger;
     private readonly ConcurrentBag<LogRecord> _logs = new();
+    private readonly ConcurrentBag<LoggerRecord> _loggers = new();
+    private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
     private readonly ConcurrentDictionary<string, FileRecord> _files = new();
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
     private readonly ReaderWriterLockSlim _lock = new();
@@ -127,10 +129,13 @@ internal sealed class LogContainer : ILogContainer
         var tp = TracePerf.Start<LogContainer>(nameof(ReadLogsAsync));
 
         var logReaderProcessor = _logReaderContainer.CreateLogReaderProcessor(Profile.LogReader);
-        var logRecords = (await logReaderProcessor.ReadAsync(Profile, fileRecord, stream)).ToImmutableArray();
+        var logRecordResult = await logReaderProcessor.ReadAsync(Profile, fileRecord, stream);
+
+        // TODO: preserve and merge with global container: `logRecordResult.Loggers` to `_loggers`
+        // TODO: preserve and merge with global container: `logRecordResult.LogLevels` to `_logLevels`
 
         _lock.EnterWriteLock();
-        foreach (var record in logRecords)
+        foreach (var record in logRecordResult.Records)
         {
             _logs.Add(record);
         }
@@ -138,7 +143,7 @@ internal sealed class LogContainer : ILogContainer
 
         tp.StopAndReport();
 
-        _logsAdded.OnNext(logRecords);
+        _logsAdded.OnNext(logRecordResult.Records);
     }
 
     public Profile? Profile { get; private set; }

@@ -5,12 +5,12 @@ using Genius.Atom.Infrastructure.Commands;
 using Genius.Starlog.Core.CommandHandlers;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFiltering;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
-using Microsoft.Extensions.DependencyInjection;
-using Genius.Starlog.Core.LogFlow;
 using Genius.Atom.Data.Persistence;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Genius.Starlog.Core;
 
@@ -34,6 +34,7 @@ public static class Module
         services.AddTransient<IFilterProcessor, ThreadFilterProcessor>();
         services.AddTransient<IFilterProcessor, LoggerFilterProcessor>();
         services.AddTransient<ILogReaderProcessor, PlainTextProfileLogReaderProcessor>();
+        services.AddTransient<ILogReaderProcessor, XmlProfileLogReaderProcessor>();
 
         // Services, Converters
         services.AddSingleton<IJsonConverter, LogReaderJsonConverter>();
@@ -42,8 +43,6 @@ public static class Module
         services.AddScoped<ICommandHandler<ProfileCreateCommand, Guid>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileUpdateCommand>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileDeleteCommand>, ProfileDeleteCommandHandler>();
-
-        // Log Filters
     }
 
     public static void Initialize(IServiceProvider serviceProvider)
@@ -58,10 +57,13 @@ public static class Module
         var logReaderContainer = serviceProvider.GetRequiredService<ILogReaderContainer>();
         logReaderContainer.RegisterLogReader<PlainTextProfileLogReader, PlainTextProfileLogReaderProcessor>(
             new LogReader(new Guid("a38a40b6-c07f-49d5-a143-5c9f9f42149b"), "Plain Text"));
+        logReaderContainer.RegisterLogReader<XmlProfileLogReader, XmlProfileLogReaderProcessor>(
+            new LogReader(new Guid("0cb976bc-6d87-4450-8202-530d9db09b40"), "XML"));
 
         var typeDiscriminators = serviceProvider.GetRequiredService<ITypeDiscriminators>();
         typeDiscriminators.AddMapping<LoggerProfileFilter>("logger-profile-filter");
         typeDiscriminators.AddMapping<ThreadProfileFilter>("thread-profile-filter");
         typeDiscriminators.AddMapping<PlainTextProfileLogReader>("plaintext-profile-log-reader");
+        typeDiscriminators.AddMapping<XmlProfileLogReader>("xml-profile-log-reader");
     }
 }

@@ -41,6 +41,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
             {
                 EditingProfile = vmFactory.CreateProfile(null);
                 EditingProfile.CommitProfileCommand.Executed
+                    .Where(x => x)
                     .Take(1)
                     .Subscribe(async _ => {
                         IsAddEditProfileVisible = false;
@@ -53,6 +54,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
         OpenEditProfileFlyoutCommand = new ActionCommand(_ => {
             EditingProfile = Profiles.FirstOrDefault(x => x.IsSelected);
             EditingProfile?.CommitProfileCommand.Executed
+                .Where(x => x)
                 .Take(1)
                 .Subscribe(_ =>
                     IsAddEditProfileVisible = false)

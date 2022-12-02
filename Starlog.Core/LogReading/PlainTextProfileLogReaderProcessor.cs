@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
@@ -6,17 +7,16 @@ namespace Genius.Starlog.Core.LogReading;
 
 public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
 {
-    public async Task<IEnumerable<LogRecord>> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream)
+    public async Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream)
     {
         using var reader = new StreamReader(stream);
         var readerSettings = (PlainTextProfileLogReader)profile.LogReader;
+        Regex regex = new(readerSettings.LineRegex);
 
         var fileArtifacts = await ReadArtifactsAsync(profile, reader);
 
-        // TODO: Move regex to Profile.LogReader (PlainTextProfileLogReader) settings.
-        Regex regex = new(@"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w)+\]\s(?<logger>\w+)\s-\s(?<message>.+)");
-
         Dictionary<int, LoggerRecord> loggers = new();
+        Dictionary<int, LogLevelRecord> logLevels = new();
         List<LogRecord> records = new();
 
         LogRecord? lastRecord = null;
@@ -55,10 +55,17 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
                 loggers.Add(loggerHash, loggerRecord);
             }
 
-            lastRecord = new LogRecord(dateTime, ParseLogLevel(level), thread, fileRecord, fileArtifacts, loggerRecord, message, null);
+            var logLevelHash = level.GetHashCode();
+            if (!logLevels.TryGetValue(logLevelHash, out var logLevelRecord))
+            {
+                logLevelRecord = new LogLevelRecord(logLevelHash, level, DetermineLogSeverity(level));
+                logLevels.Add(logLevelHash, logLevelRecord);
+            }
+
+            lastRecord = new LogRecord(dateTime, logLevelRecord, thread, fileRecord, fileArtifacts, loggerRecord, message, null);
         }
 
-        return records;
+        return new LogReaderResult(records.ToImmutableArray(), loggers.Values, logLevels.Values);
 
         void FlushRecentRecord()
         {
@@ -76,7 +83,19 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
         }
     }
 
-    private async Task<FileArtifacts> ReadArtifactsAsync(Profile profile, StreamReader reader)
+    private static LogSeverity DetermineLogSeverity(string logLevel)
+    {
+        return logLevel.ToLowerInvariant() switch
+        {
+            "trace" or "statistics" or "debug" => LogSeverity.Minor,
+            "warn" or "warning" => LogSeverity.Attention,
+            "error" or "exception" => LogSeverity.Major,
+            "fatal" => LogSeverity.Critical,
+            _ => LogSeverity.Normal
+        };
+    }
+
+    private static async Task<FileArtifacts> ReadArtifactsAsync(Profile profile, StreamReader reader)
     {
         if (profile.FileArtifactLinesCount == 0)
         {
@@ -93,19 +112,5 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
         }
 
         return new FileArtifacts(artifacts.ToArray());
-    }
-
-    private static LogLevel ParseLogLevel(string level)
-    {
-        return level.ToLowerInvariant() switch
-        {
-            "trace" or "statistics" => LogLevel.Trace,
-            "debug" => LogLevel.Debug,
-            "info" => LogLevel.Info,
-            "warn" => LogLevel.Warn,
-            "error" => LogLevel.Error,
-            "fatal" => LogLevel.Fatal,
-            _ => throw new ArgumentOutOfRangeException($"Cannot parse log level: {level}")
-        };
     }
 }
