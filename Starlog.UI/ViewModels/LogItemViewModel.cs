@@ -4,7 +4,9 @@ using Genius.Starlog.Core.LogFlow;
 namespace Genius.Starlog.UI.ViewModels;
 
 public interface ILogItemViewModel
-{ }
+{
+    bool ColorizeByThread { get; set; }
+}
 
 public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
 {
@@ -23,4 +25,10 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
     public string Logger => Record.Logger.Name;
     public string Message => Record.Message;
     // TODO: public string? LogArtifacts => _record.LogArtifacts;
+
+    public bool ColorizeByThread
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value, (_, __) => base.OnPropertyChanged(""));
+    }
 }

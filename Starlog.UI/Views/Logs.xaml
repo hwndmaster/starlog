@@ -21,6 +21,10 @@
         </Grid.ColumnDefinitions>
 
         <DockPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="10">
+            <ComboBox SelectedValue="{Binding ColorizeBy}" SelectedValuePath="Tag">
+                <ComboBoxItem Tag="L">Colorize by Level</ComboBoxItem>
+                <ComboBoxItem Tag="T">Colorize by Thread</ComboBoxItem>
+            </ComboBox>
             <Button Content="Share" Width="Auto" Margin="10,0,0,0" Padding="5,2"
                     Command="{Binding ShareCommand}" />
             <Label Content="Filter:" Margin="100,0,0,0" />
@@ -43,7 +47,7 @@
                   IsReadOnly="True">
             <i:Interaction.Behaviors>
                 <autogrid:AttachingBehavior />
-                <behaviors:LogLevelColorizeBehavior />
+                <behaviors:LogColorizeBehavior />
             </i:Interaction.Behaviors>
         </DataGrid>
 

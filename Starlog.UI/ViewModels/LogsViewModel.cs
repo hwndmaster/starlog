@@ -26,6 +26,15 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         AutoGridBuilder = autoGridBuilder.NotNull();
 
         ShareCommand = new ActionCommand(_ => throw new NotImplementedException());
+
+        this.WhenChanged(x => x.ColorizeBy).Subscribe(_ =>
+        {
+            var colorizeByThread = ColorizeBy.Equals("T", StringComparison.Ordinal);
+            foreach (var logItem in LogItems)
+            {
+                logItem.ColorizeByThread = colorizeByThread;
+            }
+        });
     }
 
     public void LoadCurrentProfile()
@@ -52,6 +61,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public string Filter
     {
         get => GetOrDefault<string>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public string ColorizeBy
+    {
+        get => GetOrDefault("L");
         set => RaiseAndSetIfChanged(value);
     }
 
