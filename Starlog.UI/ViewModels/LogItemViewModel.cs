@@ -8,19 +8,19 @@ public interface ILogItemViewModel
 
 public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
 {
-    private readonly LogRecord _record;
-
     public LogItemViewModel(LogRecord record)
     {
-        _record = record.NotNull();
+        Record = record.NotNull();
     }
 
-    public DateTimeOffset DateTime => _record.DateTime;
-    public string Level => _record.Level.Name;
-    public string Thread => _record.Thread;
+    public LogRecord Record { get; }
+
+    public DateTimeOffset DateTime => Record.DateTime;
+    public string Level => Record.Level.Name;
+    public string Thread => Record.Thread;
     // TODO: public string File => _record.File.FileName;
     // TODO: public string FileArtifacts => string.Join(Environment.NewLine, _record.FileArtifacts.Artifacts);
-    public string Logger => _record.Logger.Name;
-    public string Message => _record.Message;
+    public string Logger => Record.Logger.Name;
+    public string Message => Record.Message;
     // TODO: public string? LogArtifacts => _record.LogArtifacts;
 }
