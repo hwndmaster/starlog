@@ -17,11 +17,14 @@ public sealed class LogItemAutoGridBuilder : IAutoGridBuilder
         return _contextBuilder
             .WithColumns(columns =>
                 columns
-                    .AddText(nameof(LogItemViewModel.DateTime))
-                    .AddText(nameof(LogItemViewModel.Level), x => x.Filterable())
-                    .AddText(nameof(LogItemViewModel.Thread), x => x.Filterable())
-                    .AddText(nameof(LogItemViewModel.Logger), x => x.Filterable())
-                    .AddText(nameof(LogItemViewModel.Message), x => x.Filterable())
+                    .AddText(x => x.DateTime, x => x.WithDisplayFormat("yyyy-MM-dd HH:mm:ss.fff"))
+                    .AddText(x => x.Level)
+                    .AddText(x => x.Thread)
+                    .AddText(x => x.Logger, x => x.WithToolTipPath(nameof(LogItemViewModel.Level)))
+                    .AddText(x => x.Message, x => x
+                        .Filterable()
+                        .WithToolTipPath(nameof(LogItemViewModel.Message))
+                        .WithAutoWidth(true))
             )
             .Build();
     }

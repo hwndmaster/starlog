@@ -12,6 +12,7 @@ public interface ILogContainer : IDisposable
 {
     Task LoadProfileAsync(Profile profile);
     ImmutableArray<LogRecord> GetLogs();
+    IObservable<ImmutableArray<LogRecord>> LogsAdded { get; }
 }
 
 internal sealed class LogContainer : ILogContainer

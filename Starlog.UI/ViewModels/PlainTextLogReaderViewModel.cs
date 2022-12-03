@@ -18,12 +18,12 @@ public sealed class PlainTextLogReaderViewModel : LogReaderViewModel
     {
         _plainTextLogReader = logReader.NotNull();
 
-        AddValidationRule(nameof(LineRegex), new StringNotNullOrEmptyValidationRule(nameof(LineRegex)));
-        AddValidationRule(nameof(LineRegex), new IsRegexValidationRule(nameof(LineRegex)));
+        AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(LineRegex)));
+        AddValidationRule(new IsRegexValidationRule(nameof(LineRegex)));
 
         LineRegexes.Add(new PlainTextLogReaderLineRegex(
             "LEVEL DATETIME [Thread] Logger - Message",
-            @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w)+\]\s(?<logger>\w+)\s-\s(?<message>.+)"));
+            @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>\w+)\s-\s(?<message>.+)"));
     }
 
     public ObservableCollection<PlainTextLogReaderLineRegex> LineRegexes { get; } = new();

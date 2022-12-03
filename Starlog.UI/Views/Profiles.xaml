@@ -4,8 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
+        xmlns:atombehaviors="clr-namespace:Genius.Atom.UI.Forms.Behaviors;assembly=Genius.Atom.UI.Forms"
+        xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d">
     <Grid>
         <Grid.RowDefinitions>
@@ -22,8 +24,11 @@
                     Background="DarkRed"
                     Command="{Binding DeleteProfileCommand}" />
             <Label Content="Filter:" Margin="100,0,0,0" />
-            <TextBox Text="{Binding Filter}" mah:TextBoxHelper.ClearTextButton="True"
-                     KeyUp="Filter_KeyUp" />
+            <TextBox Text="{Binding Filter}" mah:TextBoxHelper.ClearTextButton="True">
+                <i:Interaction.Behaviors>
+                    <atombehaviors:FilterBoxBehavior />
+                </i:Interaction.Behaviors>
+            </TextBox>
         </DockPanel>
         <DataGrid Grid.Row="1" Margin="10"
                   autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
@@ -36,6 +41,7 @@
             </DataGrid.InputBindings>
             <i:Interaction.Behaviors>
                 <autogrid:AttachingBehavior />
+                <behaviors:ProfileDragDropBehavior />
             </i:Interaction.Behaviors>
         </DataGrid>
     </Grid>

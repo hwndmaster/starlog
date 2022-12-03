@@ -13,7 +13,11 @@ using Genius.Starlog.UI.Helpers;
 namespace Genius.Starlog.UI.ViewModels;
 
 public interface IProfilesViewModel : ITabViewModel
-{ }
+{
+    bool IsAddEditProfileVisible { get; set; }
+    IProfileViewModel? EditingProfile { get; }
+    ICommand OpenAddProfileFlyoutCommand { get; }
+}
 
 internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, IDisposable
 {
@@ -85,7 +89,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
             .Subscribe(_ => IsAddEditProfileVisible = false)
             .DisposeWith(_disposables);
 
-        ReloadListAsync();
+        Task.Run(() => ReloadListAsync());
     }
 
     public void Dispose()

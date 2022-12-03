@@ -5,9 +5,38 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
+        xmlns:behaviors="clr-namespace:Genius.Atom.UI.Forms.Behaviors;assembly=Genius.Atom.UI.Forms"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d">
     <Grid>
-        <DataGrid Grid.Row="1" Margin="10"
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="10">
+            <Button Content="Share" Width="Auto" Margin="10,0,0,0" Padding="5,2"
+                    Command="{Binding ShareCommand}" />
+            <Label Content="Filter:" Margin="100,0,0,0" />
+            <TextBox Text="{Binding Filter}" mah:TextBoxHelper.ClearTextButton="True">
+                <i:Interaction.Behaviors>
+                    <behaviors:FilterBoxBehavior />
+                </i:Interaction.Behaviors>
+            </TextBox>
+        </DockPanel>
+
+        <Grid Grid.Row="1" Grid.Column="0" Grid.RowSpan="2">
+            <Border Background="#00FF0000">
+                <Label Content="Placeholder for Tree" />
+            </Border>
+        </Grid>
+
+        <DataGrid Grid.Row="1" Grid.Column="1" Margin="10"
                   autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
                   autogrid:Properties.ItemsSource="{Binding LogItems}"
                   IsReadOnly="True">
@@ -15,5 +44,11 @@
                 <autogrid:AttachingBehavior />
             </i:Interaction.Behaviors>
         </DataGrid>
+
+        <Grid Grid.Row="2" Grid.Column="1">
+            <Border Background="#00FF0000">
+                <Label Content="Placeholder for Log Artifacts" />
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

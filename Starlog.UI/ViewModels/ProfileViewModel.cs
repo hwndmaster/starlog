@@ -14,7 +14,8 @@ namespace Genius.Starlog.UI.ViewModels;
 public interface IProfileViewModel : ISelectable
 {
     Guid? Id { get; }
-    string Name { get; }
+    string Name { get; set; }
+    string Path { get; set; }
     IActionCommand CommitProfileCommand { get; }
     IActionCommand LoadProfileCommand { get; }
 }
@@ -49,7 +50,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
         _profile = profile;
 
-        AddValidationRule(nameof(Name), new StringNotNullOrEmptyValidationRule(nameof(Name)));
+        AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Name)));
 
         foreach (var logReader in _logReaderContainer.GetLogReaders())
         {
