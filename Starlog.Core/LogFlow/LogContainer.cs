@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Reactive;
 using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Io;
 using Genius.Starlog.Core.LogReading;
@@ -11,7 +12,13 @@ namespace Genius.Starlog.Core.LogFlow;
 public interface ILogContainer : IDisposable
 {
     Task LoadProfileAsync(Profile profile);
+    ImmutableArray<FileRecord> GetFiles();
     ImmutableArray<LogRecord> GetLogs();
+
+    Profile? Profile { get; }
+    IObservable<Unit> ProfileChanging { get; }
+    IObservable<Profile> ProfileChanged { get; }
+    IObservable<FileRecord> FileAdded { get; }
     IObservable<ImmutableArray<LogRecord>> LogsAdded { get; }
 }
 
@@ -26,6 +33,9 @@ internal sealed class LogContainer : ILogContainer
     private readonly ConcurrentBag<LoggerRecord> _loggers = new();
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
     private readonly ConcurrentDictionary<string, FileRecord> _files = new();
+    private readonly Subject<Unit> _profileChanging = new();
+    private readonly Subject<Profile> _profileChanged = new();
+    private readonly Subject<FileRecord> _fileAdded = new();
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
     private readonly ReaderWriterLockSlim _lock = new();
 
@@ -47,22 +57,32 @@ internal sealed class LogContainer : ILogContainer
         _fileWatcher.NotifyFilter = NotifyFilters.LastWrite;
     }
 
-    public Task LoadProfileAsync(Profile profile)
+    public async Task LoadProfileAsync(Profile profile)
     {
         _logger.LogDebug("Loading profile: {profileId}", profile.Id);
         _fileWatcher.EnableRaisingEvents = false;
 
+        _profileChanging.OnNext(Unit.Default);
+
         Profile = profile.NotNull();
+        _files.Clear();
+        _loggers.Clear();
+        _logLevels.Clear();
         _logs.Clear();
 
         var files = _fileService.EnumerateFiles(profile.Path, "*.*", new EnumerationOptions());
-        Parallel.ForEach(files, async (file, lps, i) =>
-            await LoadFileAsync(file));
+        var tasks = files.Select(async file => await LoadFileAsync(file));
+        await Task.WhenAll(tasks);
 
         _fileWatcher.Path = profile.Path;
         _fileWatcher.EnableRaisingEvents = true;
 
-        return Task.CompletedTask;
+        _profileChanged.OnNext(Profile);
+    }
+
+    public ImmutableArray<FileRecord> GetFiles()
+    {
+        return _files.Values.ToImmutableArray();
     }
 
     public ImmutableArray<LogRecord> GetLogs()
@@ -117,6 +137,7 @@ internal sealed class LogContainer : ILogContainer
         await ReadLogsAsync(fileStream, fileRecord);
 
         _files.TryAdd(file, fileRecord);
+        _fileAdded.OnNext(fileRecord);
     }
 
     private async Task ReadLogsAsync(Stream stream, FileRecord fileRecord)
@@ -132,8 +153,15 @@ internal sealed class LogContainer : ILogContainer
         var logReaderProcessor = _logReaderContainer.CreateLogReaderProcessor(Profile.LogReader);
         var logRecordResult = await logReaderProcessor.ReadAsync(Profile, fileRecord, stream);
 
-        // TODO: preserve and merge with global container: `logRecordResult.Loggers` to `_loggers`
-        // TODO: preserve and merge with global container: `logRecordResult.LogLevels` to `_logLevels`
+        foreach (var logger in logRecordResult.Loggers)
+        {
+            _loggers.Add(logger);
+        }
+
+        foreach (var logLevel in logRecordResult.LogLevels)
+        {
+            _logLevels.Add(logLevel);
+        }
 
         _lock.EnterWriteLock();
         foreach (var record in logRecordResult.Records)
@@ -148,5 +176,8 @@ internal sealed class LogContainer : ILogContainer
     }
 
     public Profile? Profile { get; private set; }
+    public IObservable<Unit> ProfileChanging => _profileChanging;
+    public IObservable<Profile> ProfileChanged => _profileChanged;
+    public IObservable<FileRecord> FileAdded => _fileAdded;
     public IObservable<ImmutableArray<LogRecord>> LogsAdded => _logsAdded;
 }

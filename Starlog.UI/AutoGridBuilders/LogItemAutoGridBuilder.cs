@@ -20,9 +20,9 @@ public sealed class LogItemAutoGridBuilder : IAutoGridBuilder
                     .AddText(x => x.DateTime, x => x.WithDisplayFormat("yyyy-MM-dd HH:mm:ss.fff"))
                     .AddText(x => x.Level)
                     .AddText(x => x.Thread)
+                    .AddText(x => x.File)
                     .AddText(x => x.Logger, x => x.WithToolTipPath(nameof(LogItemViewModel.Level)))
                     .AddText(x => x.Message, x => x
-                        .Filterable()
                         .WithToolTipPath(nameof(LogItemViewModel.Message))
                         .WithAutoWidth(true))
             )

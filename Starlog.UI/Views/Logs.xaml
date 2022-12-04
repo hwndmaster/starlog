@@ -7,8 +7,12 @@
         xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
         xmlns:atombehaviors="clr-namespace:Genius.Atom.UI.Forms.Behaviors;assembly=Genius.Atom.UI.Forms"
         xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
+        xmlns:vc="clr-namespace:Genius.Starlog.UI.ValueConverters"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d">
+    <UserControl.Resources>
+        <vc:AppIconConverter x:Key="AppIconConverter" />
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -21,14 +25,33 @@
         </Grid.ColumnDefinitions>
 
         <DockPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="10">
-            <ComboBox SelectedValue="{Binding ColorizeBy}" SelectedValuePath="Tag">
+            <Button Content="Share" Width="Auto" Padding="5,2"
+                    Command="{Binding ShareCommand}" />
+            <ComboBox Margin="10,0,0,0"
+                      SelectedValue="{Binding ColorizeBy}" SelectedValuePath="Tag">
                 <ComboBoxItem Tag="L">Colorize by Level</ComboBoxItem>
                 <ComboBoxItem Tag="T">Colorize by Thread</ComboBoxItem>
             </ComboBox>
-            <Button Content="Share" Width="Auto" Margin="10,0,0,0" Padding="5,2"
-                    Command="{Binding ShareCommand}" />
-            <Label Content="Filter:" Margin="100,0,0,0" />
-            <TextBox Text="{Binding Filter}" mah:TextBoxHelper.ClearTextButton="True">
+
+            <TextBox Text="{Binding Filter}" Margin="10,0,0,0"
+                     mah:TextBoxHelper.Watermark="Type message filter here and press ENTER."
+                     mah:TextBoxHelper.ClearTextButton="True"
+                     mah:TextBoxHelper.IsClearTextButtonBehaviorEnabled="False"
+                     mah:TextBoxHelper.ButtonCommand="{Binding FilterRegexSwitchCommand, Mode=OneWay}">
+                <mah:TextBoxHelper.ButtonContent>
+                    <Image Margin="2">
+                        <Image.Style>
+                            <Style TargetType="{x:Type Image}">
+                                <Setter Property="Source" Value="{DynamicResource RegexBw32}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilterRegex}" Value="True">
+                                        <Setter Property="Source" Value="{DynamicResource Regex32}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </mah:TextBoxHelper.ButtonContent>
                 <i:Interaction.Behaviors>
                     <atombehaviors:FilterBoxBehavior />
                 </i:Interaction.Behaviors>
@@ -36,14 +59,26 @@
         </DockPanel>
 
         <Grid Grid.Row="1" Grid.Column="0" Grid.RowSpan="2">
-            <Border Background="#00FF0000">
-                <Label Content="Placeholder for Tree" />
-            </Border>
+            <TreeView ItemsSource="{Binding FilterCategories}">
+                <TreeView.Resources>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    </Style>
+                </TreeView.Resources>
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding CategoryItemsView.View}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding Icon, Converter={StaticResource AppIconConverter}}" Width="16" Height="16" />
+                            <Label Content="{Binding Title}"/>
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
         </Grid>
 
         <DataGrid Grid.Row="1" Grid.Column="1" Margin="10"
                   autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
-                  autogrid:Properties.ItemsSource="{Binding LogItems}"
+                  autogrid:Properties.ItemsSource="{Binding LogItemsView.View}"
                   IsReadOnly="True">
             <i:Interaction.Behaviors>
                 <autogrid:AttachingBehavior />

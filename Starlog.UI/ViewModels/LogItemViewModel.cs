@@ -20,7 +20,7 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
     public DateTimeOffset DateTime => Record.DateTime;
     public string Level => Record.Level.Name;
     public string Thread => Record.Thread;
-    // TODO: public string File => _record.File.FileName;
+    public string File => Record.File.FileName;
     // TODO: public string FileArtifacts => string.Join(Environment.NewLine, _record.FileArtifacts.Artifacts);
     public string Logger => Record.Logger.Name;
     public string Message => Record.Message;

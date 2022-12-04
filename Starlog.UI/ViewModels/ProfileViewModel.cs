@@ -70,7 +70,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
         LoadProfileCommand = new ActionCommand(async _ => {
             await _logContainer.LoadProfileAsync(_profile.NotNull());
-            _controller.ShowLogsForActiveProfile();
+            _controller.ShowLogsTab();
         });
 
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profile is not null);

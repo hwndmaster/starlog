@@ -6,7 +6,7 @@ namespace Genius.Starlog.UI.Controllers;
 public interface IMainController
 {
     void ShowAddProfileForPath(string path);
-    void ShowLogsForActiveProfile();
+    void ShowLogsTab();
 }
 
 internal sealed class MainController : IMainController
@@ -27,11 +27,9 @@ internal sealed class MainController : IMainController
         tab.EditingProfile!.Path = path;
     }
 
-    public void ShowLogsForActiveProfile()
+    public void ShowLogsTab()
     {
         var tab = _mainViewModel.Value.Tabs.OfType<ILogsViewModel>().First();
         _mainViewModel.Value.SelectedTabIndex = _mainViewModel.Value.Tabs.IndexOf(tab);
-
-        tab.LoadCurrentProfile();
     }
 }
