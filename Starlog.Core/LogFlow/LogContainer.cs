@@ -12,12 +12,13 @@ namespace Genius.Starlog.Core.LogFlow;
 public interface ILogContainer : IDisposable
 {
     Task LoadProfileAsync(Profile profile);
+    void CloseProfile();
     ImmutableArray<FileRecord> GetFiles();
     ImmutableArray<LogRecord> GetLogs();
 
     Profile? Profile { get; }
     IObservable<Unit> ProfileChanging { get; }
-    IObservable<Profile> ProfileChanged { get; }
+    IObservable<Profile?> ProfileChanged { get; }
     IObservable<FileRecord> FileAdded { get; }
     IObservable<ImmutableArray<LogRecord>> LogsAdded { get; }
 }
@@ -60,15 +61,12 @@ internal sealed class LogContainer : ILogContainer
     public async Task LoadProfileAsync(Profile profile)
     {
         _logger.LogDebug("Loading profile: {profileId}", profile.Id);
-        _fileWatcher.EnableRaisingEvents = false;
 
         _profileChanging.OnNext(Unit.Default);
 
+        CloseProfile();
+
         Profile = profile.NotNull();
-        _files.Clear();
-        _loggers.Clear();
-        _logLevels.Clear();
-        _logs.Clear();
 
         var files = _fileService.EnumerateFiles(profile.Path, "*.*", new EnumerationOptions());
         var tasks = files.Select(async file => await LoadFileAsync(file));
@@ -78,6 +76,15 @@ internal sealed class LogContainer : ILogContainer
         _fileWatcher.EnableRaisingEvents = true;
 
         _profileChanged.OnNext(Profile);
+    }
+
+    public void CloseProfile()
+    {
+        _fileWatcher.EnableRaisingEvents = false;
+        _files.Clear();
+        _loggers.Clear();
+        _logLevels.Clear();
+        _logs.Clear();
     }
 
     public ImmutableArray<FileRecord> GetFiles()

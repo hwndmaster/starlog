@@ -15,7 +15,12 @@
         </mah:FlyoutsControl>
     </mah:MetroWindow.Flyouts>
     <Grid>
-        <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TabControl Grid.Row="0"
+                    SelectedIndex="{Binding SelectedTabIndex}"
                     mah:TabControlHelper.Underlined="TabItems">
             <TabItem Header="Profiles">
                 <uc:Profiles DataContext="{Binding Path=Tabs[0]}" />
@@ -27,5 +32,10 @@
                 <uc:Settings DataContext="{Binding Path=Tabs[2]}" />
             </TabItem>
         </TabControl>
+        <StatusBar Grid.Row="1">
+            <StatusBarItem>Selected Profile:</StatusBarItem>
+            <StatusBarItem Content="{Binding CurrentProfileName, Mode=OneWay}" />
+            <!-- <Separator Style="{StaticResource MahApps.Styles.Separator.StatusBar}" />-->
+        </StatusBar>
     </Grid>
 </mah:MetroWindow>
