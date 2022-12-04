@@ -83,6 +83,7 @@
             <i:Interaction.Behaviors>
                 <autogrid:AttachingBehavior />
                 <behaviors:LogColorizeBehavior />
+                <behaviors:LogsCopyToClipboardBehavior />
             </i:Interaction.Behaviors>
         </DataGrid>
 
