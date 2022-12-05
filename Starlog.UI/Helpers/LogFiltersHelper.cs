@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
+using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.ViewModels;
 
@@ -12,14 +13,34 @@ public record LogFilterContext(
     HashSet<string> FilesSelected,
     ImmutableArray<ProfileFilterBase> FiltersSelected);
 
-public static class LogFiltersHelper
+public interface ILogFiltersHelper
 {
-    internal static void InitializeQuickFiltersCategory(LogFilterCategoryViewModel<LogFilterViewModel> quickFiltersCategory)
+    void InitializeQuickFiltersCategory(LogFilterCategoryViewModel<LogFilterViewModel> category);
+    LogFilterContext CreateContext(ICollection<ILogFilterCategoryViewModel> selectedFilters, string searchText, bool searchRegex);
+    bool IsMatch(LogFilterContext? context, LogItemViewModel item);
+}
+
+public class LogFiltersHelper : ILogFiltersHelper
+{
+    private readonly ILogFilterContainer _logFilterContainer;
+
+    public LogFiltersHelper(ILogFilterContainer logFilterContainer)
     {
-        // TODO: throw new NotImplementedException();
+        _logFilterContainer = logFilterContainer.NotNull();
     }
 
-    internal static LogFilterContext CreateContext(ICollection<ILogFilterCategoryViewModel> selectedFilters, string searchText, bool searchRegex)
+    public void InitializeQuickFiltersCategory(LogFilterCategoryViewModel<LogFilterViewModel> category)
+    {
+        var errorsFilter = _logFilterContainer.CreateProfileFilter<LogLevelsProfileFilter>("Majors and Criticals");
+        errorsFilter.LogLevels = new [] { LogSeverity.Major, LogSeverity.Critical };
+
+        category.AddItems(new [] {
+                errorsFilter
+            }
+            .Select(x => new LogFilterViewModel(x)));
+    }
+
+    public LogFilterContext CreateContext(ICollection<ILogFilterCategoryViewModel> selectedFilters, string searchText, bool searchRegex)
     {
         var filesSelected = selectedFilters.OfType<LogFileViewModel>()
             .Select(x => x.File.FileName)
@@ -45,7 +66,7 @@ public static class LogFiltersHelper
         return new(messageSearchIncluded, searchText, filterRegex, filesSelected, filtersSelected);
     }
 
-    internal static bool IsMatch(LogFilterContext? context, LogItemViewModel item)
+    public bool IsMatch(LogFilterContext? context, LogItemViewModel item)
     {
         if (context is null)
         {
@@ -76,7 +97,14 @@ public static class LogFiltersHelper
             }
         }
 
-        // TODO: Add other filters here
+        foreach (var filter in context.FiltersSelected)
+        {
+            var processor = _logFilterContainer.GetFilterProcessor(filter);
+            if (!processor.IsMatch(filter, item.Record))
+            {
+                return false;
+            }
+        }
 
         return true;
     }

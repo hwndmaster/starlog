@@ -21,7 +21,7 @@ public sealed class LogItemAutoGridBuilder : IAutoGridBuilder
                     .AddText(x => x.Level)
                     .AddText(x => x.Thread)
                     .AddText(x => x.File)
-                    .AddText(x => x.Logger, x => x.WithToolTipPath(nameof(LogItemViewModel.Level)))
+                    .AddText(x => x.Logger, x => x.WithToolTipPath(nameof(LogItemViewModel.Logger)))
                     .AddText(x => x.Message, x => x
                         .WithToolTipPath(nameof(LogItemViewModel.Message))
                         .WithAutoWidth(true))

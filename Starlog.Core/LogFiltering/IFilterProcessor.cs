@@ -4,5 +4,5 @@ namespace Genius.Starlog.Core.LogFlow;
 
 public interface IFilterProcessor
 {
-    IEnumerable<LogRecord> Filter(ProfileFilterBase profileFilter, IEnumerable<LogRecord> logs);
+    bool IsMatch(ProfileFilterBase profileFilter, LogRecord log);
 }

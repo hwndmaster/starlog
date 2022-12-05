@@ -14,6 +14,7 @@ public sealed class LogFileViewModel : ViewModelBase, ILogFilterCategoryViewMode
     public FileRecord File { get; }
     public string Title => File.FileName;
     public string Icon => "LogFile32";
+    public bool IsExpanded { get; set; } = false;
 
     public CollectionViewSource CategoryItemsView { get; } = new();
 }

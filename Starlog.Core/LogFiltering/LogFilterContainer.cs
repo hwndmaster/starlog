@@ -6,13 +6,13 @@ namespace Genius.Starlog.Core.LogFiltering;
 public interface ILogFilterContainer
 {
     ProfileFilterBase CreateProfileFilter(LogFilter logFilter);
-    IFilterProcessor CreateFilterProcessor(ProfileFilterBase profileFilter);
+    TLogProfileFilter CreateProfileFilter<TLogProfileFilter>(string? name = null)
+        where TLogProfileFilter : ProfileFilterBase;
+    IFilterProcessor GetFilterProcessor(ProfileFilterBase profileFilter);
     void RegisterLogFilter<TProfileFilter, TFilterProcessor>(LogFilter logFilter)
         where TProfileFilter : ProfileFilterBase
         where TFilterProcessor : class, IFilterProcessor;
 }
-
-internal readonly record struct LogFilterRecord(LogFilter LogFilter, Type ProfileFilterType, Type FilterProcessorType);
 
 internal sealed class LogFilterContainer : ILogFilterContainer
 {
@@ -25,6 +25,20 @@ internal sealed class LogFilterContainer : ILogFilterContainer
         _filterProcessors = filterProcessors.ToArray();
     }
 
+    public TLogProfileFilter CreateProfileFilter<TLogProfileFilter>(string? name = null)
+        where TLogProfileFilter : ProfileFilterBase
+    {
+        var type = typeof(TLogProfileFilter);
+        var registration = _registeredFilters.Values.Single(x => x.ProfileFilterType == type);
+
+        var filter = (TLogProfileFilter)CreateProfileFilter(registration.LogFilter);
+        if (name is not null)
+        {
+            filter.Name = name;
+        }
+        return filter;
+    }
+
     public ProfileFilterBase CreateProfileFilter(LogFilter logFilter)
     {
         if (!_registeredFilters.TryGetValue(logFilter.Id, out var value))
@@ -35,7 +49,7 @@ internal sealed class LogFilterContainer : ILogFilterContainer
         return (ProfileFilterBase)Activator.CreateInstance(value.ProfileFilterType, logFilter).NotNull();
     }
 
-    public IFilterProcessor CreateFilterProcessor(ProfileFilterBase profileFilter)
+    public IFilterProcessor GetFilterProcessor(ProfileFilterBase profileFilter)
     {
         if (!_registeredFilters.TryGetValue(profileFilter.LogFilter.Id, out var value))
         {
@@ -56,4 +70,6 @@ internal sealed class LogFilterContainer : ILogFilterContainer
 
         _registeredFilters.Add(logFilter.Id, new LogFilterRecord(logFilter, typeof(TProfileFilter), typeof(TFilterProcessor)));
     }
+
+    private readonly record struct LogFilterRecord(LogFilter LogFilter, Type ProfileFilterType, Type FilterProcessorType);
 }

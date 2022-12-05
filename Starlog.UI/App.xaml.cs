@@ -5,6 +5,7 @@ global using System.Windows;
 global using Genius.Atom.Infrastructure;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
+using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.ViewModels;
 using Genius.Starlog.UI.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,7 +57,7 @@ public partial class App : Application
         services.AddSingleton<IMainController, MainController>();
 
         // Services and Helpers:
-        // ...
+        services.AddTransient<ILogFiltersHelper, LogFiltersHelper>();
     }
 
     private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)

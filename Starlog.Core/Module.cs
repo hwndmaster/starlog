@@ -31,8 +31,9 @@ public static class Module
         services.AddSingleton<ILogFilterContainer, LogFilterContainer>();
         services.AddSingleton<ILogContainer, LogContainer>();
         services.AddSingleton<ILogReaderContainer, LogReaderContainer>();
-        services.AddTransient<IFilterProcessor, ThreadFilterProcessor>();
-        services.AddTransient<IFilterProcessor, LoggerFilterProcessor>();
+        services.AddTransient<IFilterProcessor, ThreadsFilterProcessor>();
+        services.AddTransient<IFilterProcessor, LoggersFilterProcessor>();
+        services.AddTransient<IFilterProcessor, LogLevelsFilterProcessor>();
         services.AddTransient<ILogReaderProcessor, PlainTextProfileLogReaderProcessor>();
         services.AddTransient<ILogReaderProcessor, XmlProfileLogReaderProcessor>();
 
@@ -49,10 +50,12 @@ public static class Module
     {
         var logFilterContainer = serviceProvider.GetRequiredService<ILogFilterContainer>();
 
-        logFilterContainer.RegisterLogFilter<ThreadProfileFilter, ThreadFilterProcessor>(
-            new LogFilter(new Guid("11235ba9-cf84-413c-b094-d2c2c6672f4f"), "Thread filter"));
-        logFilterContainer.RegisterLogFilter<LoggerProfileFilter, LoggerFilterProcessor>(
+        logFilterContainer.RegisterLogFilter<LoggersProfileFilter, LoggersFilterProcessor>(
             new LogFilter(new Guid("ad1398bc-a17e-4584-b7fa-d82fa547b5fe"), "Logger filter"));
+        logFilterContainer.RegisterLogFilter<LogLevelsProfileFilter, LogLevelsFilterProcessor>(
+            new LogFilter(new Guid("1123d366-5aa1-4e00-b16f-7832b0880ee8"), "Level filter"));
+        logFilterContainer.RegisterLogFilter<ThreadsProfileFilter, ThreadsFilterProcessor>(
+            new LogFilter(new Guid("11235ba9-cf84-413c-b094-d2c2c6672f4f"), "Thread filter"));
 
         var logReaderContainer = serviceProvider.GetRequiredService<ILogReaderContainer>();
         logReaderContainer.RegisterLogReader<PlainTextProfileLogReader, PlainTextProfileLogReaderProcessor>(
@@ -61,8 +64,9 @@ public static class Module
             new LogReader(new Guid("0cb976bc-6d87-4450-8202-530d9db09b40"), "XML"));
 
         var typeDiscriminators = serviceProvider.GetRequiredService<ITypeDiscriminators>();
-        typeDiscriminators.AddMapping<LoggerProfileFilter>("logger-profile-filter");
-        typeDiscriminators.AddMapping<ThreadProfileFilter>("thread-profile-filter");
+        typeDiscriminators.AddMapping<LoggersProfileFilter>("logger-profile-filter");
+        typeDiscriminators.AddMapping<LogLevelsProfileFilter>("loglevel-profile-filter");
+        typeDiscriminators.AddMapping<ThreadsProfileFilter>("thread-profile-filter");
         typeDiscriminators.AddMapping<PlainTextProfileLogReader>("plaintext-profile-log-reader");
         typeDiscriminators.AddMapping<XmlProfileLogReader>("xml-profile-log-reader");
     }

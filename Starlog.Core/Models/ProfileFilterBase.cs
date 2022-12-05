@@ -7,7 +7,9 @@ public abstract class ProfileFilterBase : EntityBase
     protected ProfileFilterBase(LogFilter logFilter)
     {
         LogFilter = logFilter;
+        Name = logFilter.Name;
     }
 
+    public string Name { get; set; }
     public LogFilter LogFilter { get; }
 }

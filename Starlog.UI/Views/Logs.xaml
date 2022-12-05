@@ -62,6 +62,7 @@
             <TreeView ItemsSource="{Binding FilterCategories}">
                 <TreeView.ItemContainerStyle>
                     <Style TargetType="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                         <Style.Triggers>
                             <Trigger Property="behaviors:TreeViewMultiSelectBehavior.IsSelected" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.AccentBase}"></Setter>
@@ -109,13 +110,14 @@
                 <autogrid:AttachingBehavior />
                 <behaviors:LogColorizeBehavior />
                 <behaviors:LogsCopyToClipboardBehavior />
+                <behaviors:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
             </i:Interaction.Behaviors>
         </DataGrid>
 
         <Grid Grid.Row="2" Grid.Column="1">
-            <Border Background="#00FF0000">
-                <Label Content="Placeholder for Log Artifacts" />
-            </Border>
+            <RichTextBox behaviors:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
+                         IsReadOnly="True"
+                         MaxHeight="300" />
         </Grid>
     </Grid>
 </UserControl>

@@ -12,7 +12,9 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterCategoryViewMo
     }
 
     public ProfileFilterBase Filter { get; }
-    public string Title => Filter.LogFilter.Name;
+    public string Title => Filter.Name;
     public string Icon => "FolderFavs32";
+    public bool IsExpanded { get; set; } = false;
+
     public CollectionViewSource CategoryItemsView { get; } = new();
 }

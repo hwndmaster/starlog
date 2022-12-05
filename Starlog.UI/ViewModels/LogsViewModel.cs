@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Data;
+using System.Windows.Documents;
 using Genius.Atom.UI.Forms;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core.LogFlow;
@@ -17,23 +18,26 @@ public interface ILogsViewModel : ITabViewModel
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 {
     private readonly ILogContainer _logContainer;
+    private readonly ILogFiltersHelper _logFiltersHelper;
     private readonly LogFilterCategoryViewModel<LogFileViewModel> _filesCategory = new("Files", "FolderFiles32", sort: true);
-    private readonly LogFilterCategoryViewModel<LogFilterViewModel> _quickFiltersCategory = new("Quick filters", "FolderDown32");
+    private readonly LogFilterCategoryViewModel<LogFilterViewModel> _quickFiltersCategory = new("Quick filters", "FolderDown32", expanded: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _userFiltersCategory = new("User filters", "FolderFavs32");
     private readonly CompositeDisposable _subscriptions = new();
     private bool _suspendUpdate = false;
     private LogFilterContext? _filterContext;
 
     public LogsViewModel(ILogContainer logContainer,
-        LogItemAutoGridBuilder autoGridBuilder)
+        LogItemAutoGridBuilder autoGridBuilder,
+        ILogFiltersHelper logFiltersHelper)
     {
         _logContainer = logContainer.NotNull();
         AutoGridBuilder = autoGridBuilder.NotNull();
+        _logFiltersHelper = logFiltersHelper.NotNull();
 
         LogItemsView.Source = LogItems;
         LogItemsView.Filter += OnLogItemsViewFilter;
 
-        LogFiltersHelper.InitializeQuickFiltersCategory(_quickFiltersCategory);
+        _logFiltersHelper.InitializeQuickFiltersCategory(_quickFiltersCategory);
 
         _subscriptions.Add(_logContainer.ProfileChanging
             //.ObserveOn(RxApp.MainThreadScheduler)
@@ -84,15 +88,16 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
         this.WhenChanged(x => x.SearchText).Subscribe(_ => RefreshFilteredItems());
         SelectedFilters.WhenCollectionChanged().Subscribe(_ => RefreshFilteredItems());
+        SelectedLogItems.WhenCollectionChanged().Subscribe(_ => SelectedLogItem = SelectedLogItems.FirstOrDefault());
+        this.WhenChanged(x => x.SelectedLogItem).Subscribe(_ => SelectedLogArtifacts = SelectedLogItem?.Artifacts);
     }
 
     private void AddFiles(IEnumerable<FileRecord> files)
     {
-        foreach (var file in files.OrderBy(x => x.FileName))
-        {
-            _filesCategory.CategoryItems.Add(new LogFileViewModel(file));
-        }
-        _filesCategory.CategoryItemsView.View.Refresh();
+        _filesCategory.AddItems(
+            files.OrderBy(x => x.FileName)
+                .Select(x => new LogFileViewModel(x))
+        );
     }
 
     private void AddLogs(IEnumerable<LogRecord> logs)
@@ -105,12 +110,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     private void OnLogItemsViewFilter(object sender, FilterEventArgs e)
     {
-        e.Accepted = LogFiltersHelper.IsMatch(_filterContext, (LogItemViewModel)e.Item);
+        e.Accepted = _logFiltersHelper.IsMatch(_filterContext, (LogItemViewModel)e.Item);
     }
 
     private void RefreshFilteredItems()
     {
-        _filterContext = LogFiltersHelper.CreateContext(SelectedFilters, SearchText, SearchRegex);
+        _filterContext = _logFiltersHelper.CreateContext(SelectedFilters, SearchText, SearchRegex);
         LogItemsView.View.Refresh();
     }
 
@@ -141,6 +146,20 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         = new TypedObservableList<ILogItemViewModel, LogItemViewModel>();
 
     public CollectionViewSource LogItemsView { get; } = new();
+
+    public ObservableCollection<ILogItemViewModel> SelectedLogItems { get; set; } = new();
+
+    public ILogItemViewModel? SelectedLogItem
+    {
+        get => GetOrDefault<ILogItemViewModel>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public FlowDocument? SelectedLogArtifacts
+    {
+        get => GetOrDefault<FlowDocument>();
+        set => RaiseAndSetIfChanged(value);
+    }
 
     public IActionCommand ShareCommand { get; }
     public IActionCommand SearchRegexSwitchCommand { get; }

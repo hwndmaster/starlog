@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
+using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.ViewModels;
 
 namespace Genius.Starlog.UI.ValueConverters;
@@ -23,10 +24,10 @@ public sealed class LogLevelToColorConverter : IValueConverter
 
         var color = vm.Record.Level.Severity switch
         {
-            Core.LogFlow.LogSeverity.Minor => Colors.DimGray,
-            Core.LogFlow.LogSeverity.Attention => Colors.Yellow,
-            Core.LogFlow.LogSeverity.Major => Colors.Red,
-            Core.LogFlow.LogSeverity.Critical => Colors.DarkRed,
+            LogSeverity.Minor => Colors.DimGray,
+            LogSeverity.Attention => Colors.Yellow,
+            LogSeverity.Major => Colors.Red,
+            LogSeverity.Critical => Colors.DarkRed,
             _ => _standardColor,
         };
 
