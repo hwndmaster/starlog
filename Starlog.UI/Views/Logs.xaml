@@ -33,18 +33,18 @@
                 <ComboBoxItem Tag="T">Colorize by Thread</ComboBoxItem>
             </ComboBox>
 
-            <TextBox Text="{Binding Filter}" Margin="10,0,0,0"
-                     mah:TextBoxHelper.Watermark="Type message filter here and press ENTER."
+            <TextBox Text="{Binding SearchText}" Margin="10,0,0,0"
+                     mah:TextBoxHelper.Watermark="Type message search text here and press ENTER."
                      mah:TextBoxHelper.ClearTextButton="True"
                      mah:TextBoxHelper.IsClearTextButtonBehaviorEnabled="False"
-                     mah:TextBoxHelper.ButtonCommand="{Binding FilterRegexSwitchCommand, Mode=OneWay}">
+                     mah:TextBoxHelper.ButtonCommand="{Binding SearchRegexSwitchCommand, Mode=OneWay}">
                 <mah:TextBoxHelper.ButtonContent>
-                    <Image Margin="2">
+                    <Image>
                         <Image.Style>
                             <Style TargetType="{x:Type Image}">
                                 <Setter Property="Source" Value="{DynamicResource RegexBw32}" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding FilterRegex}" Value="True">
+                                    <DataTrigger Binding="{Binding SearchRegex}" Value="True">
                                         <Setter Property="Source" Value="{DynamicResource Regex32}" />
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -60,11 +60,33 @@
 
         <Grid Grid.Row="1" Grid.Column="0" Grid.RowSpan="2">
             <TreeView ItemsSource="{Binding FilterCategories}">
-                <TreeView.Resources>
+                <TreeView.ItemContainerStyle>
                     <Style TargetType="TreeViewItem">
-                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                        <Style.Triggers>
+                            <Trigger Property="behaviors:TreeViewMultiSelectBehavior.IsSelected" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.AccentBase}"></Setter>
+                                <Setter Property="TextElement.Foreground" Value="{DynamicResource MahApps.Brushes.Text}"></Setter>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="behaviors:TreeViewMultiSelectBehavior.IsSelected" Value="True" />
+                                    <Condition Property="IsSelectionActive" Value="False" />
+                                </MultiTrigger.Conditions>
+                                <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent4}"></Setter>
+                                <Setter Property="TextElement.Foreground" Value="{DynamicResource MahApps.Brushes.Text}"/>
+                            </MultiTrigger>
+                            <!-- TODO: For some reason is overriden by another rule
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected" Value="True" />
+                                    <Condition Property="IsSelectionActive" Value="False" />
+                                </MultiTrigger.Conditions>
+                                <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent4}"></Setter>
+                                <Setter Property="TextElement.Foreground" Value="{DynamicResource MahApps.Brushes.Text}"/>
+                            </MultiTrigger> -->
+                        </Style.Triggers>
                     </Style>
-                </TreeView.Resources>
+                </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding CategoryItemsView.View}">
                         <StackPanel Orientation="Horizontal">
@@ -73,6 +95,9 @@
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
+                <i:Interaction.Behaviors>
+                    <behaviors:TreeViewMultiSelectBehavior SelectedItems="{Binding SelectedFilters}" />
+                </i:Interaction.Behaviors>
             </TreeView>
         </Grid>
 

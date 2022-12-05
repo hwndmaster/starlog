@@ -16,10 +16,4 @@ public sealed class LogFileViewModel : ViewModelBase, ILogFilterCategoryViewMode
     public string Icon => "LogFile32";
 
     public CollectionViewSource CategoryItemsView { get; } = new();
-
-    public bool IsSelected
-    {
-        get => GetOrDefault(false);
-        set => RaiseAndSetIfChanged(value);
-    }
 }

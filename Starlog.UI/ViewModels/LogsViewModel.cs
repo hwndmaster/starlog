@@ -1,24 +1,18 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Text.RegularExpressions;
 using System.Windows.Data;
 using Genius.Atom.UI.Forms;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.UI.AutoGridBuilders;
-using ReactiveUI;
+using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.ViewModels;
 
 public interface ILogsViewModel : ITabViewModel
 {
 }
-
-public record LogFilterContext(
-    bool MessageFilterSpecified,
-    Regex? MessageFilterRegex,
-    HashSet<string> FilesSelected);
 
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 {
@@ -38,6 +32,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
         LogItemsView.Source = LogItems;
         LogItemsView.Filter += OnLogItemsViewFilter;
+
+        LogFiltersHelper.InitializeQuickFiltersCategory(_quickFiltersCategory);
 
         _subscriptions.Add(_logContainer.ProfileChanging
             //.ObserveOn(RxApp.MainThreadScheduler)
@@ -64,10 +60,10 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             .Subscribe(x => AddLogs(x)));
 
         ShareCommand = new ActionCommand(_ => throw new NotImplementedException());
-        FilterRegexSwitchCommand = new ActionCommand(_ =>
+        SearchRegexSwitchCommand = new ActionCommand(_ =>
         {
-            FilterRegex = !FilterRegex;
-            if (!string.IsNullOrWhiteSpace(Filter))
+            SearchRegex = !SearchRegex;
+            if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 RefreshFilteredItems();
             }
@@ -86,16 +82,15 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             }
         });
 
-        this.WhenChanged(x => x.Filter).Subscribe(_ => RefreshFilteredItems());
+        this.WhenChanged(x => x.SearchText).Subscribe(_ => RefreshFilteredItems());
+        SelectedFilters.WhenCollectionChanged().Subscribe(_ => RefreshFilteredItems());
     }
 
     private void AddFiles(IEnumerable<FileRecord> files)
     {
         foreach (var file in files.OrderBy(x => x.FileName))
         {
-            var vm = new LogFileViewModel(file);
-            vm.WhenChanged(x => x.IsSelected).Subscribe(_ => RefreshFilteredItems());
-            _filesCategory.CategoryItems.Add(vm);
+            _filesCategory.CategoryItems.Add(new LogFileViewModel(file));
         }
         _filesCategory.CategoryItemsView.View.Refresh();
     }
@@ -110,76 +105,22 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     private void OnLogItemsViewFilter(object sender, FilterEventArgs e)
     {
-        if (_filterContext is null)
-        {
-            e.Accepted = true;
-            return;
-        }
-
-        var item = (LogItemViewModel)e.Item;
-        if (_filterContext.FilesSelected.Count > 0
-            && !_filterContext.FilesSelected.Contains(item.Record.File.FileName))
-        {
-            e.Accepted = false;
-            return;
-        }
-
-        if (_filterContext.MessageFilterSpecified)
-        {
-            bool filterMatch;
-            if (_filterContext.MessageFilterRegex is not null)
-            {
-                filterMatch = _filterContext.MessageFilterRegex.IsMatch(item.Message);
-            }
-            else
-            {
-                filterMatch = item.Message.Contains(Filter, StringComparison.InvariantCultureIgnoreCase);
-            }
-
-            if (!filterMatch)
-            {
-                e.Accepted = false;
-                return;
-            }
-        }
-
-        // TODO: Add other filters here
-
-        e.Accepted = true;
+        e.Accepted = LogFiltersHelper.IsMatch(_filterContext, (LogItemViewModel)e.Item);
     }
 
     private void RefreshFilteredItems()
     {
-        var filesSelected = _filesCategory.CategoryItems
-            .Where(x => x.IsSelected)
-            .Select(x => x.File.FileName)
-            .ToHashSet();
-        var messageFilterSpecified = !string.IsNullOrWhiteSpace(Filter);
-
-        Regex? filterRegex = null;
-        if (FilterRegex)
-        {
-            try
-            {
-                filterRegex = new Regex(Filter, RegexOptions.IgnoreCase);
-            }
-            catch (Exception)
-            {
-                filterRegex = null;
-            }
-        }
-
-        _filterContext = new(messageFilterSpecified, filterRegex, filesSelected);
+        _filterContext = LogFiltersHelper.CreateContext(SelectedFilters, SearchText, SearchRegex);
         LogItemsView.View.Refresh();
     }
 
-    public string Filter
+    public string SearchText
     {
         get => GetOrDefault<string>();
         set => RaiseAndSetIfChanged(value);
     }
 
-    public bool FilterRegex
+    public bool SearchRegex
     {
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
@@ -194,6 +135,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public IAutoGridBuilder AutoGridBuilder { get; }
 
     public ObservableCollection<ILogFilterCategoryViewModel> FilterCategories { get; } = new();
+    public ObservableCollection<ILogFilterCategoryViewModel> SelectedFilters { get; } = new();
 
     public ObservableCollection<ILogItemViewModel> LogItems { get; }
         = new TypedObservableList<ILogItemViewModel, LogItemViewModel>();
@@ -201,5 +143,5 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public CollectionViewSource LogItemsView { get; } = new();
 
     public IActionCommand ShareCommand { get; }
-    public IActionCommand FilterRegexSwitchCommand { get; }
+    public IActionCommand SearchRegexSwitchCommand { get; }
 }

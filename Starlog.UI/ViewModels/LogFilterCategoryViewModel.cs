@@ -4,7 +4,7 @@ using Genius.Atom.UI.Forms;
 
 namespace Genius.Starlog.UI.ViewModels;
 
-public interface ILogFilterCategoryViewModel : ISelectable
+public interface ILogFilterCategoryViewModel
 {
     string Title { get; }
     string Icon { get; }
@@ -31,10 +31,4 @@ public sealed class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase,
 
     public ObservableCollection<TChildViewModel> CategoryItems { get; } = new();
     public CollectionViewSource CategoryItemsView { get; } = new CollectionViewSource();
-
-    public bool IsSelected
-    {
-        get => GetOrDefault(false);
-        set => RaiseAndSetIfChanged(value);
-    }
 }
