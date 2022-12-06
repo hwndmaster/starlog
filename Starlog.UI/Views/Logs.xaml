@@ -61,31 +61,8 @@
         <Grid Grid.Row="1" Grid.Column="0" Grid.RowSpan="2">
             <TreeView ItemsSource="{Binding FilterCategories}">
                 <TreeView.ItemContainerStyle>
-                    <Style TargetType="TreeViewItem">
+                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource TreeViewItemMultiselect}">
                         <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                        <Style.Triggers>
-                            <Trigger Property="behaviors:TreeViewMultiSelectBehavior.IsSelected" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.AccentBase}"></Setter>
-                                <Setter Property="TextElement.Foreground" Value="{DynamicResource MahApps.Brushes.Text}"></Setter>
-                            </Trigger>
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="behaviors:TreeViewMultiSelectBehavior.IsSelected" Value="True" />
-                                    <Condition Property="IsSelectionActive" Value="False" />
-                                </MultiTrigger.Conditions>
-                                <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent4}"></Setter>
-                                <Setter Property="TextElement.Foreground" Value="{DynamicResource MahApps.Brushes.Text}"/>
-                            </MultiTrigger>
-                            <!-- TODO: For some reason is overriden by another rule
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsSelected" Value="True" />
-                                    <Condition Property="IsSelectionActive" Value="False" />
-                                </MultiTrigger.Conditions>
-                                <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent4}"></Setter>
-                                <Setter Property="TextElement.Foreground" Value="{DynamicResource MahApps.Brushes.Text}"/>
-                            </MultiTrigger> -->
-                        </Style.Triggers>
                     </Style>
                 </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
@@ -97,7 +74,7 @@
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
                 <i:Interaction.Behaviors>
-                    <behaviors:TreeViewMultiSelectBehavior SelectedItems="{Binding SelectedFilters}" />
+                    <atombehaviors:TreeViewMultiSelectBehavior SelectedItems="{Binding SelectedFilters}" />
                 </i:Interaction.Behaviors>
             </TreeView>
         </Grid>
@@ -110,12 +87,12 @@
                 <autogrid:AttachingBehavior />
                 <behaviors:LogColorizeBehavior />
                 <behaviors:LogsCopyToClipboardBehavior />
-                <behaviors:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
+                <atombehaviors:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
             </i:Interaction.Behaviors>
         </DataGrid>
 
         <Grid Grid.Row="2" Grid.Column="1">
-            <RichTextBox behaviors:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
+            <RichTextBox atombehaviors:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
                          IsReadOnly="True"
                          MaxHeight="300" />
         </Grid>
