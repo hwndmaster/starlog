@@ -104,7 +104,7 @@ public sealed partial class LogItemViewModel : ViewModelBase, ILogItemViewModel
 
         if (indexFrom < text.Length)
         {
-            var plainText = text.Substring(indexFrom);
+            var plainText = text[indexFrom..];
             paragraph.Inlines.Add(new Run(plainText));
         }
     }

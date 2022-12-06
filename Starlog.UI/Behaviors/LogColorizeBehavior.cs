@@ -30,7 +30,7 @@ public class LogColorizeBehavior : Behavior<DataGrid>
     {
         var bindingForLogLevel = new Binding(".")
         {
-            Converter = new LogLevelToColorConverter(AssociatedObject)
+            Converter = new LogSeverityToColorConverter(AssociatedObject)
         };
         var trigger1 = CreateDummyTrigger(false, bindingForLogLevel);
 

@@ -31,8 +31,8 @@ public class LogFiltersHelper : ILogFiltersHelper
 
     public void InitializeQuickFiltersCategory(LogFilterCategoryViewModel<LogFilterViewModel> category)
     {
-        var errorsFilter = _logFilterContainer.CreateProfileFilter<LogLevelsProfileFilter>("Majors and Criticals");
-        errorsFilter.LogLevels = new [] { LogSeverity.Major, LogSeverity.Critical };
+        var errorsFilter = _logFilterContainer.CreateProfileFilter<LogSeveritiesProfileFilter>("Majors and Criticals");
+        errorsFilter.LogSeverities = new [] { LogSeverity.Major, LogSeverity.Critical };
 
         category.AddItems(new [] {
                 errorsFilter

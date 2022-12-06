@@ -6,11 +6,11 @@ using Genius.Starlog.UI.ViewModels;
 
 namespace Genius.Starlog.UI.ValueConverters;
 
-public sealed class LogLevelToColorConverter : IValueConverter
+public sealed class LogSeverityToColorConverter : IValueConverter
 {
     private readonly Color _standardColor;
 
-    public LogLevelToColorConverter(FrameworkElement anyElement)
+    public LogSeverityToColorConverter(FrameworkElement anyElement)
     {
         _standardColor = (Color)anyElement.FindResource("MahApps.Colors.ThemeForeground");
     }
