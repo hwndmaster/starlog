@@ -25,7 +25,7 @@ public sealed class LogSeverityToColorConverter : IValueConverter
         var color = vm.Record.Level.Severity switch
         {
             LogSeverity.Minor => Colors.DimGray,
-            LogSeverity.Attention => Colors.Yellow,
+            LogSeverity.Warning => Colors.Yellow,
             LogSeverity.Major => Colors.Red,
             LogSeverity.Critical => Colors.DarkRed,
             _ => _standardColor,

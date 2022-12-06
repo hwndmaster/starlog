@@ -31,11 +31,15 @@ public class LogFiltersHelper : ILogFiltersHelper
 
     public void InitializeQuickFiltersCategory(LogFilterCategoryViewModel<LogFilterViewModel> category)
     {
-        var errorsFilter = _logFilterContainer.CreateProfileFilter<LogSeveritiesProfileFilter>("Majors and Criticals");
-        errorsFilter.LogSeverities = new [] { LogSeverity.Major, LogSeverity.Critical };
+        var filter1 = _logFilterContainer.CreateProfileFilter<LogSeveritiesProfileFilter>("Warnings");
+        filter1.LogSeverities = new [] { LogSeverity.Warning };
+
+        var filter2 = _logFilterContainer.CreateProfileFilter<LogSeveritiesProfileFilter>("Majors and Criticals");
+        filter2.LogSeverities = new [] { LogSeverity.Major, LogSeverity.Critical };
 
         category.AddItems(new [] {
-                errorsFilter
+                filter1,
+                filter2
             }
             .Select(x => new LogFilterViewModel(x)));
     }

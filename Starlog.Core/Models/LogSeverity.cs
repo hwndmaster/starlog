@@ -15,7 +15,7 @@ public enum LogSeverity
     /// <summary>
     ///   WARN, WARNING
     /// </summary>
-    Attention,
+    Warning,
 
     /// <summary>
     ///   ERR, ERROR, EXCEPTION

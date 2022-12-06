@@ -88,7 +88,7 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
         return logLevel.ToLowerInvariant() switch
         {
             "debug" or "trace" or "statistics" => LogSeverity.Minor,
-            "warn" or "warning" => LogSeverity.Attention,
+            "warn" or "warning" => LogSeverity.Warning,
             "err" or "error" or "exception" => LogSeverity.Major,
             "fatal" => LogSeverity.Critical,
             _ => LogSeverity.Normal
