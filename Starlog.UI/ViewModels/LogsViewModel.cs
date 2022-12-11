@@ -3,9 +3,12 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Data;
 using System.Windows.Documents;
+using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.UI.Forms;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
+using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFlow;
+using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Helpers;
 
@@ -17,29 +20,65 @@ public interface ILogsViewModel : ITabViewModel
 
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 {
+    private readonly ICommandBus _commandBus;
+    private readonly ICurrentProfile _currentProfile;
     private readonly ILogContainer _logContainer;
     private readonly ILogFiltersHelper _logFiltersHelper;
+    private readonly IViewModelFactory _vmFactory;
+    private readonly IUiDispatcher _uiDispatcher;
+    private readonly IUserInteraction _ui;
     private readonly LogFilterCategoryViewModel<LogFileViewModel> _filesCategory = new("Files", "FolderFiles32", sort: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _quickFiltersCategory = new("Quick filters", "FolderDown32", expanded: true);
-    private readonly LogFilterCategoryViewModel<LogFilterViewModel> _userFiltersCategory = new("User filters", "FolderFavs32");
+    private readonly LogFilterCategoryViewModel<LogFilterViewModel> _userFiltersCategory = new("User filters", "FolderFavs32", expanded: true, canAddChildren: true);
     private readonly CompositeDisposable _subscriptions = new();
     private bool _suspendUpdate = false;
     private LogFilterContext? _filterContext;
 
-    public LogsViewModel(ILogContainer logContainer,
+    public LogsViewModel(
+        ICommandBus commandBus,
+        ICurrentProfile currentProfile,
+        ILogContainer logContainer,
         LogItemAutoGridBuilder autoGridBuilder,
-        ILogFiltersHelper logFiltersHelper)
+        ILogFiltersHelper logFiltersHelper,
+        IViewModelFactory vmFactory,
+        IUiDispatcher uiDispatcher,
+        IUserInteraction ui)
     {
+        _commandBus = commandBus.NotNull();
+        _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
         AutoGridBuilder = autoGridBuilder.NotNull();
         _logFiltersHelper = logFiltersHelper.NotNull();
+        _vmFactory = vmFactory.NotNull();
+        _uiDispatcher = uiDispatcher.NotNull();
+        _ui = ui.NotNull();
 
         LogItemsView.Source = LogItems;
         LogItemsView.Filter += OnLogItemsViewFilter;
 
         _logFiltersHelper.InitializeQuickFiltersCategory(_quickFiltersCategory);
+        _userFiltersCategory.AddChildCommand.Executed.Subscribe(_ =>
+        {
+            IsAddEditProfileFilterVisible = !IsAddEditProfileFilterVisible;
+            if (IsAddEditProfileFilterVisible)
+            {
+                EditingProfileFilter = vmFactory.CreateProfileFilter(null);
+                EditingProfileFilter.CommitFilterCommand.Executed
+                    .Where(x => x)
+                    .Take(1)
+                    .Subscribe(commandResult => {
+                        if (!commandResult || EditingProfileFilter.ProfileFilter is null)
+                            return;
+                        var vm = AddUserFilters(new [] { EditingProfileFilter.ProfileFilter }).First();
+                        IsAddEditProfileFilterVisible = false;
+                        SelectedFilters.Clear();
+                        SelectedFilters.Add(vm);
+                    })
+                    .DisposeWith(_subscriptions);
+            }
+        });
 
-        _subscriptions.Add(_logContainer.ProfileChanging
+        _subscriptions.Add(_currentProfile.ProfileChanging
             //.ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(_ =>
             {
@@ -49,10 +88,16 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                 _userFiltersCategory.CategoryItems.Clear();
                 LogItems.Clear();
             }));
-        _subscriptions.Add(_logContainer.ProfileChanged
-            .Subscribe(_ =>
+        _subscriptions.Add(_currentProfile.ProfileChanged
+            .Subscribe(profile =>
             {
+                if (profile is null)
+                {
+                    return;
+                }
+
                 AddFiles(_logContainer.GetFiles());
+                AddUserFilters(profile.Filters);
                 AddLogs(_logContainer.GetLogs());
                 _suspendUpdate = false;
             }));
@@ -87,7 +132,9 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         });
 
         this.WhenChanged(x => x.SearchText).Subscribe(_ => RefreshFilteredItems());
-        SelectedFilters.WhenCollectionChanged().Subscribe(_ => RefreshFilteredItems());
+        SelectedFilters.WhenCollectionChanged()
+            .Throttle(TimeSpan.FromMilliseconds(50))
+            .Subscribe(_ => RefreshFilteredItems());
         SelectedLogItems.WhenCollectionChanged().Subscribe(_ => SelectedLogItem = SelectedLogItems.FirstOrDefault());
         this.WhenChanged(x => x.SelectedLogItem).Subscribe(_ => SelectedLogArtifacts = SelectedLogItem?.Artifacts);
     }
@@ -98,6 +145,36 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             files.OrderBy(x => x.FileName)
                 .Select(x => new LogFileViewModel(x))
         );
+    }
+
+    private IEnumerable<LogFilterViewModel> AddUserFilters(IEnumerable<ProfileFilterBase> userFilters)
+    {
+        var vms = userFilters.Select(x =>
+        {
+            var vm = new LogFilterViewModel(x, isUserDefined: true);
+            vm.ModifyCommand.Executed.Subscribe(_ =>
+            {
+                EditingProfileFilter = _vmFactory.CreateProfileFilter(vm.Filter);
+                EditingProfileFilter?.CommitFilterCommand.Executed
+                    .Where(x => x)
+                    .Take(1)
+                    .Subscribe(_ => IsAddEditProfileFilterVisible = false)
+                    .DisposeWith(_subscriptions);
+                IsAddEditProfileFilterVisible = EditingProfileFilter is not null;
+            });
+            vm.DeleteCommand.Executed.Subscribe(async _ =>
+            {
+                if (_ui.AskForConfirmation($"You're about to delete a filter named '{vm.Filter.Name}'. Proceed?", "Deletion confirmation"))
+                {
+                    await _commandBus.SendAsync(new ProfileFilterDeleteCommand(_currentProfile.Profile.NotNull().Id, vm.Filter.Id));
+                    _userFiltersCategory.RemoveItem(vm);
+                }
+            });
+            vm.WhenChanged(x => x.IsSelected).Subscribe(_ => IsAddEditProfileFilterVisible = false);
+            return vm;
+        }).ToList();
+        _userFiltersCategory.AddItems(vms);
+        return vms;
     }
 
     private void AddLogs(IEnumerable<LogRecord> logs)
@@ -116,7 +193,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private void RefreshFilteredItems()
     {
         _filterContext = _logFiltersHelper.CreateContext(SelectedFilters, SearchText, SearchRegex);
-        LogItemsView.View.Refresh();
+
+        _uiDispatcher.Invoke(() => LogItemsView.View.Refresh());
     }
 
     public string SearchText
@@ -137,10 +215,22 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
+    public bool IsAddEditProfileFilterVisible
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public IProfileFilterViewModel? EditingProfileFilter
+    {
+        get => GetOrDefault<IProfileFilterViewModel?>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
     public IAutoGridBuilder AutoGridBuilder { get; }
 
-    public ObservableCollection<ILogFilterCategoryViewModel> FilterCategories { get; } = new();
-    public ObservableCollection<ILogFilterCategoryViewModel> SelectedFilters { get; } = new();
+    public ObservableCollection<ILogFilterNodeViewModel> FilterCategories { get; } = new();
+    public ObservableCollection<ILogFilterNodeViewModel> SelectedFilters { get; } = new();
 
     public ObservableCollection<ILogItemViewModel> LogItems { get; }
         = new TypedObservableList<ILogItemViewModel, LogItemViewModel>();

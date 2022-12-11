@@ -28,8 +28,10 @@ public static class Module
         services.AddSingleton<IProfileQueryService>(sp => sp.GetService<ProfileRepository>()!);
 
         // LogFlow and LogFiltering services
+        services.AddSingleton<LogContainer>();
+        services.AddSingleton<ICurrentProfile>(x => x.GetRequiredService<LogContainer>());
+        services.AddSingleton<ILogContainer>(x => x.GetRequiredService<LogContainer>());
         services.AddSingleton<ILogFilterContainer, LogFilterContainer>();
-        services.AddSingleton<ILogContainer, LogContainer>();
         services.AddSingleton<ILogReaderContainer, LogReaderContainer>();
         services.AddTransient<IFilterProcessor, ThreadsFilterProcessor>();
         services.AddTransient<IFilterProcessor, LoggersFilterProcessor>();
@@ -37,13 +39,19 @@ public static class Module
         services.AddTransient<ILogReaderProcessor, PlainTextProfileLogReaderProcessor>();
         services.AddTransient<ILogReaderProcessor, XmlProfileLogReaderProcessor>();
 
-        // Services, Converters
+        // Services
+        // TO BE DONE LATER
+
+        // Converters
         services.AddSingleton<IJsonConverter, LogReaderJsonConverter>();
+        services.AddSingleton<IJsonConverter, LogFilterJsonConverter>();
 
         // Command Handlers
         services.AddScoped<ICommandHandler<ProfileCreateCommand, Guid>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileUpdateCommand>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileDeleteCommand>, ProfileDeleteCommandHandler>();
+        services.AddScoped<ICommandHandler<ProfileFilterCreateOrUpdateCommand, ProfileFilterCreateOrUpdateCommandResult>, ProfileFilterCreateOrUpdateCommandHandler>();
+        services.AddScoped<ICommandHandler<ProfileFilterDeleteCommand>, ProfileFilterDeleteCommandHandler>();
     }
 
     public static void Initialize(IServiceProvider serviceProvider)

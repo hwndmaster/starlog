@@ -1,6 +1,6 @@
 namespace Genius.Starlog.Core.LogFlow;
 
-public class FileRecord
+public sealed class FileRecord
 {
     public FileRecord(string fullPath, string fileName, long lastReadOffset)
     {

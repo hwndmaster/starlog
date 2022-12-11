@@ -5,7 +5,6 @@
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:uc="clr-namespace:Genius.Starlog.UI.Views"
-        xmlns:atom="clr-namespace:Genius.Atom.UI.Forms.Controls;assembly=Genius.Atom.UI.Forms"
         mc:Ignorable="d"
         Icon="../Assets/Logo.ico"
         WindowStartupLocation="CenterScreen"

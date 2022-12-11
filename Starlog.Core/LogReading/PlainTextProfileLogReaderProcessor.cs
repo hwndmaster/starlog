@@ -14,6 +14,10 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
         Regex regex = new(readerSettings.LineRegex);
 
         var fileArtifacts = await ReadArtifactsAsync(profile, reader);
+        if (reader.EndOfStream)
+        {
+            return LogReaderResult.Empty;
+        }
 
         Dictionary<int, LoggerRecord> loggers = new();
         Dictionary<int, LogLevelRecord> logLevels = new();
@@ -34,6 +38,11 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
             var match = regex.Match(line);
             if (!match.Success)
             {
+                if (lastRecord is null)
+                {
+                    // Seems a wrong file format, better to stop processing it now
+                    return LogReaderResult.Empty;
+                }
                 lastRecordArtifacts.Add(line);
                 continue;
             }
@@ -106,7 +115,11 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
         for (var i = 0; i < profile.FileArtifactLinesCount; i++)
         {
             var line = await reader.ReadLineAsync().ConfigureAwait(false);
-            if (line is null) break;
+            if (line is null)
+            {
+                // File has insufficient number of lines, skipping.
+                return new FileArtifacts(Array.Empty<string>());
+            }
 
             artifacts.Add(line);
         }

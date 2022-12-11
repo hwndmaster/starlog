@@ -6,7 +6,7 @@ using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;
 
-public class LogsCopyToClipboardBehavior : Behavior<DataGrid>
+public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
 {
     protected override void OnAttached()
     {

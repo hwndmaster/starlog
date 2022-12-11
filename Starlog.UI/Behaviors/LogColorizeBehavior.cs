@@ -6,7 +6,7 @@ using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;
 
-public class LogColorizeBehavior : Behavior<DataGrid>
+public sealed class LogColorizeBehavior : Behavior<DataGrid>
 {
     private IDisposable? _subscription;
 

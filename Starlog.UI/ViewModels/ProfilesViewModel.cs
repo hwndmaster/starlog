@@ -8,7 +8,6 @@ using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
-using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.ViewModels;
 

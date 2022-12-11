@@ -1,4 +1,4 @@
-﻿global using System;
+global using System;
 global using System.Collections.Generic;
 global using System.Linq;
 global using System.Windows;
@@ -34,11 +34,11 @@ public partial class App : Application
         mainWindow.Show();
     }
 
-    private static void ConfigureServices(IServiceCollection services)
+    private void ConfigureServices(IServiceCollection services)
     {
         Atom.Data.Module.Configure(services);
         Atom.Infrastructure.Module.Configure(services);
-        Atom.UI.Forms.Module.Configure(services);
+        Atom.UI.Forms.Module.Configure(services, this);
         Starlog.Core.Module.Configure(services);
 
         // Framework:

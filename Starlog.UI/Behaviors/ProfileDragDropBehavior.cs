@@ -7,7 +7,7 @@ using Genius.Starlog.UI.Controllers;
 
 namespace Genius.Starlog.UI.Behaviors;
 
-public class ProfileDragDropBehavior : Behavior<DataGrid>
+public sealed class ProfileDragDropBehavior : Behavior<DataGrid>
 {
     private readonly IMainController _controller;
     private DropOverlay? _dropOverlay;

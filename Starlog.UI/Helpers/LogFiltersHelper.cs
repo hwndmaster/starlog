@@ -16,11 +16,11 @@ public record LogFilterContext(
 public interface ILogFiltersHelper
 {
     void InitializeQuickFiltersCategory(LogFilterCategoryViewModel<LogFilterViewModel> category);
-    LogFilterContext CreateContext(ICollection<ILogFilterCategoryViewModel> selectedFilters, string searchText, bool searchRegex);
+    LogFilterContext CreateContext(ICollection<ILogFilterNodeViewModel> selectedFilters, string searchText, bool searchRegex);
     bool IsMatch(LogFilterContext? context, LogItemViewModel item);
 }
 
-public class LogFiltersHelper : ILogFiltersHelper
+public sealed class LogFiltersHelper : ILogFiltersHelper
 {
     private readonly ILogFilterContainer _logFilterContainer;
 
@@ -41,10 +41,10 @@ public class LogFiltersHelper : ILogFiltersHelper
                 filter1,
                 filter2
             }
-            .Select(x => new LogFilterViewModel(x)));
+            .Select(x => new LogFilterViewModel(x, isUserDefined: false)));
     }
 
-    public LogFilterContext CreateContext(ICollection<ILogFilterCategoryViewModel> selectedFilters, string searchText, bool searchRegex)
+    public LogFilterContext CreateContext(ICollection<ILogFilterNodeViewModel> selectedFilters, string searchText, bool searchRegex)
     {
         var filesSelected = selectedFilters.OfType<LogFileViewModel>()
             .Select(x => x.File.FileName)

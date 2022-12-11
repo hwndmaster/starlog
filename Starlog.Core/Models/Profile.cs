@@ -7,6 +7,6 @@ public sealed class Profile : EntityBase
     public required string Name { get; set; }
     public required string Path { get; set; }
     public required ProfileLogReaderBase LogReader { get; set; }
-    public ICollection<ProfileFilterBase> Filters { get; set; } = new List<ProfileFilterBase>();
+    public IList<ProfileFilterBase> Filters { get; set; } = new List<ProfileFilterBase>();
     public int FileArtifactLinesCount { get; set; } = 0;
 }

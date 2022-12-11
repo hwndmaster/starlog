@@ -9,7 +9,6 @@ namespace Genius.Starlog.Core.Repositories;
 internal sealed class LogReaderJsonConverter : JsonConverter<LogReader>, IJsonConverter
 {
     private readonly ILogReaderContainer _logReaderContainer;
-    private readonly JsonEncodedText _idProperty = JsonEncodedText.Encode("Id");
 
     public LogReaderJsonConverter(ILogReaderContainer logReaderContainer)
     {

@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
         xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
         xmlns:atombehaviors="clr-namespace:Genius.Atom.UI.Forms.Behaviors;assembly=Genius.Atom.UI.Forms"
         xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
@@ -67,10 +68,23 @@
                 </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding CategoryItemsView.View}">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{Binding Icon, Converter={StaticResource AppIconConverter}}" Width="16" Height="16" />
-                            <Label Content="{Binding Title}"/>
-                        </StackPanel>
+                        <DockPanel>
+                            <Image DockPanel.Dock="Left"
+                                   Source="{Binding Icon, Converter={StaticResource AppIconConverter}}" Width="16" Height="16" />
+                            <Label DockPanel.Dock="Left"
+                                   Content="{Binding Title}"/>
+                            <Button DockPanel.Dock="Right"
+                                    Padding="0"
+                                    Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                    Command="{Binding AddChildCommand}"
+                                    Visibility="{Binding CanAddChildren, Converter={atom:BooleanToVisibilityConverter}}">
+                                <Image Source="{StaticResource Plus16}" Width="16" />
+                            </Button>
+                            <i:Interaction.Behaviors>
+                                <behaviors:TreeViewItemWithDockPanelStretchBehavior />
+                                <behaviors:TreeViewItemModifiableBehavior />
+                            </i:Interaction.Behaviors>
+                        </DockPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
                 <i:Interaction.Behaviors>

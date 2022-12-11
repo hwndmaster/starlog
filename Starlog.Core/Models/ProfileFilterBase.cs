@@ -6,6 +6,7 @@ public abstract class ProfileFilterBase : EntityBase
 {
     protected ProfileFilterBase(LogFilter logFilter)
     {
+        Id = Guid.NewGuid();
         LogFilter = logFilter;
         Name = logFilter.Name;
     }

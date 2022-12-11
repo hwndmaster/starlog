@@ -15,15 +15,14 @@ public interface ILogContainer : IDisposable
     void CloseProfile();
     ImmutableArray<FileRecord> GetFiles();
     ImmutableArray<LogRecord> GetLogs();
+    ImmutableArray<LoggerRecord> GetLoggers();
+    ImmutableArray<string> GetThreads();
 
-    Profile? Profile { get; }
-    IObservable<Unit> ProfileChanging { get; }
-    IObservable<Profile?> ProfileChanged { get; }
     IObservable<FileRecord> FileAdded { get; }
     IObservable<ImmutableArray<LogRecord>> LogsAdded { get; }
 }
 
-internal sealed class LogContainer : ILogContainer
+internal sealed class LogContainer : ILogContainer, ICurrentProfile
 {
     private readonly IFileService _fileService;
     private readonly ILogReaderContainer _logReaderContainer;
@@ -33,6 +32,7 @@ internal sealed class LogContainer : ILogContainer
     private readonly ConcurrentBag<LogRecord> _logs = new();
     private readonly ConcurrentBag<LoggerRecord> _loggers = new();
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
+    private readonly ConcurrentDictionary<string, byte> _logThreads = new();
     private readonly ConcurrentDictionary<string, FileRecord> _files = new();
     private readonly Subject<Unit> _profileChanging = new();
     private readonly Subject<Profile> _profileChanged = new();
@@ -84,6 +84,7 @@ internal sealed class LogContainer : ILogContainer
         _files.Clear();
         _loggers.Clear();
         _logLevels.Clear();
+        _logThreads.Clear();
         _logs.Clear();
     }
 
@@ -99,6 +100,16 @@ internal sealed class LogContainer : ILogContainer
         _lock.ExitReadLock();
 
         return result;
+    }
+
+    public ImmutableArray<LoggerRecord> GetLoggers()
+    {
+        return _loggers.ToImmutableArray();
+    }
+
+    public ImmutableArray<string> GetThreads()
+    {
+        return _logThreads.Keys.ToImmutableArray();
     }
 
     public void Dispose()
@@ -168,6 +179,11 @@ internal sealed class LogContainer : ILogContainer
         foreach (var logLevel in logRecordResult.LogLevels)
         {
             _logLevels.Add(logLevel);
+        }
+
+        foreach (var thread in logRecordResult.Records.Select(x => x.Thread))
+        {
+            _logThreads.TryAdd(thread, 0);
         }
 
         _lock.EnterWriteLock();

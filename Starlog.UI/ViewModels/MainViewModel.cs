@@ -16,15 +16,20 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
         IProfilesViewModel profiles,
         ILogsViewModel logs,
         ISettingsViewModel settings,
-        ILogContainer logContainer)
+        ICurrentProfile currentProfile)
     {
+        Guard.NotNull(profiles);
+        Guard.NotNull(logs);
+        Guard.NotNull(settings);
+        Guard.NotNull(currentProfile);
+
         Tabs = new ITabViewModel[] {
             profiles,
             logs,
             settings
         }.ToImmutableArray();
 
-        logContainer.ProfileChanged.Subscribe(profile =>
+        currentProfile.ProfileChanged.Subscribe(profile =>
         {
             CurrentProfileName = profile is null
                 ? "N/A"
