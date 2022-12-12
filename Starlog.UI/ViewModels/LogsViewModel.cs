@@ -158,7 +158,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                 EditingProfileFilter?.CommitFilterCommand.Executed
                     .Where(x => x)
                     .Take(1)
-                    .Subscribe(_ => IsAddEditProfileFilterVisible = false)
+                    .Subscribe(_ =>
+                    {
+                        IsAddEditProfileFilterVisible = false;
+                        vm.Reconcile();
+                        RefreshFilteredItems();
+                    })
                     .DisposeWith(_subscriptions);
                 IsAddEditProfileFilterVisible = EditingProfileFilter is not null;
             });

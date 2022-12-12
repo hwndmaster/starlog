@@ -19,7 +19,9 @@ public sealed class ThreadProfileFilterSettingsViewModel : ProfileFilterSettings
         SelectedThreads.WhenCollectionChanged().Subscribe(_ =>
         {
             profileFilter.Threads = SelectedThreads.ToArray();
-            Name = LimitNameLength("Threads: " + string.Join(", ", profileFilter.Threads));
+            Name = profileFilter.Threads.Any()
+                ? LimitNameLength("Threads: " + string.Join(", ", profileFilter.Threads))
+                : profileFilter.LogFilter.Name;
         });
     }
 

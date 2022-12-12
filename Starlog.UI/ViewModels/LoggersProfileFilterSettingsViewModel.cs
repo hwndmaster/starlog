@@ -18,7 +18,9 @@ public sealed class LoggersProfileFilterSettingsViewModel : ProfileFilterSetting
         SelectedLoggers.WhenCollectionChanged().Subscribe(_ =>
         {
             profileFilter.LoggerNames = SelectedLoggers.ToArray();
-            Name = LimitNameLength("Loggers: " + string.Join(", ", profileFilter.LoggerNames));
+            Name = profileFilter.LoggerNames.Any()
+                ? LimitNameLength("Loggers: " + string.Join(", ", profileFilter.LoggerNames))
+                : profileFilter.LogFilter.Name;
         });
     }
 

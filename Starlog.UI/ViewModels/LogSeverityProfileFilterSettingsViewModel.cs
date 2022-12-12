@@ -14,7 +14,9 @@ public sealed class LogSeverityProfileFilterSettingsViewModel : ProfileFilterSet
         SelectedLogSeverities.WhenCollectionChanged().Subscribe(_ =>
         {
             profileFilter.LogSeverities = SelectedLogSeverities.ToArray();
-            Name = LimitNameLength("Severities: " + string.Join(", ", profileFilter.LogSeverities));
+            Name = profileFilter.LogSeverities.Any()
+                ? LimitNameLength("Severities: " + string.Join(", ", profileFilter.LogSeverities))
+                : profileFilter.LogFilter.Name;
         });
     }
 

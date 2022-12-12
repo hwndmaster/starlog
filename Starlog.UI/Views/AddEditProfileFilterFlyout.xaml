@@ -28,7 +28,7 @@
             <Label>Filter Type:</Label>
             <ComboBox ItemsSource="{Binding FilterTypes}"
                       SelectedItem="{Binding FilterSettings}"
-                      DisplayMemberPath="Name"
+                      DisplayMemberPath="ProfileFilter.LogFilter.Name"
                       Validation.ErrorTemplate="{x:Null}">
             </ComboBox>
         </DockPanel>

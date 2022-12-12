@@ -26,6 +26,11 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
         }
     }
 
+    internal void Reconcile()
+    {
+        OnPropertyChanged(nameof(Title));
+    }
+
     public ProfileFilterBase Filter { get; }
     public string Title => Filter.Name;
     public string Icon => "FolderFavs32";
