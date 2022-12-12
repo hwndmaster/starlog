@@ -16,6 +16,7 @@ public interface ILogContainer : IDisposable
     ImmutableArray<FileRecord> GetFiles();
     ImmutableArray<LogRecord> GetLogs();
     ImmutableArray<LoggerRecord> GetLoggers();
+    ImmutableArray<LogLevelRecord> GetLogLevels();
     ImmutableArray<string> GetThreads();
 
     IObservable<FileRecord> FileAdded { get; }
@@ -105,6 +106,11 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     public ImmutableArray<LoggerRecord> GetLoggers()
     {
         return _loggers.ToImmutableArray();
+    }
+
+    public ImmutableArray<LogLevelRecord> GetLogLevels()
+    {
+        return _logLevels.ToImmutableArray();
     }
 
     public ImmutableArray<string> GetThreads()

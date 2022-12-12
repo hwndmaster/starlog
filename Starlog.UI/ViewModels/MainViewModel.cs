@@ -8,6 +8,7 @@ public interface IMainViewModel : IViewModel
 {
     ImmutableArray<ITabViewModel> Tabs { get; }
     int SelectedTabIndex { get; set; }
+    bool IsBusy { get; set; }
 }
 
 internal sealed class MainViewModel : ViewModelBase, IMainViewModel
@@ -52,5 +53,11 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
             Tabs[@old].Deactivated.Execute(null);
             Tabs[@new].Activated.Execute(null);
         });
+    }
+
+    public bool IsBusy
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
     }
 }

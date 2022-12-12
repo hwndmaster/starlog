@@ -4,6 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         xmlns:uc="clr-namespace:Genius.Starlog.UI.Views"
         mc:Ignorable="d"
         Icon="../Assets/Logo.ico"
@@ -19,6 +21,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <TabControl Grid.Row="0"
+                    IsEnabled="{Binding IsBusy, Converter={atom:InvertedBooleanConverter}}"
                     SelectedIndex="{Binding SelectedTabIndex}"
                     mah:TabControlHelper.Underlined="TabItems">
             <TabItem Header="Profiles">
@@ -36,5 +39,11 @@
             <StatusBarItem Content="{Binding CurrentProfileName, Mode=OneWay}" />
             <!-- <Separator Style="{StaticResource MahApps.Styles.Separator.StatusBar}" />-->
         </StatusBar>
+        <Grid Background="#80808080" Visibility="{Binding IsBusy, Converter={atom:BooleanToVisibilityConverter}}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Image gif:ImageBehavior.AnimatedSource="{StaticResource Loading32}" Width="24" Height="24" />
+                <TextBlock Margin="3">Loading...</TextBlock>
+            </StackPanel>
+        </Grid>
     </Grid>
 </mah:MetroWindow>

@@ -27,6 +27,7 @@
     <PackageVersion Include="ReactiveUI" Version="18.3.1" />
     <PackageVersion Include="ReactiveUI.WPF" Version="18.3.1" />
     <PackageVersion Include="ReactiveUI.Events.WPF" Version="15.1.1" />
+    <PackageVersion Include="WpfAnimatedGif" Version="2.0.2" />
 
     <!-- Automated Testing components -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />

@@ -13,7 +13,10 @@ public sealed class LoggersProfileFilterSettingsViewModel : ProfileFilterSetting
     {
         Guard.NotNull(logContainer);
 
-        Loggers = logContainer.GetLoggers().Select(x => x.Name).ToArray();
+        Loggers = logContainer.GetLoggers().Select(x => x.Name)
+            .Union(profileFilter.LoggerNames)
+            .OrderBy(x => x)
+            .ToArray();
         SelectedLoggers = new ObservableCollection<string>(profileFilter.LoggerNames);
         SelectedLoggers.WhenCollectionChanged().Subscribe(_ =>
         {

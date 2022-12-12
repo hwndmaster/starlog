@@ -1,4 +1,4 @@
-<UserControl x:Class="Genius.Starlog.UI.Views.LoggersProfileFilterView"
+<UserControl x:Class="Genius.Starlog.UI.Views.LogLevelsProfileFilterView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -10,12 +10,11 @@
     <Grid>
         <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
             <DockPanel>
-                <Label>Loggers:</Label>
+                <Label>Levels:</Label>
                 <ListBox SelectionMode="Multiple"
-                         ItemsSource="{Binding Loggers}"
-                         MaxHeight="400">
+                         ItemsSource="{Binding LogLevels}">
                     <i:Interaction.Behaviors>
-                        <behaviors:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedLoggers}" />
+                        <behaviors:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedLogLevels}" />
                     </i:Interaction.Behaviors>
                 </ListBox>
             </DockPanel>

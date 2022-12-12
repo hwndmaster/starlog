@@ -69,8 +69,16 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         CommitProfileCommand = new ActionCommand(_ => CommitProfile());
 
         LoadProfileCommand = new ActionCommand(async _ => {
-            await _logContainer.LoadProfileAsync(_profile.NotNull());
-            _controller.ShowLogsTab();
+            _controller.SetBusy(true);
+            try
+            {
+                await _logContainer.LoadProfileAsync(_profile.NotNull()).ConfigureAwait(false);
+                _controller.ShowLogsTab();
+            }
+            finally
+            {
+                _controller.SetBusy(false);
+            }
         });
 
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profile is not null);

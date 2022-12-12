@@ -22,11 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Reactive" />
-    <PackageReference Include="ReactiveUI.WPF" />
     <PackageReference Include="MahApps.Metro" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="ReactiveUI.WPF" />
+    <PackageReference Include="System.Reactive" />
+    <PackageReference Include="WpfAnimatedGif" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">

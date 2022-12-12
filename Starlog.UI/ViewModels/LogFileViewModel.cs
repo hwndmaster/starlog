@@ -9,6 +9,7 @@ public sealed class LogFileViewModel : ViewModelBase, ILogFilterNodeViewModel
     public LogFileViewModel(FileRecord file)
     {
         File = file.NotNull();
+        AddChildCommand = new ActionCommand(_ => throw new NotSupportedException());
     }
 
     public FileRecord File { get; }
@@ -19,7 +20,7 @@ public sealed class LogFileViewModel : ViewModelBase, ILogFilterNodeViewModel
     public bool IsExpanded { get; set; } = false;
 
     public CollectionViewSource CategoryItemsView { get; } = new();
-    public IActionCommand AddChildCommand => throw new NotSupportedException();
+    public IActionCommand AddChildCommand { get; }
     public IActionCommand ModifyCommand => throw new NotSupportedException();
     public IActionCommand DeleteCommand => throw new NotSupportedException();
 }

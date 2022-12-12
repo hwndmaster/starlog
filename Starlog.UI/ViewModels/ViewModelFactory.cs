@@ -82,8 +82,9 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
         return profileFilter switch
         {
-            LogSeveritiesProfileFilter logSeverities => new LogSeverityProfileFilterSettingsViewModel(logSeverities),
             LoggersProfileFilter loggers => new LoggersProfileFilterSettingsViewModel(loggers, _logContainer),
+            LogLevelsProfileFilter logLevels => new LogLevelsProfileFilterSettingsViewModel(logLevels, _logContainer),
+            LogSeveritiesProfileFilter logSeverities => new LogSeverityProfileFilterSettingsViewModel(logSeverities),
             ThreadsProfileFilter threads => new ThreadProfileFilterSettingsViewModel(threads, _logContainer),
             _ => throw new InvalidOperationException($"{nameof(profileFilter)} is of unexpected type {profileFilter.GetType().Name}")
         };

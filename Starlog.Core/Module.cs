@@ -35,6 +35,7 @@ public static class Module
         services.AddSingleton<ILogReaderContainer, LogReaderContainer>();
         services.AddTransient<IFilterProcessor, ThreadsFilterProcessor>();
         services.AddTransient<IFilterProcessor, LoggersFilterProcessor>();
+        services.AddTransient<IFilterProcessor, LogLevelsFilterProcessor>();
         services.AddTransient<IFilterProcessor, LogSeveritiesFilterProcessor>();
         services.AddTransient<ILogReaderProcessor, PlainTextProfileLogReaderProcessor>();
         services.AddTransient<ILogReaderProcessor, XmlProfileLogReaderProcessor>();
@@ -60,6 +61,8 @@ public static class Module
 
         logFilterContainer.RegisterLogFilter<LoggersProfileFilter, LoggersFilterProcessor>(
             new LogFilter(new Guid("ad1398bc-a17e-4584-b7fa-d82fa547b5fe"), "Logger filter"));
+        logFilterContainer.RegisterLogFilter<LogLevelsProfileFilter, LogLevelsFilterProcessor>(
+            new LogFilter(new Guid("bd1ffa05-8534-4555-ab17-92fd3f53fe13"), "Level filter"));
         logFilterContainer.RegisterLogFilter<LogSeveritiesProfileFilter, LogSeveritiesFilterProcessor>(
             new LogFilter(new Guid("1123d366-5aa1-4e00-b16f-7832b0880ee8"), "Severity filter"));
         logFilterContainer.RegisterLogFilter<ThreadsProfileFilter, ThreadsFilterProcessor>(
@@ -72,9 +75,10 @@ public static class Module
             new LogReader(new Guid("0cb976bc-6d87-4450-8202-530d9db09b40"), "XML"));
 
         var typeDiscriminators = serviceProvider.GetRequiredService<ITypeDiscriminators>();
-        typeDiscriminators.AddMapping<LoggersProfileFilter>("logger-profile-filter");
-        typeDiscriminators.AddMapping<LogSeveritiesProfileFilter>("loglevel-profile-filter");
-        typeDiscriminators.AddMapping<ThreadsProfileFilter>("thread-profile-filter");
+        typeDiscriminators.AddMapping<LoggersProfileFilter>("loggers-profile-filter");
+        typeDiscriminators.AddMapping<LogLevelsProfileFilter>("loglevels-profile-filter");
+        typeDiscriminators.AddMapping<LogSeveritiesProfileFilter>("logseverities-profile-filter");
+        typeDiscriminators.AddMapping<ThreadsProfileFilter>("threads-profile-filter");
         typeDiscriminators.AddMapping<PlainTextProfileLogReader>("plaintext-profile-log-reader");
         typeDiscriminators.AddMapping<XmlProfileLogReader>("xml-profile-log-reader");
     }

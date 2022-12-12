@@ -14,7 +14,9 @@ public sealed class ThreadProfileFilterSettingsViewModel : ProfileFilterSettings
     {
         Guard.NotNull(logContainer);
 
-        Threads = logContainer.GetThreads();
+        Threads = logContainer.GetThreads()
+            .Union(profileFilter.Threads)
+            .ToImmutableArray();
         SelectedThreads = new ObservableCollection<string>(profileFilter.Threads);
         SelectedThreads.WhenCollectionChanged().Subscribe(_ =>
         {

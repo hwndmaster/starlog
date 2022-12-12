@@ -23,7 +23,7 @@ public sealed class PlainTextLogReaderViewModel : LogReaderViewModel
 
         LineRegexes.Add(new PlainTextLogReaderLineRegex(
             "LEVEL DATETIME [Thread] Logger - Message",
-            @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>\w+)\s-\s(?<message>.+)"));
+            @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>.+)\s-\s(?<message>.+)"));
     }
 
     public ObservableCollection<PlainTextLogReaderLineRegex> LineRegexes { get; } = new();
