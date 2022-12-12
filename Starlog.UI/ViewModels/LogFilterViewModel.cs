@@ -12,6 +12,15 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
         Filter = profileFilter.NotNull();
         IsUserDefined = isUserDefined;
 
+        Icon = profileFilter switch
+        {
+            LoggersProfileFilter _ => "Logger32",
+            LogLevelsProfileFilter _ => "LogLevel32",
+            LogSeveritiesProfileFilter _ => "LogSeverity32",
+            ThreadsProfileFilter _ => "Thread32",
+            _ => "FolderFavs32"
+        };
+
         AddChildCommand = new ActionCommand(_ => throw new NotSupportedException());
 
         if (isUserDefined)
@@ -33,7 +42,7 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
 
     public ProfileFilterBase Filter { get; }
     public string Title => Filter.Name;
-    public string Icon => "FolderFavs32";
+    public string Icon { get; }
     public bool CanAddChildren => false;
     public bool IsExpanded { get; set; } = false;
     public bool IsUserDefined { get; }

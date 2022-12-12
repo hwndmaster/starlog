@@ -1,4 +1,5 @@
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
+using Genius.Atom.UI.Forms.WpfBuilders;
 using Genius.Starlog.UI.ViewModels;
 
 namespace Genius.Starlog.UI.AutoGridBuilders;
@@ -19,7 +20,9 @@ public sealed class ProfileAutoGridBuilder : IAutoGridBuilder
                 columns
                     .AddText(nameof(ProfileViewModel.Name), x => x.Filterable())
                     .AddText(nameof(ProfileViewModel.Path))
-                    .AddCommand(nameof(ProfileViewModel.LoadProfileCommand), x => x.WithIcon("PlayBlue16"))
+                    .AddCommand(nameof(ProfileViewModel.LoadProfileCommand), x => x
+                        .WithIcon("Play32")
+                        .WithStyle(new StylingRecord(Padding: new Thickness(0))))
             )
             .Build();
     }
