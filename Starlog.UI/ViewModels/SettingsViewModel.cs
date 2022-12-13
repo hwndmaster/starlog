@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Reactive.Linq;
 using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.UI.Forms;
@@ -7,6 +8,7 @@ using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
+using ReactiveUI;
 
 namespace Genius.Starlog.UI.ViewModels;
 
@@ -36,11 +38,13 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         AddPlainTextLogReaderLineRegexTemplateCommand = new ActionCommand(_ =>
             AddPlainTextLogReaderLineRegexTemplate(new StringValue("Unnamed", ".*")));
 
-        eventBus.WhenFired<SettingsUpdatedEvent>().Subscribe(@event =>
-        {
-            _model = @event.Settings;
-            Reconcile();
-        });
+        eventBus.WhenFired<SettingsUpdatedEvent>()
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(@event =>
+            {
+                _model = @event.Settings;
+                Reconcile();
+            });
 
         this.WhenAnyChanged().Subscribe(async _ => await SendUpdate());
     }

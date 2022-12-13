@@ -24,6 +24,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private readonly ICurrentProfile _currentProfile;
     private readonly ILogContainer _logContainer;
     private readonly ILogFiltersHelper _logFiltersHelper;
+    private readonly ILogArtifactsFormatter _artifactsFormatter;
     private readonly IViewModelFactory _vmFactory;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IUserInteraction _ui;
@@ -40,6 +41,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         ILogContainer logContainer,
         LogItemAutoGridBuilder autoGridBuilder,
         ILogFiltersHelper logFiltersHelper,
+        ILogArtifactsFormatter artifactsFormatter,
         IViewModelFactory vmFactory,
         IUiDispatcher uiDispatcher,
         IUserInteraction ui)
@@ -49,6 +51,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         _logContainer = logContainer.NotNull();
         AutoGridBuilder = autoGridBuilder.NotNull();
         _logFiltersHelper = logFiltersHelper.NotNull();
+        _artifactsFormatter = artifactsFormatter.NotNull();
         _vmFactory = vmFactory.NotNull();
         _uiDispatcher = uiDispatcher.NotNull();
         _ui = ui.NotNull();
@@ -229,7 +232,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
         foreach (var log in logs.OrderBy(x => x.DateTime))
         {
-            LogItems.Add(new LogItemViewModel(log));
+            LogItems.Add(new LogItemViewModel(log, _artifactsFormatter));
         }
 
         RefreshFilteredItems();

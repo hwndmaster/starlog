@@ -61,6 +61,7 @@ public partial class App : Application
 
         // Services and Helpers:
         services.AddTransient<ILogFiltersHelper, LogFiltersHelper>();
+        services.AddTransient<ILogArtifactsFormatter, LogArtifactsFormatter>();
     }
 
     private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
