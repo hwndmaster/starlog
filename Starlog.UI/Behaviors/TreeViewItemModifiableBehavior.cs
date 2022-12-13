@@ -13,7 +13,7 @@ public sealed class TreeViewItemModifiableBehavior : Behavior<FrameworkElement>
 
     protected override void OnAttached()
     {
-        _treeViewItem = WpfHelpers.FindVisualParent<TreeViewItem>(AssociatedObject).NotNull();
+        _treeViewItem = AssociatedObject.FindVisualParent<TreeViewItem>().NotNull();
         var vm = _treeViewItem.DataContext;
         _vmWithModifySupport = vm as IHasModifyCommand;
         _vmWithDeleteSupport = vm as IHasDeleteCommand;

@@ -53,6 +53,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         _uiDispatcher = uiDispatcher.NotNull();
         _ui = ui.NotNull();
 
+        Search = vmFactory.CreateLogSearch();
+
         LogItemsView.Source = LogItems;
         LogItemsView.Filter += OnLogItemsViewFilter;
 
@@ -111,8 +113,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         ShareCommand = new ActionCommand(_ => throw new NotImplementedException());
         SearchRegexSwitchCommand = new ActionCommand(_ =>
         {
-            SearchRegex = !SearchRegex;
-            if (!string.IsNullOrWhiteSpace(SearchText))
+            Search.UseRegex = !Search.UseRegex;
+            if (!string.IsNullOrWhiteSpace(Search.Text))
             {
                 RefreshFilteredItems();
             }
@@ -131,7 +133,9 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             }
         });
 
-        this.WhenChanged(x => x.SearchText).Subscribe(_ => RefreshFilteredItems());
+        Search.WhenAnyChanged(x => x.Text, x => x.SelectedDateTimeFromTicks, x => x.SelectedDateTimeToTicks)
+            .Throttle(TimeSpan.FromMilliseconds(50))
+            .Subscribe(_ => RefreshFilteredItems());
         SelectedFilters.WhenCollectionChanged()
             .Throttle(TimeSpan.FromMilliseconds(50))
             .Subscribe(_ => RefreshFilteredItems());
@@ -182,12 +186,21 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         return vms;
     }
 
-    private void AddLogs(IEnumerable<LogRecord> logs)
+    private void AddLogs(ICollection<LogRecord> logs)
     {
+        if (!logs.Any())
+        {
+            return;
+        }
+
+        Search.Reconcile(LogItems.Count, logs);
+
         foreach (var log in logs.OrderBy(x => x.DateTime))
         {
             LogItems.Add(new LogItemViewModel(log));
         }
+
+        RefreshFilteredItems();
     }
 
     private void OnLogItemsViewFilter(object sender, FilterEventArgs e)
@@ -197,22 +210,24 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     private void RefreshFilteredItems()
     {
-        _filterContext = _logFiltersHelper.CreateContext(SelectedFilters, SearchText, SearchRegex);
+        _filterContext = _logFiltersHelper.CreateContext(SelectedFilters, Search);
 
-        _uiDispatcher.Invoke(() => LogItemsView.View.Refresh());
+        _uiDispatcher.Invoke(() =>
+        {
+            LogItemsView.View.Refresh();
+
+            var filteredItems = LogItemsView.View.Cast<ILogItemViewModel>().ToList();
+            StatsFilteredCount = filteredItems.Count;
+
+            // TODO: Filter out items by log level and show stats like:
+            //       TRACE:  xxx
+            //       INFO:    kk
+            //       WARN:   yyy
+            //       ERROR:    z
+        });
     }
 
-    public string SearchText
-    {
-        get => GetOrDefault<string>();
-        set => RaiseAndSetIfChanged(value);
-    }
-
-    public bool SearchRegex
-    {
-        get => GetOrDefault(false);
-        set => RaiseAndSetIfChanged(value);
-    }
+    public ILogsSearchViewModel Search { get; }
 
     public string ColorizeBy
     {
@@ -253,6 +268,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public FlowDocument? SelectedLogArtifacts
     {
         get => GetOrDefault<FlowDocument>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public int StatsFilteredCount
+    {
+        get => GetOrDefault<int>();
         set => RaiseAndSetIfChanged(value);
     }
 

@@ -11,12 +11,14 @@ public record LogFilterContext(
     string SearchText,
     Regex? MessageSearchRegex,
     HashSet<string> FilesSelected,
-    ImmutableArray<ProfileFilterBase> FiltersSelected);
+    ImmutableArray<ProfileFilterBase> FiltersSelected,
+    DateTimeOffset? DateFrom,
+    DateTimeOffset? DateTo);
 
 public interface ILogFiltersHelper
 {
     void InitializeQuickFiltersCategory(LogFilterCategoryViewModel<LogFilterViewModel> category);
-    LogFilterContext CreateContext(ICollection<ILogFilterNodeViewModel> selectedFilters, string searchText, bool searchRegex);
+    LogFilterContext CreateContext(ICollection<ILogFilterNodeViewModel> selectedFilters, ILogsSearchViewModel searchViewModel);
     bool IsMatch(LogFilterContext? context, LogItemViewModel item);
 }
 
@@ -44,7 +46,7 @@ public sealed class LogFiltersHelper : ILogFiltersHelper
             .Select(x => new LogFilterViewModel(x, isUserDefined: false)));
     }
 
-    public LogFilterContext CreateContext(ICollection<ILogFilterNodeViewModel> selectedFilters, string searchText, bool searchRegex)
+    public LogFilterContext CreateContext(ICollection<ILogFilterNodeViewModel> selectedFilters, ILogsSearchViewModel searchViewModel)
     {
         var filesSelected = selectedFilters.OfType<LogFileViewModel>()
             .Select(x => x.File.FileName)
@@ -52,14 +54,14 @@ public sealed class LogFiltersHelper : ILogFiltersHelper
         var filtersSelected = selectedFilters.OfType<LogFilterViewModel>()
             .Select(x => x.Filter)
             .ToImmutableArray();
-        var messageSearchIncluded = !string.IsNullOrWhiteSpace(searchText);
+        var messageSearchIncluded = !string.IsNullOrWhiteSpace(searchViewModel.Text);
 
         Regex? filterRegex = null;
-        if (searchRegex)
+        if (searchViewModel.UseRegex)
         {
             try
             {
-                filterRegex = new Regex(searchText, RegexOptions.IgnoreCase);
+                filterRegex = new Regex(searchViewModel.Text, RegexOptions.IgnoreCase);
             }
             catch (Exception)
             {
@@ -67,7 +69,16 @@ public sealed class LogFiltersHelper : ILogFiltersHelper
             }
         }
 
-        return new(messageSearchIncluded, searchText, filterRegex, filesSelected, filtersSelected);
+        DateTimeOffset? dateFrom = null;
+        DateTimeOffset? dateTo = null;
+        if (searchViewModel.MinDateTimeTicks != searchViewModel.SelectedDateTimeFromTicks
+            || searchViewModel.MaxDateTimeTicks != searchViewModel.SelectedDateTimeToTicks)
+        {
+            dateFrom = new DateTimeOffset((long)searchViewModel.SelectedDateTimeFromTicks, TimeSpan.Zero);
+            dateTo = new DateTimeOffset((long)searchViewModel.SelectedDateTimeToTicks, TimeSpan.Zero);
+        }
+
+        return new(messageSearchIncluded, searchViewModel.Text, filterRegex, filesSelected, filtersSelected, dateFrom, dateTo);
     }
 
     public bool IsMatch(LogFilterContext? context, LogItemViewModel item)
@@ -81,6 +92,14 @@ public sealed class LogFiltersHelper : ILogFiltersHelper
             && !context.FilesSelected.Contains(item.Record.File.FileName))
         {
             return false;
+        }
+
+        if (context.DateFrom is not null && context.DateTo is not null)
+        {
+            if (item.DateTime < context.DateFrom || item.DateTime > context.DateTo)
+            {
+                return false;
+            }
         }
 
         if (context.MessageSearchIncluded)

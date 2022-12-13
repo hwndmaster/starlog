@@ -13,7 +13,7 @@ public sealed class TreeViewItemWithDockPanelStretchBehavior : Behavior<DockPane
     {
         AssociatedObject.LastChildFill = false;
 
-        _treeViewItem = WpfHelpers.FindVisualParent<TreeViewItem>(AssociatedObject).NotNull();
+        _treeViewItem = AssociatedObject.FindVisualParent<TreeViewItem>().NotNull();
         _treeViewItem.SizeChanged += OnSizeChanged;
 
         base.OnAttached();

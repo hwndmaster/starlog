@@ -29,7 +29,7 @@ public sealed class ProfileDragDropBehavior : Behavior<DataGrid>
             Visibility = Visibility.Collapsed
         };
 
-        var grid = WpfHelpers.FindVisualParent<Grid>(AssociatedObject).NotNull();
+        var grid = AssociatedObject.FindVisualParent<Grid>().NotNull();
         StretchToGrid(_dropOverlay, grid);
         grid.Children.Add(_dropOverlay);
 
@@ -42,8 +42,8 @@ public sealed class ProfileDragDropBehavior : Behavior<DataGrid>
         AssociatedObject.DragEnter -= OnDragEnter;
         AssociatedObject.DragLeave -= OnDragLeave;
 
-        var grid = WpfHelpers.FindVisualParent<Grid>(AssociatedObject);
-        grid.NotNull().Children.Remove(_dropOverlay);
+        var grid = AssociatedObject.FindVisualParent<Grid>().NotNull();
+        grid.Children.Remove(_dropOverlay);
         _dropOverlay = null;
 
         base.OnDetaching();

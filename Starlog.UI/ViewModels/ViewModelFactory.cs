@@ -13,6 +13,7 @@ namespace Genius.Starlog.UI.ViewModels;
 public interface IViewModelFactory
 {
     LogReaderViewModel CreateLogReader(LogReader logReader, ProfileLogReaderBase? profileLogReader);
+    ILogsSearchViewModel CreateLogSearch();
     IProfileViewModel CreateProfile(Profile? profile);
     IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter);
     IProfileFilterSettingsViewModel CreateProfileFilterSettings(LogFilter logFilter, ProfileFilterBase? profileFilter);
@@ -62,6 +63,11 @@ internal sealed class ViewModelFactory : IViewModelFactory
             XmlProfileLogReader xml => new XmlLogReaderViewModel(xml),
             _ => throw new InvalidOperationException($"{nameof(profileLogReader)} is of unexpected type {profileLogReader.GetType().Name}")
         };
+    }
+
+    public ILogsSearchViewModel CreateLogSearch()
+    {
+        return new LogsSearchViewModel();
     }
 
     public IProfileViewModel CreateProfile(Profile? profile)

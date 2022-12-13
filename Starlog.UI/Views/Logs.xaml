@@ -13,11 +13,14 @@
         mc:Ignorable="d">
     <UserControl.Resources>
         <vc:AppIconConverter x:Key="AppIconConverter" />
+        <vc:TicksToDateTimeConverter x:Key="TicksToDateTimeConverter" />
+        <vc:TickRangeToTimeConverter x:Key="TickRangeToTimeConverter" />
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -25,16 +28,27 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <DockPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="10">
-            <Button Content="Share" Width="Auto" Padding="5,2"
+        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button Content="Share" Width="Auto" Padding="5,2" Grid.Column="0"
                     Command="{Binding ShareCommand}" />
-            <ComboBox Margin="10,0,0,0"
+            <ComboBox Margin="10,0,0,0" Grid.Column="1"
                       SelectedValue="{Binding ColorizeBy}" SelectedValuePath="Tag">
                 <ComboBoxItem Tag="L">Colorize by Level</ComboBoxItem>
                 <ComboBoxItem Tag="T">Colorize by Thread</ComboBoxItem>
             </ComboBox>
 
-            <TextBox Text="{Binding SearchText}" Margin="10,0,0,0"
+            <TextBox Text="{Binding Search.Text}" Margin="10,0,0,0" Grid.Column="2"
+                     Width="350"
                      mah:TextBoxHelper.Watermark="Type message search text here and press ENTER."
                      mah:TextBoxHelper.ClearTextButton="True"
                      mah:TextBoxHelper.IsClearTextButtonBehaviorEnabled="False"
@@ -45,7 +59,7 @@
                             <Style TargetType="{x:Type Image}">
                                 <Setter Property="Source" Value="{DynamicResource RegexBw32}" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SearchRegex}" Value="True">
+                                    <DataTrigger Binding="{Binding Search.UseRegex}" Value="True">
                                         <Setter Property="Source" Value="{DynamicResource Regex32}" />
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -57,10 +71,68 @@
                     <atombehaviors:FilterBoxBehavior />
                 </i:Interaction.Behaviors>
             </TextBox>
-        </DockPanel>
+
+            <mah:RangeSlider Grid.Column="3"
+                             Minimum="{Binding Search.MinDateTimeTicks}"
+                             Maximum="{Binding Search.MaxDateTimeTicks}"
+                             LowerValue="{Binding Search.SelectedDateTimeFromTicks}"
+                             UpperValue="{Binding Search.SelectedDateTimeToTicks}"
+                             Orientation="Horizontal"
+                             Margin="10,0,0,0"
+                             Style="{DynamicResource MahApps.Styles.RangeSlider.Win10}"
+                             AutoToolTipPlacement="TopLeft"
+                             mah:SliderHelper.EnableMouseWheel="MouseHover">
+                <mah:RangeSlider.AutoToolTipLowerValueTemplate>
+                    <DataTemplate DataType="mah:RangeSliderAutoTooltipValues">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock HorizontalAlignment="Right" Text="From: " />
+                            <TextBlock HorizontalAlignment="Right" Text="{Binding ., Converter={StaticResource TicksToDateTimeConverter}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </mah:RangeSlider.AutoToolTipLowerValueTemplate>
+                <mah:RangeSlider.AutoToolTipUpperValueTemplate>
+                    <DataTemplate DataType="mah:RangeSliderAutoTooltipValues">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock HorizontalAlignment="Right" Text="To: " />
+                            <TextBlock HorizontalAlignment="Right" Text="{Binding ., Converter={StaticResource TicksToDateTimeConverter}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </mah:RangeSlider.AutoToolTipUpperValueTemplate>
+                <mah:RangeSlider.AutoToolTipRangeValuesTemplate>
+                    <DataTemplate DataType="mah:RangeSliderAutoTooltipValues">
+                        <UniformGrid Columns="2" Rows="3">
+                            <TextBlock HorizontalAlignment="Right" Text="From: " />
+                            <TextBlock HorizontalAlignment="Right" Text="{Binding LowerValue, Converter={StaticResource TicksToDateTimeConverter}}" />
+                            <TextBlock HorizontalAlignment="Right" Text="To: " />
+                            <TextBlock HorizontalAlignment="Right" Text="{Binding UpperValue, Converter={StaticResource TicksToDateTimeConverter}}" />
+                            <TextBlock HorizontalAlignment="Right" Text="Range: " />
+                            <TextBlock HorizontalAlignment="Right">
+                                <TextBlock.Text>
+                                    <MultiBinding Converter="{StaticResource TickRangeToTimeConverter}">
+                                        <Binding Path="LowerValue" />
+                                        <Binding Path="UpperValue" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </UniformGrid>
+                    </DataTemplate>
+                </mah:RangeSlider.AutoToolTipRangeValuesTemplate>
+            </mah:RangeSlider>
+            <Button Content="1 min" Grid.Column="4" Margin="4,0,0,0"
+                    Command="{Binding Search.SetTimeRangeTo1MinuteCommand}" />
+            <Button Content="5 sec" Grid.Column="5" Margin="4,0,0,0"
+                    Command="{Binding Search.SetTimeRangeTo5SecondCommand}" />
+            <Button Content="Reset" Grid.Column="6" Margin="4,0,0,0"
+                    Command="{Binding Search.ResetTimeRangeCommand}" />
+        </Grid>
 
         <Grid Grid.Row="1" Grid.Column="0" Grid.RowSpan="2">
-            <TreeView ItemsSource="{Binding FilterCategories}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TreeView ItemsSource="{Binding FilterCategories}" Grid.Row="0">
                 <TreeView.ItemContainerStyle>
                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource TreeViewItemMultiselect}">
                         <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
@@ -91,6 +163,13 @@
                     <atombehaviors:TreeViewMultiSelectBehavior SelectedItems="{Binding SelectedFilters}" />
                 </i:Interaction.Behaviors>
             </TreeView>
+
+            <StackPanel Orientation="Vertical" Grid.Row="1">
+                <DockPanel>
+                    <Label>Logs in list:</Label>
+                    <Label FontWeight="Bold" Content="{Binding StatsFilteredCount}" />
+                </DockPanel>
+            </StackPanel>
         </Grid>
 
         <DataGrid Grid.Row="1" Grid.Column="1" Margin="10"
