@@ -27,13 +27,13 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
     public ProfilesViewModel(
         ICommandBus commandBus,
         IProfileQueryService profileQuery,
-        ISettingsRepository settingsRepo,
+        ISettingsQueryService settingsQuery,
         IViewModelFactory vmFactory,
         IUserInteraction ui,
         ProfileAutoGridBuilder autoGridBuilder)
     {
         Guard.NotNull(commandBus);
-        Guard.NotNull(settingsRepo);
+        Guard.NotNull(settingsQuery);
         Guard.NotNull(ui);
 
         _profileQuery = profileQuery.NotNull();
@@ -93,7 +93,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
         Task.Run(() => ReloadListAsync())
             .ContinueWith(_ =>
             {
-                var settings = settingsRepo.Get();
+                var settings = settingsQuery.Get();
                 if (settings.AutoLoadPreviouslyOpenedProfile && settings.AutoLoadProfile is not null)
                 {
                     var profile = Profiles.FirstOrDefault(x => x.Id == settings.AutoLoadProfile);

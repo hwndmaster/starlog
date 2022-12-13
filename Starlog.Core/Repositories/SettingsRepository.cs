@@ -6,9 +6,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.Repositories;
 
-public interface ISettingsRepository
+public interface ISettingsQueryService
 {
     Settings Get();
+}
+
+internal interface ISettingsRepository : ISettingsQueryService
+{
     void Store(Settings settings);
 }
 
@@ -43,8 +47,11 @@ internal sealed class SettingsRepository : ISettingsRepository
         _logger.LogInformation("Settings updated.");
     }
 
-    private static Settings CreateDefaultSettings()
-        => new() {
-            AutoLoadPreviouslyOpenedProfile = false
-        };
+    private static Settings CreateDefaultSettings() => new()
+    {
+        PlainTextLogReaderLineRegexes = new List<StringValue>
+        {
+            new StringValue("LEVEL DATETIME [Thread] Logger - Message", @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>.+)\s-\s(?<message>.+)")
+        }
+    };
 }

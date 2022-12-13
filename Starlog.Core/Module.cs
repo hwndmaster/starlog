@@ -21,8 +21,10 @@ public static class Module
     {
         // Repositories
         services.AddSingleton<ProfileRepository>();
-        services.AddSingleton<IProfileRepository>(sp => sp.GetService<ProfileRepository>()!);
-        services.AddSingleton<ISettingsRepository, SettingsRepository>();
+        services.AddSingleton<IProfileRepository>(sp => sp.GetRequiredService<ProfileRepository>());
+        services.AddSingleton<SettingsRepository>();
+        services.AddSingleton<ISettingsQueryService>(sp => sp.GetRequiredService<SettingsRepository>());
+        services.AddSingleton<ISettingsRepository>(sp => sp.GetRequiredService<SettingsRepository>());
 
         // Query services
         services.AddSingleton<IProfileQueryService>(sp => sp.GetService<ProfileRepository>()!);

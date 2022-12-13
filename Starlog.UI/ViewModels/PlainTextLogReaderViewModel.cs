@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.UI.ViewModels;
 
@@ -13,7 +14,7 @@ public sealed class PlainTextLogReaderViewModel : LogReaderViewModel
 {
     private readonly PlainTextProfileLogReader _plainTextLogReader;
 
-    public PlainTextLogReaderViewModel(PlainTextProfileLogReader logReader)
+    public PlainTextLogReaderViewModel(PlainTextProfileLogReader logReader, ISettingsQueryService settingsQuery)
         : base(logReader)
     {
         _plainTextLogReader = logReader.NotNull();
@@ -21,9 +22,11 @@ public sealed class PlainTextLogReaderViewModel : LogReaderViewModel
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(LineRegex)));
         AddValidationRule(new IsRegexValidationRule(nameof(LineRegex)));
 
-        LineRegexes.Add(new PlainTextLogReaderLineRegex(
-            "LEVEL DATETIME [Thread] Logger - Message",
-            @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>.+)\s-\s(?<message>.+)"));
+        var templates = settingsQuery.NotNull().Get().PlainTextLogReaderLineRegexes;
+        foreach (var template in templates)
+        {
+            LineRegexes.Add(new PlainTextLogReaderLineRegex(template.Name, template.Value));
+        }
     }
 
     public ObservableCollection<PlainTextLogReaderLineRegex> LineRegexes { get; } = new();

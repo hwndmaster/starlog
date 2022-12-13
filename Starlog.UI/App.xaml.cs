@@ -44,17 +44,20 @@ public partial class App : Application
         // Framework:
         services.AddLogging();
 
-        // Views, View models, View model factories, AutoGrid builders
-        services.AddSingleton<IViewModelFactory, ViewModelFactory>();
+        // Views, View models, View model factories, Controllers
         services.AddSingleton<MainWindow>();
+        services.AddSingleton<IMainController, MainController>();
+        services.AddSingleton<IViewModelFactory, ViewModelFactory>();
         services.AddSingleton<IMainViewModel, MainViewModel>();
         services.AddSingleton<IProfilesViewModel, ProfilesViewModel>();
         services.AddTransient<IProfileViewModel, ProfileViewModel>();
         services.AddSingleton<ILogsViewModel, LogsViewModel>();
         services.AddSingleton<ISettingsViewModel, SettingsViewModel>();
+
+        // AutoGrid builders
         services.AddTransient<ProfileAutoGridBuilder>();
         services.AddTransient<LogItemAutoGridBuilder>();
-        services.AddSingleton<IMainController, MainController>();
+        services.AddTransient<PlainTextLineRegexTemplatesAutoGridBuilder>();
 
         // Services and Helpers:
         services.AddTransient<ILogFiltersHelper, LogFiltersHelper>();

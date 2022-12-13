@@ -29,6 +29,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
     private readonly ILogReaderContainer _logReaderContainer;
     private readonly IMainController _mainController;
     private readonly IProfileQueryService _profileQuery;
+    private readonly ISettingsQueryService _settingsQuery;
     private readonly IUserInteraction _ui;
 
     public ViewModelFactory(
@@ -39,6 +40,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
         ILogReaderContainer logReaderContainer,
         IMainController mainController,
         IProfileQueryService profileQuery,
+        ISettingsQueryService settingsQuery,
         IUserInteraction ui)
     {
         _commandBus = commandBus.NotNull();
@@ -48,6 +50,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _logReaderContainer = logReaderContainer.NotNull();
         _mainController = mainController.NotNull();
         _profileQuery = profileQuery.NotNull();
+        _settingsQuery = settingsQuery.NotNull();
         _ui = ui.NotNull();
     }
 
@@ -59,7 +62,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
         return profileLogReader switch
         {
-            PlainTextProfileLogReader plainText => new PlainTextLogReaderViewModel(plainText),
+            PlainTextProfileLogReader plainText => new PlainTextLogReaderViewModel(plainText, _settingsQuery),
             XmlProfileLogReader xml => new XmlLogReaderViewModel(xml),
             _ => throw new InvalidOperationException($"{nameof(profileLogReader)} is of unexpected type {profileLogReader.GetType().Name}")
         };
