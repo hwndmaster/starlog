@@ -33,6 +33,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -46,8 +47,15 @@
                 <ComboBoxItem Tag="L">Colorize by Level</ComboBoxItem>
                 <ComboBoxItem Tag="T">Colorize by Thread</ComboBoxItem>
             </ComboBox>
+            <ComboBox Margin="10,0,0,0" Grid.Column="2"
+                      SelectedValue="{Binding GroupBy}" SelectedValuePath="Tag">
+                <ComboBoxItem Tag="">No grouping</ComboBoxItem>
+                <ComboBoxItem Tag="M">Group by messages</ComboBoxItem>
+                <ComboBoxItem Tag="MF">Group by messages (fuzzy)</ComboBoxItem>
+                <ComboBoxItem Tag="L">Group by loggers</ComboBoxItem>
+            </ComboBox>
 
-            <TextBox Text="{Binding Search.Text}" Margin="10,0,0,0" Grid.Column="2"
+            <TextBox Text="{Binding Search.Text}" Margin="10,0,0,0" Grid.Column="3"
                      Width="350"
                      mah:TextBoxHelper.Watermark="Type message search text here and press ENTER."
                      mah:TextBoxHelper.ClearTextButton="True"
@@ -72,7 +80,7 @@
                 </i:Interaction.Behaviors>
             </TextBox>
 
-            <mah:RangeSlider Grid.Column="3"
+            <mah:RangeSlider Grid.Column="4"
                              Minimum="{Binding Search.MinDateTimeTicks}"
                              Maximum="{Binding Search.MaxDateTimeTicks}"
                              LowerValue="{Binding Search.SelectedDateTimeFromTicks}"
@@ -118,21 +126,23 @@
                     </DataTemplate>
                 </mah:RangeSlider.AutoToolTipRangeValuesTemplate>
             </mah:RangeSlider>
-            <Button Content="1 min" Grid.Column="4" Margin="4,0,0,0"
+            <Button Content="1 min" Grid.Column="5" Margin="4,0,0,0"
                     Command="{Binding Search.SetTimeRangeTo1MinuteCommand}" />
-            <Button Content="5 sec" Grid.Column="5" Margin="4,0,0,0"
+            <Button Content="5 sec" Grid.Column="6" Margin="4,0,0,0"
                     Command="{Binding Search.SetTimeRangeTo5SecondCommand}" />
-            <Button Content="Reset" Grid.Column="6" Margin="4,0,0,0"
+            <Button Content="Reset" Grid.Column="7" Margin="4,0,0,0"
                     Command="{Binding Search.ResetTimeRangeCommand}" />
         </Grid>
 
-        <Grid Grid.Row="1" Grid.Column="0" Grid.RowSpan="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <DockPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="2">
+            <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
+                <DockPanel>
+                    <Label>Logs in list:</Label>
+                    <Label FontWeight="Bold" Content="{Binding StatsFilteredCount}" />
+                </DockPanel>
+            </StackPanel>
 
-            <TreeView ItemsSource="{Binding FilterCategories}" Grid.Row="0">
+            <TreeView ItemsSource="{Binding FilterCategories}">
                 <TreeView.ItemContainerStyle>
                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource TreeViewItemMultiselect}">
                         <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
@@ -163,19 +173,35 @@
                     <atombehaviors:TreeViewMultiSelectBehavior SelectedItems="{Binding SelectedFilters}" />
                 </i:Interaction.Behaviors>
             </TreeView>
-
-            <StackPanel Orientation="Vertical" Grid.Row="1">
-                <DockPanel>
-                    <Label>Logs in list:</Label>
-                    <Label FontWeight="Bold" Content="{Binding StatsFilteredCount}" />
-                </DockPanel>
-            </StackPanel>
-        </Grid>
+        </DockPanel>
 
         <DataGrid Grid.Row="1" Grid.Column="1" Margin="10"
                   autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
                   autogrid:Properties.ItemsSource="{Binding LogItemsView.View}"
-                  IsReadOnly="True">
+                  IsReadOnly="True"
+
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                  EnableRowVirtualization="True">
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="GroupItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type GroupItem}">
+                                        <StackPanel Margin="5, 10, 0, 10">
+                                            <TextBlock FontWeight="Bold" FontSize="16"
+                                                       Text="{Binding Name}" Margin="0,0,0,3"/>
+                                            <ItemsPresenter/>
+                                        </StackPanel>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
             <i:Interaction.Behaviors>
                 <autogrid:AttachingBehavior />
                 <behaviors:LogColorizeBehavior />

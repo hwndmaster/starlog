@@ -110,7 +110,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             .Where(_ => !_suspendUpdate)
             .Subscribe(x => AddLogs(x)));
 
-        ShareCommand = new ActionCommand(_ => throw new NotImplementedException());
+        ShareCommand = new ActionCommand(_ =>
+        {
+            // TODO: Implement sharing
+            throw new NotImplementedException();
+        });
         SearchRegexSwitchCommand = new ActionCommand(_ =>
         {
             Search.UseRegex = !Search.UseRegex;
@@ -131,6 +135,27 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             {
                 logItem.ColorizeByThread = colorizeByThread;
             }
+        });
+
+        this.WhenChanged(x => x.GroupBy).Subscribe(_ =>
+        {
+            LogItemsView.GroupDescriptions.Clear();
+
+            if (string.IsNullOrEmpty(GroupBy))
+            {
+                return;
+            }
+
+            var propertyName = GroupBy switch
+            {
+                "M" => nameof(ILogItemViewModel.Message),
+                // TODO: Implement fuzzy grouping
+                "MF" => nameof(ILogItemViewModel.Message),
+                "L" => nameof(ILogItemViewModel.Logger),
+                _ => throw new NotSupportedException($"Field ID '{GroupBy}' is unknown.")
+            };
+
+            LogItemsView.GroupDescriptions.Add(new PropertyGroupDescription(propertyName));
         });
 
         Search.WhenAnyChanged(x => x.Text, x => x.SelectedDateTimeFromTicks, x => x.SelectedDateTimeToTicks)
@@ -212,7 +237,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     {
         _filterContext = _logFiltersHelper.CreateContext(SelectedFilters, Search);
 
-        _uiDispatcher.Invoke(() =>
+        _uiDispatcher.BeginInvoke(() =>
         {
             LogItemsView.View.Refresh();
 
@@ -232,6 +257,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public string ColorizeBy
     {
         get => GetOrDefault("L");
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public string GroupBy
+    {
+        get => GetOrDefault(string.Empty);
         set => RaiseAndSetIfChanged(value);
     }
 

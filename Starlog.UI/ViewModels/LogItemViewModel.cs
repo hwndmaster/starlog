@@ -9,6 +9,8 @@ namespace Genius.Starlog.UI.ViewModels;
 public interface ILogItemViewModel : IViewModel
 {
     bool ColorizeByThread { get; set; }
+    string Logger { get; }
+    string Message { get; }
     FlowDocument Artifacts { get; }
 }
 
