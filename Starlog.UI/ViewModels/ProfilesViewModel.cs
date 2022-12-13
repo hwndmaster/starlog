@@ -27,11 +27,13 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
     public ProfilesViewModel(
         ICommandBus commandBus,
         IProfileQueryService profileQuery,
+        ISettingsRepository settingsRepo,
         IViewModelFactory vmFactory,
         IUserInteraction ui,
         ProfileAutoGridBuilder autoGridBuilder)
     {
         Guard.NotNull(commandBus);
+        Guard.NotNull(settingsRepo);
         Guard.NotNull(ui);
 
         _profileQuery = profileQuery.NotNull();
@@ -88,7 +90,16 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
             .Subscribe(_ => IsAddEditProfileVisible = false)
             .DisposeWith(_disposables);
 
-        Task.Run(() => ReloadListAsync());
+        Task.Run(() => ReloadListAsync())
+            .ContinueWith(_ =>
+            {
+                var settings = settingsRepo.Get();
+                if (settings.AutoLoadPreviouslyOpenedProfile && settings.AutoLoadProfile is not null)
+                {
+                    var profile = Profiles.FirstOrDefault(x => x.Id == settings.AutoLoadProfile);
+                    profile?.LoadProfileCommand.Execute(null);
+                }
+            }, TaskContinuationOptions.OnlyOnRanToCompletion);
     }
 
     public void Dispose()

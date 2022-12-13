@@ -6,5 +6,11 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d">
     <Grid>
+        <StackPanel Orientation="Vertical">
+            <DockPanel>
+                <Label>Auto load previously opened profile:</Label>
+                <CheckBox IsChecked="{Binding AutoLoadPreviouslyOpenedProfile}" />
+            </DockPanel>
+        </StackPanel>
     </Grid>
 </UserControl>

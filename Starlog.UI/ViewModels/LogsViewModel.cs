@@ -85,10 +85,14 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             .Subscribe(_ =>
             {
                 _suspendUpdate = true;
-                _filesCategory.CategoryItems.Clear();
-                _filesCategory.CategoryItemsView.View.Refresh();
-                _userFiltersCategory.CategoryItems.Clear();
-                LogItems.Clear();
+
+                _uiDispatcher.BeginInvoke(() =>
+                {
+                    _filesCategory.CategoryItems.Clear();
+                    _filesCategory.CategoryItemsView.View.Refresh();
+                    _userFiltersCategory.CategoryItems.Clear();
+                    LogItems.Clear();
+                });
             }));
         _subscriptions.Add(_currentProfile.ProfileChanged
             .Subscribe(profile =>
@@ -98,10 +102,13 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                     return;
                 }
 
-                AddFiles(_logContainer.GetFiles());
-                AddUserFilters(profile.Filters);
-                AddLogs(_logContainer.GetLogs());
-                _suspendUpdate = false;
+                _uiDispatcher.BeginInvoke(() =>
+                {
+                    AddFiles(_logContainer.GetFiles());
+                    AddUserFilters(profile.Filters);
+                    AddLogs(_logContainer.GetLogs());
+                    _suspendUpdate = false;
+                });
             }));
         _subscriptions.Add(_logContainer.FileAdded
             .Where(_ => !_suspendUpdate)

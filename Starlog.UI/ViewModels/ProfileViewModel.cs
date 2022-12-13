@@ -72,7 +72,9 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             _controller.SetBusy(true);
             try
             {
-                await _logContainer.LoadProfileAsync(_profile.NotNull()).ConfigureAwait(false);
+                Guard.NotNull(_profile);
+                await _logContainer.LoadProfileAsync(_profile).ConfigureAwait(false);
+                await _commandBus.SendAsync(new SettingsUpdateAutoLoadingProfileCommand(_profile.Id));
                 _controller.ShowLogsTab();
             }
             finally
