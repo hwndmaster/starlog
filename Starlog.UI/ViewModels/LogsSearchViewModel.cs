@@ -1,6 +1,10 @@
+using System.Reactive;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
+using System.Text.RegularExpressions;
 using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.LogFlow;
+using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.ViewModels;
 
@@ -11,14 +15,16 @@ namespace Genius.Starlog.UI.ViewModels;
 /// </summary>
 public interface ILogsSearchViewModel : IViewModel
 {
+    LogSearchContext CreateContext();
+    void Reconcile(int existingLogsCount, ICollection<LogRecord> logs);
+
+    IObservable<Unit> SearchChanged { get; }
     string Text { get; set; }
     bool UseRegex { get; set; }
     double MinDateTimeTicks { get; set; }
     double MaxDateTimeTicks { get; set; }
     double SelectedDateTimeFromTicks { get; set; }
     double SelectedDateTimeToTicks { get; set; }
-
-    void Reconcile(int existingLogsCount, ICollection<LogRecord> logs);
 }
 
 public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
@@ -26,25 +32,60 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
     static readonly long OneMinuteTicks = TimeSpan.FromMinutes(1).Ticks;
     static readonly long FiveSecondTicks = TimeSpan.FromSeconds(5).Ticks;
 
+    private readonly ISubject<Unit> _searchChanged = new Subject<Unit>();
+
     public LogsSearchViewModel()
     {
-        SetTimeRangeTo1MinuteCommand = new ActionCommand(_ => NewMethod(OneMinuteTicks));
-        SetTimeRangeTo5SecondCommand = new ActionCommand(_ => NewMethod(FiveSecondTicks));
+        SetTimeRangeTo1MinuteCommand = new ActionCommand(_ => SetTimeRange(OneMinuteTicks));
+        SetTimeRangeTo5SecondCommand = new ActionCommand(_ => SetTimeRange(FiveSecondTicks));
 
         ResetTimeRangeCommand = new ActionCommand(_ =>
         {
             SelectedDateTimeFromTicks = MinDateTimeTicks;
             SelectedDateTimeToTicks = MaxDateTimeTicks;
         });
+
+        UseRegexSwitchCommand = new ActionCommand(_ =>
+        {
+            UseRegex = !UseRegex;
+            if (!string.IsNullOrWhiteSpace(Text))
+            {
+                _searchChanged.OnNext(Unit.Default);
+            }
+        });
+
+        this.WhenAnyChanged(x => x.Text, x => x.SelectedDateTimeFromTicks, x => x.SelectedDateTimeToTicks)
+            .Throttle(TimeSpan.FromMilliseconds(50))
+            .Subscribe(_ => _searchChanged.OnNext(Unit.Default));
     }
 
-    private void NewMethod(long rangeTicks)
+    public LogSearchContext CreateContext()
     {
-        SelectedDateTimeToTicks = Math.Min(SelectedDateTimeFromTicks + rangeTicks, MaxDateTimeTicks);
-        if ((SelectedDateTimeToTicks - SelectedDateTimeFromTicks) < rangeTicks)
+        var messageSearchIncluded = !string.IsNullOrWhiteSpace(Text);
+
+        Regex? filterRegex = null;
+        if (UseRegex)
         {
-            SelectedDateTimeFromTicks = Math.Max(MinDateTimeTicks, SelectedDateTimeToTicks - rangeTicks);
+            try
+            {
+                filterRegex = new Regex(Text, RegexOptions.IgnoreCase);
+            }
+            catch (Exception)
+            {
+                filterRegex = null;
+            }
         }
+
+        DateTimeOffset? dateFrom = null;
+        DateTimeOffset? dateTo = null;
+        if (MinDateTimeTicks != SelectedDateTimeFromTicks
+            || MaxDateTimeTicks != SelectedDateTimeToTicks)
+        {
+            dateFrom = new DateTimeOffset((long)SelectedDateTimeFromTicks, TimeSpan.Zero);
+            dateTo = new DateTimeOffset((long)SelectedDateTimeToTicks, TimeSpan.Zero);
+        }
+
+        return new(messageSearchIncluded, Text, filterRegex, dateFrom, dateTo);
     }
 
     public void Reconcile(int existingLogsCount, ICollection<LogRecord> addedLogs)
@@ -63,6 +104,17 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
             SelectedDateTimeToTicks = MaxDateTimeTicks;
         }
     }
+
+    private void SetTimeRange(long rangeTicks)
+    {
+        SelectedDateTimeToTicks = Math.Min(SelectedDateTimeFromTicks + rangeTicks, MaxDateTimeTicks);
+        if ((SelectedDateTimeToTicks - SelectedDateTimeFromTicks) < rangeTicks)
+        {
+            SelectedDateTimeFromTicks = Math.Max(MinDateTimeTicks, SelectedDateTimeToTicks - rangeTicks);
+        }
+    }
+
+    public IObservable<Unit> SearchChanged => _searchChanged;
 
     public string Text
     {
@@ -100,6 +152,7 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
+    public IActionCommand UseRegexSwitchCommand { get; }
     public IActionCommand SetTimeRangeTo1MinuteCommand { get; }
     public IActionCommand SetTimeRangeTo5SecondCommand { get; }
     public IActionCommand ResetTimeRangeCommand { get; }

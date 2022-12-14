@@ -7,12 +7,16 @@ using Genius.Starlog.UI.ViewModels;
 
 namespace Genius.Starlog.UI.Helpers;
 
+public record LogOverallFilterContext(LogFilterContext Filter, LogSearchContext Search);
+
 public record LogFilterContext(
+    HashSet<string> FilesSelected,
+    ImmutableArray<ProfileFilterBase> FiltersSelected);
+
+public record LogSearchContext(
     bool MessageSearchIncluded,
     string SearchText,
     Regex? MessageSearchRegex,
-    HashSet<string> FilesSelected,
-    ImmutableArray<ProfileFilterBase> FiltersSelected,
     DateTimeOffset? DateFrom,
     DateTimeOffset? DateTo);
 
@@ -20,8 +24,7 @@ public interface ILogFiltersHelper
 {
     void InitializeQuickFiltersCategory(LogFilterCategoryViewModel<LogFilterViewModel> category);
     void InitializePinSubscription(IEnumerable<LogFilterViewModel> items, Action handler);
-    LogFilterContext CreateContext(IEnumerable<ILogFilterNodeViewModel> selectedFilters, ILogsSearchViewModel searchViewModel);
-    bool IsMatch(LogFilterContext? context, LogItemViewModel item);
+    bool IsMatch(LogOverallFilterContext? context, ILogItemViewModel item);
 }
 
 public sealed class LogFiltersHelper : ILogFiltersHelper
@@ -59,85 +62,49 @@ public sealed class LogFiltersHelper : ILogFiltersHelper
         }
     }
 
-    public LogFilterContext CreateContext(IEnumerable<ILogFilterNodeViewModel> selectedFilters, ILogsSearchViewModel searchViewModel)
-    {
-        var filtersMaterialized = selectedFilters.ToList();
-        var filesSelected = filtersMaterialized.OfType<LogFileViewModel>()
-            .Select(x => x.File.FileName)
-            .ToHashSet();
-        var filtersSelected = filtersMaterialized.OfType<LogFilterViewModel>()
-            .Select(x => x.Filter)
-            .ToImmutableArray();
-        var messageSearchIncluded = !string.IsNullOrWhiteSpace(searchViewModel.Text);
-
-        Regex? filterRegex = null;
-        if (searchViewModel.UseRegex)
-        {
-            try
-            {
-                filterRegex = new Regex(searchViewModel.Text, RegexOptions.IgnoreCase);
-            }
-            catch (Exception)
-            {
-                filterRegex = null;
-            }
-        }
-
-        DateTimeOffset? dateFrom = null;
-        DateTimeOffset? dateTo = null;
-        if (searchViewModel.MinDateTimeTicks != searchViewModel.SelectedDateTimeFromTicks
-            || searchViewModel.MaxDateTimeTicks != searchViewModel.SelectedDateTimeToTicks)
-        {
-            dateFrom = new DateTimeOffset((long)searchViewModel.SelectedDateTimeFromTicks, TimeSpan.Zero);
-            dateTo = new DateTimeOffset((long)searchViewModel.SelectedDateTimeToTicks, TimeSpan.Zero);
-        }
-
-        return new(messageSearchIncluded, searchViewModel.Text, filterRegex, filesSelected, filtersSelected, dateFrom, dateTo);
-    }
-
-    public bool IsMatch(LogFilterContext? context, LogItemViewModel item)
+    public bool IsMatch(LogOverallFilterContext? context, ILogItemViewModel item)
     {
         if (context is null)
         {
             return true;
         }
 
-        if (context.FilesSelected.Count > 0
-            && !context.FilesSelected.Contains(item.Record.File.FileName))
+        if (context.Filter.FilesSelected.Count > 0
+            && !context.Filter.FilesSelected.Contains(item.Record.File.FileName))
         {
             return false;
         }
 
-        if (context.DateFrom is not null && context.DateTo is not null)
+        if (context.Search.DateFrom is not null && context.Search.DateTo is not null)
         {
-            if (item.DateTime < context.DateFrom || item.DateTime > context.DateTo)
+            if (item.Record.DateTime < context.Search.DateFrom || item.Record.DateTime > context.Search.DateTo)
             {
                 return false;
             }
         }
 
-        if (context.MessageSearchIncluded)
-        {
-            bool filterMatch;
-            if (context.MessageSearchRegex is not null)
-            {
-                filterMatch = context.MessageSearchRegex.IsMatch(item.Message);
-            }
-            else
-            {
-                filterMatch = item.Message.Contains(context.SearchText, StringComparison.InvariantCultureIgnoreCase);
-            }
-
-            if (!filterMatch)
-            {
-                return false;
-            }
-        }
-
-        foreach (var filter in context.FiltersSelected)
+        foreach (var filter in context.Filter.FiltersSelected)
         {
             var processor = _logFilterContainer.GetFilterProcessor(filter);
             if (!processor.IsMatch(filter, item.Record))
+            {
+                return false;
+            }
+        }
+
+        if (context.Search.MessageSearchIncluded)
+        {
+            bool filterMatch;
+            if (context.Search.MessageSearchRegex is not null)
+            {
+                filterMatch = context.Search.MessageSearchRegex.IsMatch(item.Message);
+            }
+            else
+            {
+                filterMatch = item.Message.Contains(context.Search.SearchText, StringComparison.InvariantCultureIgnoreCase);
+            }
+
+            if (!filterMatch)
             {
                 return false;
             }

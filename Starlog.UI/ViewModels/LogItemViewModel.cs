@@ -7,6 +7,7 @@ namespace Genius.Starlog.UI.ViewModels;
 
 public interface ILogItemViewModel : IViewModel
 {
+    LogRecord Record { get; }
     bool ColorizeByThread { get; set; }
     string Logger { get; }
     string Message { get; }

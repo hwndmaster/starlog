@@ -52,6 +52,8 @@ public partial class App : Application
         services.AddSingleton<IProfilesViewModel, ProfilesViewModel>();
         services.AddTransient<IProfileViewModel, ProfileViewModel>();
         services.AddSingleton<ILogsViewModel, LogsViewModel>();
+        services.AddTransient<ILogsFilteringViewModel, LogsFilteringViewModel>();
+        services.AddTransient<ILogsSearchViewModel, LogsSearchViewModel>();
         services.AddSingleton<ISettingsViewModel, SettingsViewModel>();
 
         // AutoGrid builders

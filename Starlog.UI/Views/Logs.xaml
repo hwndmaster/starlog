@@ -8,6 +8,7 @@
         xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
         xmlns:atombehaviors="clr-namespace:Genius.Atom.UI.Forms.Behaviors;assembly=Genius.Atom.UI.Forms"
         xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
+        xmlns:v="clr-namespace:Genius.Starlog.UI.Views"
         xmlns:vc="clr-namespace:Genius.Starlog.UI.ValueConverters"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d">
@@ -60,7 +61,7 @@
                      mah:TextBoxHelper.Watermark="Type message search text here and press ENTER."
                      mah:TextBoxHelper.ClearTextButton="True"
                      mah:TextBoxHelper.IsClearTextButtonBehaviorEnabled="False"
-                     mah:TextBoxHelper.ButtonCommand="{Binding SearchRegexSwitchCommand, Mode=OneWay}">
+                     mah:TextBoxHelper.ButtonCommand="{Binding Search.UseRegexSwitchCommand, Mode=OneWay}">
                 <mah:TextBoxHelper.ButtonContent>
                     <Image>
                         <Image.Style>
@@ -142,54 +143,13 @@
                 </DockPanel>
             </StackPanel>
 
-            <TreeView ItemsSource="{Binding FilterCategories}">
-                <TreeView.ItemContainerStyle>
-                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource TreeViewItemMultiselect}">
-                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                    </Style>
-                </TreeView.ItemContainerStyle>
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate ItemsSource="{Binding CategoryItemsView.View}">
-                        <DockPanel>
-                            <Image DockPanel.Dock="Left"
-                                   Source="{Binding Icon, Converter={StaticResource AppIconConverter}}"
-                                   Width="16" Height="16" />
-                            <Label DockPanel.Dock="Left"
-                                   Content="{Binding Title}"/>
-                            <Button DockPanel.Dock="Right"
-                                    Padding="0"
-                                    Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                                    Command="{Binding AddChildCommand}"
-                                    Visibility="{Binding CanAddChildren, Converter={atom:BooleanToVisibilityConverter}}"
-                                    Focusable="False">
-                                <Image Source="{StaticResource Plus16}" Width="16" />
-                            </Button>
-                            <ToggleButton DockPanel.Dock="Right"
-                                    Padding="0"
-                                    Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}"
-                                    Content="📌"
-                                    IsChecked="{Binding IsPinned}"
-                                    Visibility="{Binding CanPin, Converter={atom:BooleanToVisibilityConverter}}"
-                                    Focusable="False" />
-                            <i:Interaction.Behaviors>
-                                <behaviors:TreeViewItemWithDockPanelStretchBehavior />
-                                <behaviors:TreeViewItemModifiableBehavior />
-                                <behaviors:TreeViewItemPinnableBehavior />
-                            </i:Interaction.Behaviors>
-                        </DockPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-                <i:Interaction.Behaviors>
-                    <atombehaviors:TreeViewMultiSelectBehavior SelectedItems="{Binding SelectedFilters}" />
-                </i:Interaction.Behaviors>
-            </TreeView>
+            <v:LogsFilteringView DataContext="{Binding Filtering}" />
         </DockPanel>
 
         <DataGrid Grid.Row="1" Grid.Column="1" Margin="10"
                   autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
                   autogrid:Properties.ItemsSource="{Binding LogItemsView.View}"
                   IsReadOnly="True"
-
                   VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                   EnableRowVirtualization="True">
