@@ -152,19 +152,29 @@
                     <HierarchicalDataTemplate ItemsSource="{Binding CategoryItemsView.View}">
                         <DockPanel>
                             <Image DockPanel.Dock="Left"
-                                   Source="{Binding Icon, Converter={StaticResource AppIconConverter}}" Width="16" Height="16" />
+                                   Source="{Binding Icon, Converter={StaticResource AppIconConverter}}"
+                                   Width="16" Height="16" />
                             <Label DockPanel.Dock="Left"
                                    Content="{Binding Title}"/>
                             <Button DockPanel.Dock="Right"
                                     Padding="0"
                                     Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                                     Command="{Binding AddChildCommand}"
-                                    Visibility="{Binding CanAddChildren, Converter={atom:BooleanToVisibilityConverter}}">
+                                    Visibility="{Binding CanAddChildren, Converter={atom:BooleanToVisibilityConverter}}"
+                                    Focusable="False">
                                 <Image Source="{StaticResource Plus16}" Width="16" />
                             </Button>
+                            <ToggleButton DockPanel.Dock="Right"
+                                    Padding="0"
+                                    Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}"
+                                    Content="📌"
+                                    IsChecked="{Binding IsPinned}"
+                                    Visibility="{Binding CanPin, Converter={atom:BooleanToVisibilityConverter}}"
+                                    Focusable="False" />
                             <i:Interaction.Behaviors>
                                 <behaviors:TreeViewItemWithDockPanelStretchBehavior />
                                 <behaviors:TreeViewItemModifiableBehavior />
+                                <behaviors:TreeViewItemPinnableBehavior />
                             </i:Interaction.Behaviors>
                         </DockPanel>
                     </HierarchicalDataTemplate>

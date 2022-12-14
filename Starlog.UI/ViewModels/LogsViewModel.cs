@@ -62,6 +62,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         LogItemsView.Filter += OnLogItemsViewFilter;
 
         _logFiltersHelper.InitializeQuickFiltersCategory(_quickFiltersCategory);
+        _logFiltersHelper.InitializePinSubscription(_quickFiltersCategory.CategoryItems, () => RefreshFilteredItems());
         _userFiltersCategory.AddChildCommand.Executed.Subscribe(_ =>
         {
             IsAddEditProfileFilterVisible = !IsAddEditProfileFilterVisible;
@@ -218,6 +219,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             return vm;
         }).ToList();
         _userFiltersCategory.AddItems(vms);
+        _logFiltersHelper.InitializePinSubscription(vms, () => RefreshFilteredItems());
         return vms;
     }
 
@@ -245,7 +247,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     private void RefreshFilteredItems()
     {
-        _filterContext = _logFiltersHelper.CreateContext(SelectedFilters, Search);
+        var filters = SelectedFilters
+            .Union(_filesCategory.CategoryItems.Where(x => x.IsPinned))
+            .Union(_quickFiltersCategory.CategoryItems.Where(x => x.IsPinned))
+            .Union(_userFiltersCategory.CategoryItems.Where(x => x.IsPinned));
+        _filterContext = _logFiltersHelper.CreateContext(filters, Search);
 
         _uiDispatcher.BeginInvoke(() =>
         {

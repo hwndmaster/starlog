@@ -43,16 +43,25 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
     public ProfileFilterBase Filter { get; }
     public string Title => Filter.Name;
     public string Icon { get; }
-    public bool CanAddChildren => false;
-    public bool IsExpanded { get; set; } = false;
     public bool IsUserDefined { get; }
+    public bool CanAddChildren => false;
     public bool CanModifyOrDelete => IsUserDefined;
-    public CollectionViewSource CategoryItemsView { get; } = new();
+    public bool CanPin => true;
+    public bool IsExpanded { get; set; } = false;
+
+    public bool IsPinned
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
     public bool IsSelected
     {
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
+
+    public CollectionViewSource CategoryItemsView { get; } = new();
 
     public IActionCommand AddChildCommand { get; }
     public IActionCommand ModifyCommand { get; }

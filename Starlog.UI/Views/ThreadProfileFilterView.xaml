@@ -12,7 +12,8 @@
             <DockPanel>
                 <Label>Threads:</Label>
                 <ListBox SelectionMode="Multiple"
-                         ItemsSource="{Binding Threads}">
+                         ItemsSource="{Binding Threads}"
+                         MaxHeight="400">
                     <i:Interaction.Behaviors>
                         <behaviors:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedThreads}" />
                     </i:Interaction.Behaviors>

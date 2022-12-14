@@ -22,21 +22,14 @@ public sealed class TreeViewItemModifiableBehavior : Behavior<FrameworkElement>
 
         _treeViewItem.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(OnKeyDown), true);
         _treeViewItem.AddHandler(UIElement.MouseDownEvent, new MouseButtonEventHandler(OnMouseDown), true);
-        _treeViewItem.AddHandler(TreeViewItem.SelectedEvent, new RoutedEventHandler(OnTreeViewItemSelected), true);
 
         base.OnAttached();
-    }
-
-    private void OnTreeViewItemSelected(object sender, RoutedEventArgs e)
-    {
-        Console.Write(_treeViewItem?.IsSelected);
     }
 
     protected override void OnDetaching()
     {
         _treeViewItem?.RemoveHandler(UIElement.KeyDownEvent, new KeyEventHandler(OnKeyDown));
         _treeViewItem?.RemoveHandler(UIElement.MouseDownEvent, new MouseButtonEventHandler(OnMouseDown));
-        _treeViewItem?.RemoveHandler(TreeViewItem.SelectedEvent, new RoutedEventHandler(OnTreeViewItemSelected));
 
         base.OnDetaching();
     }
@@ -48,7 +41,7 @@ public sealed class TreeViewItemModifiableBehavior : Behavior<FrameworkElement>
             return;
         }
 
-        _treeViewItem!.ContextMenu = new ContextMenu();
+        _treeViewItem!.ContextMenu ??= new ContextMenu();
 
         if (_vmWithModifySupport is not null)
         {

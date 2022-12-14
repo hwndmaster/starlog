@@ -14,8 +14,6 @@ public sealed class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase,
         CanAddChildren = canAddChildren;
         IsExpanded = expanded;
 
-        AddChildCommand = new ActionCommand();
-
         CategoryItemsView.Source = CategoryItems;
         if (sort)
         {
@@ -43,6 +41,7 @@ public sealed class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase,
 
     public bool CanAddChildren { get; }
     public bool CanModifyOrDelete => false;
+    public bool CanPin => false;
 
     public bool IsExpanded
     {
@@ -50,10 +49,12 @@ public sealed class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase,
         set => RaiseAndSetIfChanged(value);
     }
 
+    public bool IsPinned { get; set; } = false;
+
     public ObservableCollection<TChildViewModel> CategoryItems { get; } = new();
     public CollectionViewSource CategoryItemsView { get; } = new CollectionViewSource();
 
-    public IActionCommand AddChildCommand { get; }
+    public IActionCommand AddChildCommand { get; } = new ActionCommand();
     public IActionCommand ModifyCommand => throw new NotSupportedException();
     public IActionCommand DeleteCommand => throw new NotSupportedException();
 }

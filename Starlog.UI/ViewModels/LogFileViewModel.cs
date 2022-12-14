@@ -17,7 +17,14 @@ public sealed class LogFileViewModel : ViewModelBase, ILogFilterNodeViewModel
     public string Icon => "LogFile32";
     public bool CanAddChildren => false;
     public bool CanModifyOrDelete => false;
+    public bool CanPin => true;
     public bool IsExpanded { get; set; } = false;
+
+    public bool IsPinned
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
 
     public CollectionViewSource CategoryItemsView { get; } = new();
     public IActionCommand AddChildCommand { get; }

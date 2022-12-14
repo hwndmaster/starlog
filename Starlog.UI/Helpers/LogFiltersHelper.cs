@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
+using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.ViewModels;
@@ -18,7 +19,8 @@ public record LogFilterContext(
 public interface ILogFiltersHelper
 {
     void InitializeQuickFiltersCategory(LogFilterCategoryViewModel<LogFilterViewModel> category);
-    LogFilterContext CreateContext(ICollection<ILogFilterNodeViewModel> selectedFilters, ILogsSearchViewModel searchViewModel);
+    void InitializePinSubscription(IEnumerable<LogFilterViewModel> items, Action handler);
+    LogFilterContext CreateContext(IEnumerable<ILogFilterNodeViewModel> selectedFilters, ILogsSearchViewModel searchViewModel);
     bool IsMatch(LogFilterContext? context, LogItemViewModel item);
 }
 
@@ -46,12 +48,24 @@ public sealed class LogFiltersHelper : ILogFiltersHelper
             .Select(x => new LogFilterViewModel(x, isUserDefined: false)));
     }
 
-    public LogFilterContext CreateContext(ICollection<ILogFilterNodeViewModel> selectedFilters, ILogsSearchViewModel searchViewModel)
+    public void InitializePinSubscription(IEnumerable<LogFilterViewModel> items, Action handler)
     {
-        var filesSelected = selectedFilters.OfType<LogFileViewModel>()
+        foreach (var item in items)
+        {
+            if (item.CanPin)
+            {
+                item.WhenChanged(x => x.IsPinned).Subscribe(_ => handler());
+            }
+        }
+    }
+
+    public LogFilterContext CreateContext(IEnumerable<ILogFilterNodeViewModel> selectedFilters, ILogsSearchViewModel searchViewModel)
+    {
+        var filtersMaterialized = selectedFilters.ToList();
+        var filesSelected = filtersMaterialized.OfType<LogFileViewModel>()
             .Select(x => x.File.FileName)
             .ToHashSet();
-        var filtersSelected = selectedFilters.OfType<LogFilterViewModel>()
+        var filtersSelected = filtersMaterialized.OfType<LogFilterViewModel>()
             .Select(x => x.Filter)
             .ToImmutableArray();
         var messageSearchIncluded = !string.IsNullOrWhiteSpace(searchViewModel.Text);
