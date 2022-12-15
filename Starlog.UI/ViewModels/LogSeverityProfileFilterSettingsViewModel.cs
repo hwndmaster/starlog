@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.ViewModels;
@@ -9,8 +8,11 @@ public sealed class LogSeverityProfileFilterSettingsViewModel : ProfileFilterSet
     public LogSeverityProfileFilterSettingsViewModel(LogSeveritiesProfileFilter profileFilter)
         : base(profileFilter)
     {
+        // Members initialization:
         LogSeverities = Enum.GetValues<LogSeverity>();
         SelectedLogSeverities = new ObservableCollection<LogSeverity>(profileFilter.LogSeverities);
+
+        // Subscriptions:
         SelectedLogSeverities.WhenCollectionChanged().Subscribe(_ =>
         {
             profileFilter.LogSeverities = SelectedLogSeverities.ToArray();

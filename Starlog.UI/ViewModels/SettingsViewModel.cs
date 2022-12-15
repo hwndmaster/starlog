@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.Infrastructure.Events;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
@@ -28,16 +27,20 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         IUserInteraction ui,
         PlainTextLineRegexTemplatesAutoGridBuilder gridBuilder)
     {
+        // Dependencies:
         _commandBus = commandBus.NotNull();
         _ui = ui.NotNull();
         PlainTextLogReaderLineRegexTemplatesBuilder = gridBuilder.NotNull();
 
+        // Members initialization:
         _model = settingsQuery.NotNull().Get();
         Reconcile();
 
+        // Actions:
         AddPlainTextLogReaderLineRegexTemplateCommand = new ActionCommand(_ =>
-            AddPlainTextLogReaderLineRegexTemplate(new StringValue("Unnamed", ".*")));
+            AddPlainTextLogReaderLineRegexTemplate(new SettingStringValue("Unnamed", ".*")));
 
+        // Subscriptions:
         eventBus.WhenFired<SettingsUpdatedEvent>()
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(@event =>
@@ -45,7 +48,6 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
                 _model = @event.Settings;
                 Reconcile();
             });
-
         this.WhenAnyChanged().Subscribe(async _ => await SendUpdate());
     }
 
@@ -65,7 +67,7 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         await _commandBus.SendAsync(new SettingsUpdateCommand(_model));
     }
 
-    private void AddPlainTextLogReaderLineRegexTemplate(StringValue stringValue)
+    private void AddPlainTextLogReaderLineRegexTemplate(SettingStringValue stringValue)
     {
         var vm = new RegexValueViewModel(stringValue);
         vm.DeleteCommand.Executed.Subscribe(async _ =>
@@ -86,7 +88,7 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
 
         async Task RebindAndSendAsync()
         {
-            _model.PlainTextLogReaderLineRegexes = PlainTextLogReaderLineRegexTemplates.Select(x => new StringValue(x.Name, x.Regex)).ToList();
+            _model.PlainTextLogReaderLineRegexes = PlainTextLogReaderLineRegexTemplates.Select(x => new SettingStringValue(x.Name, x.Regex)).ToList();
             await SendUpdate();
         }
     }

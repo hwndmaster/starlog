@@ -49,9 +49,9 @@ internal sealed class SettingsRepository : ISettingsRepository
 
     private static Settings CreateDefaultSettings() => new()
     {
-        PlainTextLogReaderLineRegexes = new List<StringValue>
+        PlainTextLogReaderLineRegexes = new List<SettingStringValue>
         {
-            new StringValue("LEVEL DATETIME [Thread] Logger - Message", @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>.+)\s-\s(?<message>.+)")
+            new SettingStringValue("LEVEL DATETIME [Thread] Logger - Message", @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>.+)\s-\s(?<message>.+)")
         }
     };
 }

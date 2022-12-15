@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
@@ -13,10 +12,13 @@ public sealed class LogLevelsProfileFilterSettingsViewModel : ProfileFilterSetti
     {
         Guard.NotNull(logContainer);
 
+        // Members initialization:
         LogLevels = logContainer.GetLogLevels().Select(x => x.Name)
             .Union(profileFilter.LogLevels)
             .ToArray();
         SelectedLogLevels = new ObservableCollection<string>(profileFilter.LogLevels);
+
+        // Subscriptions:
         SelectedLogLevels.WhenCollectionChanged().Subscribe(_ =>
         {
             profileFilter.LogLevels = SelectedLogLevels.ToArray();

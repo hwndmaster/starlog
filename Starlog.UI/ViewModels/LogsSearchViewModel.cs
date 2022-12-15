@@ -2,9 +2,8 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text.RegularExpressions;
-using Genius.Atom.UI.Forms;
+using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
-using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.ViewModels;
 
@@ -15,7 +14,7 @@ namespace Genius.Starlog.UI.ViewModels;
 /// </summary>
 public interface ILogsSearchViewModel : IViewModel
 {
-    LogSearchContext CreateContext();
+    LogRecordSearchContext CreateContext();
     void Reconcile(int existingLogsCount, ICollection<LogRecord> logs);
 
     IObservable<Unit> SearchChanged { get; }
@@ -36,6 +35,7 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
 
     public LogsSearchViewModel()
     {
+        // Actions:
         SetTimeRangeTo1MinuteCommand = new ActionCommand(_ => SetTimeRange(OneMinuteTicks));
         SetTimeRangeTo5SecondCommand = new ActionCommand(_ => SetTimeRange(FiveSecondTicks));
 
@@ -54,12 +54,13 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
             }
         });
 
+        // Subscriptions:
         this.WhenAnyChanged(x => x.Text, x => x.SelectedDateTimeFromTicks, x => x.SelectedDateTimeToTicks)
             .Throttle(TimeSpan.FromMilliseconds(50))
             .Subscribe(_ => _searchChanged.OnNext(Unit.Default));
     }
 
-    public LogSearchContext CreateContext()
+    public LogRecordSearchContext CreateContext()
     {
         var messageSearchIncluded = !string.IsNullOrWhiteSpace(Text);
 

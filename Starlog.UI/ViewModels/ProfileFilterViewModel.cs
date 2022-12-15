@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using Genius.Atom.Infrastructure.Commands;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
@@ -30,11 +29,13 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         IUserInteraction ui,
         IViewModelFactory vmFactory)
     {
+        // Dependencies:
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
         _logFilterContainer = logFilterContainer.NotNull();
         _ui = ui.NotNull();
 
+        // Members initialization:
         _profileFilter = profileFilter;
 
         foreach (var logFilter in _logFilterContainer.GetLogFilters())
@@ -51,8 +52,8 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
             }
         });
 
+        // Actions:
         CommitFilterCommand = new ActionCommand(_ => CommitFilter());
-
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profileFilter is not null);
     }
 

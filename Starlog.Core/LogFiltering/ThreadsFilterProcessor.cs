@@ -1,6 +1,7 @@
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
-namespace Genius.Starlog.Core.LogFlow;
+namespace Genius.Starlog.Core.LogFiltering;
 
 public sealed class ThreadsFilterProcessor : IFilterProcessor
 {

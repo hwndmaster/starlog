@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using Genius.Atom.Infrastructure.Commands;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;

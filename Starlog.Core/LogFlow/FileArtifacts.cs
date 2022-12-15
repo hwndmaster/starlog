@@ -1,3 +1,3 @@
 namespace Genius.Starlog.Core.LogFlow;
 
-public record FileArtifacts(string[] Artifacts);
+public sealed record FileArtifacts(string[] Artifacts);

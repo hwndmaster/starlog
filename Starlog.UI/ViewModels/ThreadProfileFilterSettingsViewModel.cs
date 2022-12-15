@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
@@ -14,10 +13,13 @@ public sealed class ThreadProfileFilterSettingsViewModel : ProfileFilterSettings
     {
         Guard.NotNull(logContainer);
 
+        // Members initialization:
         Threads = logContainer.GetThreads()
             .Union(profileFilter.Threads)
             .ToImmutableArray();
         SelectedThreads = new ObservableCollection<string>(profileFilter.Threads);
+
+        // Subscriptions:
         SelectedThreads.WhenCollectionChanged().Subscribe(_ =>
         {
             profileFilter.Threads = SelectedThreads.ToArray();

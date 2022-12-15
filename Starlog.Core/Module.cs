@@ -41,6 +41,8 @@ public static class Module
         services.AddTransient<IFilterProcessor, LogSeveritiesFilterProcessor>();
         services.AddTransient<ILogReaderProcessor, PlainTextProfileLogReaderProcessor>();
         services.AddTransient<ILogReaderProcessor, XmlProfileLogReaderProcessor>();
+        services.AddTransient<ILogRecordMatcher, LogRecordMatcher>();
+        services.AddTransient<IQuickFilterProvider, QuickFilterProvider>();
 
         // Services
         // TO BE DONE LATER

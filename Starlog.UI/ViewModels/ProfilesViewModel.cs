@@ -3,7 +3,6 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
 using Genius.Atom.Infrastructure.Commands;
-using Genius.Atom.UI.Forms;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Repositories;
@@ -11,14 +10,14 @@ using Genius.Starlog.UI.AutoGridBuilders;
 
 namespace Genius.Starlog.UI.ViewModels;
 
-public interface IProfilesViewModel : ITabViewModel
+public interface IProfilesViewModel : ITabViewModel, IDisposable
 {
     bool IsAddEditProfileVisible { get; set; }
     IProfileViewModel? EditingProfile { get; }
     ICommand OpenAddProfileFlyoutCommand { get; }
 }
 
-internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, IDisposable
+internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 {
     private readonly IProfileQueryService _profileQuery;
     private readonly IViewModelFactory _vmFactory;
@@ -36,18 +35,19 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
         Guard.NotNull(settingsQuery);
         Guard.NotNull(ui);
 
+        // Dependencies:
         _profileQuery = profileQuery.NotNull();
         _vmFactory = vmFactory.NotNull();
         AutoGridBuilder = autoGridBuilder.NotNull();
 
+        // Actions:
         OpenAddProfileFlyoutCommand = new ActionCommand(_ => {
             IsAddEditProfileVisible = !IsAddEditProfileVisible;
             if (IsAddEditProfileVisible)
             {
                 EditingProfile = vmFactory.CreateProfile(null);
-                EditingProfile.CommitProfileCommand.Executed
-                    .Where(x => x)
-                    .Take(1)
+                EditingProfile.CommitProfileCommand
+                    .OnOneTimeExecutedBooleanAction()
                     .Subscribe(async _ => {
                         IsAddEditProfileVisible = false;
                         await ReloadListAsync();
@@ -58,11 +58,9 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
 
         OpenEditProfileFlyoutCommand = new ActionCommand(_ => {
             EditingProfile = Profiles.FirstOrDefault(x => x.IsSelected);
-            EditingProfile?.CommitProfileCommand.Executed
-                .Where(x => x)
-                .Take(1)
-                .Subscribe(_ =>
-                    IsAddEditProfileVisible = false)
+            EditingProfile?.CommitProfileCommand
+                .OnOneTimeExecutedBooleanAction()
+                .Subscribe(_ => IsAddEditProfileVisible = false)
                 .DisposeWith(_disposables);
             IsAddEditProfileVisible = EditingProfile is not null;
         });
@@ -86,10 +84,12 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel, 
             }
         });
 
+        // Subscriptions:
         Deactivated.Executed
             .Subscribe(_ => IsAddEditProfileVisible = false)
             .DisposeWith(_disposables);
 
+        // Final preparation:
         Task.Run(() => ReloadListAsync())
             .ContinueWith(_ =>
             {

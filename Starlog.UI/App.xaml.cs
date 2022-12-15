@@ -3,6 +3,7 @@ global using System.Collections.Generic;
 global using System.Linq;
 global using System.Windows;
 global using Genius.Atom.Infrastructure;
+global using Genius.Atom.UI.Forms;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Helpers;
@@ -62,7 +63,6 @@ public partial class App : Application
         services.AddTransient<PlainTextLineRegexTemplatesAutoGridBuilder>();
 
         // Services and Helpers:
-        services.AddTransient<ILogFiltersHelper, LogFiltersHelper>();
         services.AddTransient<ILogArtifactsFormatter, LogArtifactsFormatter>();
     }
 

@@ -5,7 +5,7 @@ using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.UI.ViewModels;
 
-public record PlainTextLogReaderLineRegex(string Name, string Regex)
+public sealed record PlainTextLogReaderLineRegex(string Name, string Regex)
 {
     public override string ToString() => Regex;
 }

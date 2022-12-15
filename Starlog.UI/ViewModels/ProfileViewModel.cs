@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using Genius.Atom.Infrastructure.Commands;
-using Genius.Atom.UI.Forms;
 using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFlow;
@@ -41,6 +40,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         ILogReaderContainer logReaderContainer,
         IViewModelFactory vmFactory)
     {
+        // Dependencies:
         _commandBus = commandBus.NotNull();
         _controller = controller.NotNull();
         _profileQuery = profileQuery.NotNull();
@@ -48,6 +48,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         _logContainer = logContainer.NotNull();
         _logReaderContainer = logReaderContainer.NotNull();
 
+        // Members initialization:
         _profile = profile;
 
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Name)));
@@ -66,8 +67,8 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             }
         });
 
+        // Actions:
         CommitProfileCommand = new ActionCommand(_ => CommitProfile());
-
         LoadProfileCommand = new ActionCommand(async _ => {
             _controller.SetBusy(true);
             try
@@ -82,7 +83,6 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
                 _controller.SetBusy(false);
             }
         });
-
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profile is not null);
     }
 

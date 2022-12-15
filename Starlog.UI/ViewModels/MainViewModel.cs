@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.LogFlow;
 
 namespace Genius.Starlog.UI.ViewModels;

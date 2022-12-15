@@ -1,5 +1,4 @@
 using System.Windows.Documents;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.UI.Helpers;
 

@@ -1,5 +1,4 @@
 using System.Windows.Data;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.ViewModels;
@@ -9,6 +8,7 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
 {
     public LogFilterViewModel(ProfileFilterBase profileFilter, bool isUserDefined)
     {
+        // Members initialization:
         Filter = profileFilter.NotNull();
         IsUserDefined = isUserDefined;
 
@@ -21,6 +21,7 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
             _ => "FolderFavs32"
         };
 
+        // Actions:
         AddChildCommand = new ActionCommand(_ => throw new NotSupportedException());
 
         if (isUserDefined)

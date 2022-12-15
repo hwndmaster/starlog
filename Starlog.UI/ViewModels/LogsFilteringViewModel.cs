@@ -5,17 +5,16 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Commands;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
-using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.ViewModels;
 
-public interface ILogsFilteringViewModel
+public interface ILogsFilteringViewModel : IDisposable
 {
-    LogFilterContext CreateContext();
+    LogRecordFilterContext CreateContext();
 
     IObservable<Unit> FilterChanged { get; }
 }
@@ -25,14 +24,13 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
     private readonly ILogContainer _logContainer;
-    private readonly ILogFiltersHelper _helper;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IUserInteraction _ui;
     private readonly IViewModelFactory _vmFactory;
     private readonly LogFilterCategoryViewModel<LogFileViewModel> _filesCategory = new("Files", "FolderFiles32", sort: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _quickFiltersCategory = new("Quick filters", "FolderDown32", expanded: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _userFiltersCategory = new("User filters", "FolderFavs32", expanded: true, canAddChildren: true);
-    private readonly CompositeDisposable _subscriptions = new(); // TODO: Dispose this
+    private readonly CompositeDisposable _subscriptions;
     private readonly ISubject<Unit> _filterChanged = new Subject<Unit>();
     private bool _suspendUpdate = false;
 
@@ -41,84 +39,91 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
         ILogContainer logContainer,
-        ILogFiltersHelper helper,
+        IQuickFilterProvider quickFilterProvider,
         IUiDispatcher uiDispatcher,
         IUserInteraction ui,
         IViewModelFactory vmFactory)
     {
+        Guard.NotNull(quickFilterProvider);
+
+        // Dependencies:
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
-        _helper = helper.NotNull();
         _uiDispatcher = uiDispatcher.NotNull();
         _ui = ui.NotNull();
         _vmFactory = vmFactory.NotNull();
 
-        _helper.InitializeQuickFiltersCategory(_quickFiltersCategory);
-        _helper.InitializePinSubscription(_quickFiltersCategory.CategoryItems, () => _filterChanged.OnNext(Unit.Default));
+        // Members initialization:
+        _quickFiltersCategory.AddItems(quickFilterProvider.GetQuickFilters()
+            .Select(x => new LogFilterViewModel(x, isUserDefined: false)));
+
+        SubscribeToPinningEvents(_quickFiltersCategory.CategoryItems, () => _filterChanged.OnNext(Unit.Default));
 
         FilterCategories.Add(_filesCategory);
         FilterCategories.Add(_quickFiltersCategory);
         FilterCategories.Add(_userFiltersCategory);
 
-        _subscriptions.Add(_currentProfile.ProfileChanging
-            .Subscribe(_ =>
-            {
-                _suspendUpdate = true;
+        // Subscriptions:
+        _subscriptions = new(
+            _currentProfile.ProfileChanging
+                .Subscribe(_ =>
+                {
+                    _suspendUpdate = true;
 
-                _uiDispatcher.BeginInvoke(() =>
+                    _uiDispatcher.BeginInvoke(() =>
+                    {
+                        _filesCategory.CategoryItems.Clear();
+                        _filesCategory.CategoryItemsView.View.Refresh();
+                        _userFiltersCategory.CategoryItems.Clear();
+                    });
+                }),
+            _currentProfile.ProfileChanged
+                .Subscribe(profile =>
                 {
-                    _filesCategory.CategoryItems.Clear();
-                    _filesCategory.CategoryItemsView.View.Refresh();
-                    _userFiltersCategory.CategoryItems.Clear();
-                });
-            }));
-        _subscriptions.Add(_currentProfile.ProfileChanged
-            .Subscribe(profile =>
+                    if (profile is null)
+                    {
+                        return;
+                    }
+
+                    _uiDispatcher.BeginInvoke(() =>
+                    {
+                        AddFiles(_logContainer.GetFiles());
+                        AddUserFilters(profile.Filters);
+                        _suspendUpdate = false;
+                    });
+                }),
+            _logContainer.FileAdded
+                .Where(_ => !_suspendUpdate)
+                .Subscribe(x => AddFiles(new [] { x })),
+
+            _userFiltersCategory.AddChildCommand.Executed.Subscribe(_ =>
             {
-                if (profile is null)
+                IsAddEditProfileFilterVisible = !IsAddEditProfileFilterVisible;
+                if (IsAddEditProfileFilterVisible)
                 {
-                    return;
+                    EditingProfileFilter = vmFactory.CreateProfileFilter(null);
+                    EditingProfileFilter.CommitFilterCommand
+                        .OnOneTimeExecutedBooleanAction()
+                        .Subscribe(commandResult => {
+                            if (!commandResult || EditingProfileFilter.ProfileFilter is null)
+                                return;
+                            var vm = AddUserFilters(new [] { EditingProfileFilter.ProfileFilter }).First();
+                            IsAddEditProfileFilterVisible = false;
+                            SelectedFilters.Clear();
+                            SelectedFilters.Add(vm);
+                        })
+                        .DisposeWith(_subscriptions!);
                 }
+            }),
 
-                _uiDispatcher.BeginInvoke(() =>
-                {
-                    AddFiles(_logContainer.GetFiles());
-                    AddUserFilters(profile.Filters);
-                    _suspendUpdate = false;
-                });
-            }));
-        _subscriptions.Add(_logContainer.FileAdded
-            .Where(_ => !_suspendUpdate)
-            .Subscribe(x => AddFiles(new [] { x })));
-
-        _userFiltersCategory.AddChildCommand.Executed.Subscribe(_ =>
-        {
-            IsAddEditProfileFilterVisible = !IsAddEditProfileFilterVisible;
-            if (IsAddEditProfileFilterVisible)
-            {
-                EditingProfileFilter = vmFactory.CreateProfileFilter(null);
-                EditingProfileFilter.CommitFilterCommand.Executed
-                    .Where(x => x)
-                    .Take(1)
-                    .Subscribe(commandResult => {
-                        if (!commandResult || EditingProfileFilter.ProfileFilter is null)
-                            return;
-                        var vm = AddUserFilters(new [] { EditingProfileFilter.ProfileFilter }).First();
-                        IsAddEditProfileFilterVisible = false;
-                        SelectedFilters.Clear();
-                        SelectedFilters.Add(vm);
-                    })
-                    .DisposeWith(_subscriptions);
-            }
-        });
-
-        SelectedFilters.WhenCollectionChanged()
-            .Throttle(TimeSpan.FromMilliseconds(50))
-            .Subscribe(_ => _filterChanged.OnNext(Unit.Default));
+            SelectedFilters.WhenCollectionChanged()
+                .Throttle(TimeSpan.FromMilliseconds(50))
+                .Subscribe(_ => _filterChanged.OnNext(Unit.Default))
+        );
     }
 
-    public LogFilterContext CreateContext()
+    public LogRecordFilterContext CreateContext()
     {
         var filters = SelectedFilters
             .Union(_filesCategory.CategoryItems.Where(x => x.IsPinned))
@@ -136,6 +141,22 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         return new(filesSelected, filtersSelected);
     }
 
+    public void Dispose()
+    {
+        _subscriptions.Dispose();
+    }
+
+    private static void SubscribeToPinningEvents(IEnumerable<LogFilterViewModel> items, Action handler)
+    {
+        foreach (var item in items)
+        {
+            if (item.CanPin)
+            {
+                item.WhenChanged(x => x.IsPinned).Subscribe(_ => handler());
+            }
+        }
+    }
+
     private IEnumerable<LogFilterViewModel> AddUserFilters(IEnumerable<ProfileFilterBase> userFilters)
     {
         var vms = userFilters.Select(x =>
@@ -144,9 +165,8 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
             vm.ModifyCommand.Executed.Subscribe(_ =>
             {
                 EditingProfileFilter = _vmFactory.CreateProfileFilter(vm.Filter);
-                EditingProfileFilter?.CommitFilterCommand.Executed
-                    .Where(x => x)
-                    .Take(1)
+                EditingProfileFilter?.CommitFilterCommand
+                    .OnOneTimeExecutedBooleanAction()
                     .Subscribe(_ =>
                     {
                         IsAddEditProfileFilterVisible = false;
@@ -168,7 +188,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
             return vm;
         }).ToList();
         _userFiltersCategory.AddItems(vms);
-        _helper.InitializePinSubscription(vms, () => _filterChanged.OnNext(Unit.Default));
+        SubscribeToPinningEvents(vms, () => _filterChanged.OnNext(Unit.Default));
         return vms;
     }
 

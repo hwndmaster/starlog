@@ -1,4 +1,3 @@
-using Genius.Atom.UI.Forms;
 using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core.Models;
 
@@ -6,7 +5,7 @@ namespace Genius.Starlog.UI.ViewModels;
 
 internal sealed class RegexValueViewModel : ViewModelBase
 {
-    public RegexValueViewModel(StringValue stringValue)
+    public RegexValueViewModel(SettingStringValue stringValue)
     {
         Guard.NotNull(stringValue);
 

@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
@@ -13,11 +12,14 @@ public sealed class LoggersProfileFilterSettingsViewModel : ProfileFilterSetting
     {
         Guard.NotNull(logContainer);
 
+        // Members initialization:
         Loggers = logContainer.GetLoggers().Select(x => x.Name)
             .Union(profileFilter.LoggerNames)
             .OrderBy(x => x)
             .ToArray();
         SelectedLoggers = new ObservableCollection<string>(profileFilter.LoggerNames);
+
+        // Subscriptions:
         SelectedLoggers.WhenCollectionChanged().Subscribe(_ =>
         {
             profileFilter.LoggerNames = SelectedLoggers.ToArray();

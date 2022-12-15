@@ -1,6 +1,5 @@
 using System.Windows.Controls;
 using System.Windows.Input;
-using Genius.Atom.UI.Forms;
 using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;
