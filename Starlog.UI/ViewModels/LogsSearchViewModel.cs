@@ -108,10 +108,10 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
 
     private void SetTimeRange(long rangeTicks)
     {
-        SelectedDateTimeToTicks = Math.Min(SelectedDateTimeFromTicks + rangeTicks, MaxDateTimeTicks);
+        SelectedDateTimeFromTicks = Math.Max(SelectedDateTimeToTicks - rangeTicks, MinDateTimeTicks);
         if ((SelectedDateTimeToTicks - SelectedDateTimeFromTicks) < rangeTicks)
         {
-            SelectedDateTimeFromTicks = Math.Max(MinDateTimeTicks, SelectedDateTimeToTicks - rangeTicks);
+            SelectedDateTimeToTicks = Math.Min(MaxDateTimeTicks, SelectedDateTimeFromTicks + rangeTicks);
         }
     }
 

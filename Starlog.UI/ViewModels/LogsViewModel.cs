@@ -79,7 +79,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             _logContainer.LogsAdded
                 .Where(_ => !_suspendUpdate)
                 .Subscribe(x => AddLogs(x)),
-            Filtering.FilterChanged.Concat(Search.SearchChanged)
+            Filtering.FilterChanged.Merge(Search.SearchChanged)
                 .Subscribe(_ => RefreshFilteredItems()),
             this.WhenChanged(x => x.ColorizeBy).Subscribe(_ =>
             {

@@ -34,6 +34,8 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
             ModifyCommand = new ActionCommand(_ => throw new NotSupportedException());
             DeleteCommand = new ActionCommand(_ => throw new NotSupportedException());
         }
+
+        PinCommand = new ActionCommand(_ => IsPinned = !IsPinned);
     }
 
     internal void Reconcile()
@@ -67,4 +69,5 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
     public IActionCommand AddChildCommand { get; }
     public IActionCommand ModifyCommand { get; }
     public IActionCommand DeleteCommand { get; }
+    public IActionCommand PinCommand { get; }
 }

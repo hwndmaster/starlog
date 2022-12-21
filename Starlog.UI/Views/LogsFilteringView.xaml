@@ -35,23 +35,25 @@
                                 Focusable="False">
                             <Image Source="{StaticResource Plus16}" Width="16" />
                         </Button>
-                        <ToggleButton DockPanel.Dock="Right"
+                        <Button DockPanel.Dock="Right"
                                 Padding="0"
-                                Content="📌"
-                                IsChecked="{Binding IsPinned}"
+                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                Command="{Binding PinCommand}"
                                 Visibility="{Binding CanPin, Converter={atom:BooleanToVisibilityConverter}}"
                                 Focusable="False">
-                            <ToggleButton.Style>
-                                <Style TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource MahApps.Styles.ToggleButton.ToolBar}">
-                                    <Style.Triggers>
-                                        <Trigger Property="IsChecked" Value="True">
-                                            <Setter Property="Background" Value="Green" />
-                                            <Setter Property="Foreground" Value="Black" />
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ToggleButton.Style>
-                        </ToggleButton>
+                                <Image Width="16">
+                                    <Image.Style>
+                                        <Style TargetType="{x:Type Image}">
+                                            <Setter Property="Source" Value="{DynamicResource PinOff32}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                                    <Setter Property="Source" Value="{DynamicResource PinOn32}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                        </Button>
                         <i:Interaction.Behaviors>
                             <behaviors:TreeViewItemWithDockPanelStretchBehavior />
                             <behaviors:TreeViewItemModifiableBehavior />

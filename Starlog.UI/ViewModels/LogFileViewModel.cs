@@ -9,6 +9,7 @@ public sealed class LogFileViewModel : ViewModelBase, ILogFilterNodeViewModel
     {
         File = file.NotNull();
         AddChildCommand = new ActionCommand(_ => throw new NotSupportedException());
+        PinCommand = new ActionCommand(_ => IsPinned = !IsPinned);
     }
 
     public FileRecord File { get; }
@@ -29,4 +30,5 @@ public sealed class LogFileViewModel : ViewModelBase, ILogFilterNodeViewModel
     public IActionCommand AddChildCommand { get; }
     public IActionCommand ModifyCommand => throw new NotSupportedException();
     public IActionCommand DeleteCommand => throw new NotSupportedException();
+    public IActionCommand PinCommand { get; }
 }

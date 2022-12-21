@@ -21,15 +21,9 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="10">
+        <Grid Grid.Row="0" Margin="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -135,55 +129,71 @@
                     Command="{Binding Search.ResetTimeRangeCommand}" />
         </Grid>
 
-        <DockPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="2">
-            <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
-                <DockPanel>
-                    <Label>Logs in list:</Label>
-                    <Label FontWeight="Bold" Content="{Binding StatsFilteredCount}" />
-                </DockPanel>
-            </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-            <v:LogsFilteringView DataContext="{Binding Filtering}" />
-        </DockPanel>
+            <DockPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2">
+                <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
+                    <DockPanel>
+                        <Label>Logs in list:</Label>
+                        <Label FontWeight="Bold" Content="{Binding StatsFilteredCount}" />
+                    </DockPanel>
+                </StackPanel>
 
-        <DataGrid Grid.Row="1" Grid.Column="1" Margin="10"
-                  autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
-                  autogrid:Properties.ItemsSource="{Binding LogItemsView.View}"
-                  IsReadOnly="True"
-                  VirtualizingPanel.IsVirtualizing="True"
-                  VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                  EnableRowVirtualization="True">
-            <DataGrid.GroupStyle>
-                <GroupStyle>
-                    <GroupStyle.ContainerStyle>
-                        <Style TargetType="GroupItem">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type GroupItem}">
-                                        <StackPanel Margin="5, 10, 0, 10">
-                                            <TextBlock FontWeight="Bold" FontSize="16"
-                                                       Text="{Binding Name}" Margin="0,0,0,3"/>
-                                            <ItemsPresenter/>
-                                        </StackPanel>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </GroupStyle.ContainerStyle>
-                </GroupStyle>
-            </DataGrid.GroupStyle>
-            <i:Interaction.Behaviors>
-                <autogrid:AttachingBehavior />
-                <behaviors:LogColorizeBehavior />
-                <behaviors:LogsCopyToClipboardBehavior />
-                <atombehaviors:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
-            </i:Interaction.Behaviors>
-        </DataGrid>
+                <v:LogsFilteringView DataContext="{Binding Filtering}" />
+            </DockPanel>
 
-        <Grid Grid.Row="2" Grid.Column="1">
-            <RichTextBox atombehaviors:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
-                         IsReadOnly="True"
-                         MaxHeight="300" />
+            <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" />
+
+            <DataGrid Grid.Row="0" Grid.Column="2" Margin="10"
+                    autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
+                    autogrid:Properties.ItemsSource="{Binding LogItemsView.View}"
+                    IsReadOnly="True"
+                    VirtualizingPanel.IsVirtualizing="True"
+                    VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                    EnableRowVirtualization="True">
+                <DataGrid.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.ContainerStyle>
+                            <Style TargetType="GroupItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type GroupItem}">
+                                            <StackPanel Margin="5, 10, 0, 10">
+                                                <TextBlock FontWeight="Bold" FontSize="16"
+                                                        Text="{Binding Name}" Margin="0,0,0,3"/>
+                                                <ItemsPresenter/>
+                                            </StackPanel>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </GroupStyle.ContainerStyle>
+                    </GroupStyle>
+                </DataGrid.GroupStyle>
+                <i:Interaction.Behaviors>
+                    <autogrid:AttachingBehavior />
+                    <behaviors:LogColorizeBehavior />
+                    <behaviors:LogsCopyToClipboardBehavior />
+                    <atombehaviors:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
+                </i:Interaction.Behaviors>
+            </DataGrid>
+
+            <Grid Grid.Row="1" Grid.Column="2">
+                <RichTextBox atombehaviors:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
+                             IsReadOnly="True"
+                             MaxHeight="300"
+                             BorderThickness="0,1,0,0" />
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>
