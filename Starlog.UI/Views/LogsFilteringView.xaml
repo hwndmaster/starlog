@@ -41,22 +41,13 @@
                                 Command="{Binding PinCommand}"
                                 Visibility="{Binding CanPin, Converter={atom:BooleanToVisibilityConverter}}"
                                 Focusable="False">
-                                <Image Width="16">
-                                    <Image.Style>
-                                        <Style TargetType="{x:Type Image}">
-                                            <Setter Property="Source" Value="{DynamicResource PinOff32}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsPinned}" Value="True">
-                                                    <Setter Property="Source" Value="{DynamicResource PinOn32}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Image.Style>
-                                </Image>
+                                <Image Width="16" DataContext="{Binding IsPinned}"
+                                       atombehaviors:ImageConditionalSourceBehavior.WhenTrue="{DynamicResource PinOn32}"
+                                       atombehaviors:ImageConditionalSourceBehavior.WhenFalse="{DynamicResource PinOff32}" />
                         </Button>
                         <i:Interaction.Behaviors>
                             <behaviors:TreeViewItemWithDockPanelStretchBehavior />
-                            <behaviors:TreeViewItemModifiableBehavior />
+                            <atombehaviors:TreeViewItemModifiableBehavior />
                             <behaviors:TreeViewItemPinnableBehavior />
                         </i:Interaction.Behaviors>
                     </DockPanel>
