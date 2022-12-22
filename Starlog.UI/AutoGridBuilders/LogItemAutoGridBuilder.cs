@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
-using Genius.Starlog.UI.ViewModels;
+using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.AutoGridBuilders;
 
+[ExcludeFromCodeCoverage]
 public sealed class LogItemAutoGridBuilder : IAutoGridBuilder
 {
     private readonly IAutoGridContextBuilder<LogItemViewModel> _contextBuilder;

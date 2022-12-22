@@ -1,7 +1,7 @@
 using System.Windows.Controls;
 using System.Windows.Data;
 using Genius.Starlog.UI.ValueConverters;
-using Genius.Starlog.UI.ViewModels;
+using Genius.Starlog.UI.Views;
 using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;

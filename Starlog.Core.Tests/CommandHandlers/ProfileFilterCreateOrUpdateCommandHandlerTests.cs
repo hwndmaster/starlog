@@ -1,0 +1,76 @@
+using Genius.Starlog.Core.CommandHandlers;
+using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.Messages;
+using Genius.Starlog.Core.Models;
+
+namespace Genius.Starlog.Core.Tests.CommandHandlers;
+
+public sealed class ProfileFilterCreateOrUpdateCommandHandlerTests
+{
+    private readonly ProfileHarness _harness = new();
+    private readonly ProfileFilterCreateOrUpdateCommandHandler _sut;
+
+    public ProfileFilterCreateOrUpdateCommandHandlerTests()
+    {
+        _sut = new(_harness.ProfileRepo, _harness.ProfileQuery, _harness.EventBus);
+    }
+
+    [Fact]
+    public async Task Process_WhenNewFilterProvided_ThenAddedToProfile()
+    {
+        // Arrange
+        var profile = _harness.CreateProfile();
+        var profileFiltersCount = profile.Filters.Count;
+        var command = _harness.Build<ProfileFilterCreateOrUpdateCommand>()
+            .With(x => x.ProfileId, profile.Id)
+            .Create();
+
+        // Act
+        var result = await _sut.ProcessAsync(command);
+
+        // Verify
+        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile));
+        _harness.VerifyEventPublished<ProfilesAffectedEvent>();
+        Assert.Equal(profileFiltersCount + 1, profile.Filters.Count);
+        Assert.Equal(command.ProfileFilter, profile.Filters[^1]);
+        Assert.Single(result.ProfileFiltersAdded);
+        Assert.Equal(command.ProfileFilter.Id, result.ProfileFiltersAdded[0]);
+        Assert.Empty(result.ProfileFiltersUpdated);
+    }
+
+    [Fact]
+    public async Task Process_WhenExistingFilterProvided_ThenUpdatedAndPersisted()
+    {
+        // Arrange
+        var profile = _harness.CreateProfile();
+        var profileFiltersCount = profile.Filters.Count;
+        var updatingProfileFilterId = _harness.Create<Guid>();
+        profile.Filters[0] = new SampleProfileFilter(updatingProfileFilterId);
+        var command = new ProfileFilterCreateOrUpdateCommand
+        {
+            ProfileId = profile.Id,
+            ProfileFilter = new SampleProfileFilter(updatingProfileFilterId)
+        };
+
+        // Act
+        var result = await _sut.ProcessAsync(command);
+
+        // Verify
+        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile));
+        _harness.VerifyEventPublished<ProfilesAffectedEvent>();
+        Assert.Equal(profileFiltersCount, profile.Filters.Count);
+        Assert.Equal(command.ProfileFilter, profile.Filters[0]);
+        Assert.Empty(result.ProfileFiltersAdded);
+        Assert.Single(result.ProfileFiltersUpdated);
+        Assert.Equal(command.ProfileFilter.Id, result.ProfileFiltersUpdated[0]);
+    }
+
+    private sealed class SampleProfileFilter : ProfileFilterBase
+    {
+        public SampleProfileFilter(Guid id)
+            : base(new LogFilter(Guid.NewGuid(), Guid.NewGuid().ToString()))
+        {
+            Id = id;
+        }
+    }
+}

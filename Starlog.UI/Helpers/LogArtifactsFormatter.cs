@@ -7,16 +7,16 @@ namespace Genius.Starlog.UI.Helpers;
 
 public interface ILogArtifactsFormatter
 {
-    FlowDocument CreateArtifactsDocument(FileArtifacts fileArtifacts, string? logArtifacts);
+    FlowDocument CreateArtifactsDocument(FileArtifacts? fileArtifacts, string? logArtifacts);
 }
 
 public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
 {
-    public FlowDocument CreateArtifactsDocument(FileArtifacts fileArtifacts, string? logArtifacts)
+    public FlowDocument CreateArtifactsDocument(FileArtifacts? fileArtifacts, string? logArtifacts)
     {
         var document = new FlowDocument();
 
-        if (fileArtifacts.Artifacts.Length > 0)
+        if (fileArtifacts?.Artifacts.Length > 0)
         {
             var paragraph = new Paragraph();
             paragraph.Inlines.Add(new Bold(new Run("File artifacts:\r\n")));

@@ -7,17 +7,18 @@ namespace Genius.Starlog.Core.LogReading;
 
 public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
 {
-    public async Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream)
+    public async Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, bool readFileArtifacts)
     {
         using var reader = new StreamReader(stream);
-        var readerSettings = (PlainTextProfileLogReader)profile.LogReader;
-        Regex regex = new(readerSettings.LineRegex);
+        var fileArtifacts = readFileArtifacts ? await ReadFileArtifactsAsync(profile, reader) : null;
 
-        var fileArtifacts = await ReadArtifactsAsync(profile, reader);
         if (reader.EndOfStream)
         {
             return LogReaderResult.Empty;
         }
+
+        var readerSettings = (PlainTextProfileLogRead)profile.LogReader;
+        Regex regex = new(readerSettings.LineRegex);
 
         Dictionary<int, LoggerRecord> loggers = new();
         Dictionary<int, LogLevelRecord> logLevels = new();
@@ -71,10 +72,10 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
                 logLevels.Add(logLevelHash, logLevelRecord);
             }
 
-            lastRecord = new LogRecord(dateTime, logLevelRecord, thread, fileRecord, fileArtifacts, loggerRecord, message, null);
+            lastRecord = new LogRecord(dateTime, logLevelRecord, thread, fileRecord, loggerRecord, message, null);
         }
 
-        return new LogReaderResult(records.ToImmutableArray(), loggers.Values, logLevels.Values);
+        return new LogReaderResult(fileArtifacts, records.ToImmutableArray(), loggers.Values, logLevels.Values);
 
         void FlushRecentRecord()
         {
@@ -104,7 +105,7 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
         };
     }
 
-    private static async Task<FileArtifacts> ReadArtifactsAsync(Profile profile, StreamReader reader)
+    private static async Task<FileArtifacts> ReadFileArtifactsAsync(Profile profile, StreamReader reader)
     {
         if (profile.FileArtifactLinesCount == 0)
         {

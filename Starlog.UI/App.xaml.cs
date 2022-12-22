@@ -7,8 +7,8 @@ global using Genius.Atom.UI.Forms;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Helpers;
-using Genius.Starlog.UI.ViewModels;
 using Genius.Starlog.UI.Views;
+using Genius.Starlog.UI.Views.LogSearchAndFiltering;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Genius.Starlog.UI;

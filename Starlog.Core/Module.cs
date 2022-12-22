@@ -75,9 +75,9 @@ public static class Module
             new LogFilter(new Guid("11235ba9-cf84-413c-b094-d2c2c6672f4f"), "Thread filter"));
 
         var logReaderContainer = serviceProvider.GetRequiredService<ILogReaderContainer>();
-        logReaderContainer.RegisterLogReader<PlainTextProfileLogReader, PlainTextProfileLogReaderProcessor>(
+        logReaderContainer.RegisterLogReader<PlainTextProfileLogRead, PlainTextProfileLogReaderProcessor>(
             new LogReader(new Guid("a38a40b6-c07f-49d5-a143-5c9f9f42149b"), "Plain Text"));
-        logReaderContainer.RegisterLogReader<XmlProfileLogReader, XmlProfileLogReaderProcessor>(
+        logReaderContainer.RegisterLogReader<XmlProfileLogRead, XmlProfileLogReaderProcessor>(
             new LogReader(new Guid("0cb976bc-6d87-4450-8202-530d9db09b40"), "XML"));
 
         var typeDiscriminators = serviceProvider.GetRequiredService<ITypeDiscriminators>();
@@ -85,7 +85,7 @@ public static class Module
         typeDiscriminators.AddMapping<LogLevelsProfileFilter>("loglevels-profile-filter");
         typeDiscriminators.AddMapping<LogSeveritiesProfileFilter>("logseverities-profile-filter");
         typeDiscriminators.AddMapping<ThreadsProfileFilter>("threads-profile-filter");
-        typeDiscriminators.AddMapping<PlainTextProfileLogReader>("plaintext-profile-log-reader");
-        typeDiscriminators.AddMapping<XmlProfileLogReader>("xml-profile-log-reader");
+        typeDiscriminators.AddMapping<PlainTextProfileLogRead>("plaintext-profile-log-reader");
+        typeDiscriminators.AddMapping<XmlProfileLogRead>("xml-profile-log-reader");
     }
 }

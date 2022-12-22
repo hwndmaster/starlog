@@ -4,11 +4,11 @@ namespace Genius.Starlog.Core.LogReading;
 
 public interface ILogReaderContainer
 {
-    ProfileLogReaderBase CreateProfileLogReader(LogReader logReader);
-    ILogReaderProcessor CreateLogReaderProcessor(ProfileLogReaderBase profileLogReader);
+    ProfileLogReadBase CreateProfileLogReader(LogReader logReader);
+    ILogReaderProcessor CreateLogReaderProcessor(ProfileLogReadBase profileLogReader);
     IEnumerable<LogReader> GetLogReaders();
     void RegisterLogReader<TProfileLogReader, TLogReader>(LogReader logReader)
-        where TProfileLogReader : ProfileLogReaderBase
+        where TProfileLogReader : ProfileLogReadBase
         where TLogReader : class, ILogReaderProcessor;
 }
 
@@ -26,17 +26,17 @@ internal sealed class LogReaderContainer : ILogReaderContainer
         _logReaderProcessors = LogReaderProcessors.ToArray();
     }
 
-    public ProfileLogReaderBase CreateProfileLogReader(LogReader logReader)
+    public ProfileLogReadBase CreateProfileLogReader(LogReader logReader)
     {
         if (!_registeredLogReaders.TryGetValue(logReader.Id, out var value))
         {
             throw new InvalidOperationException("The log reader '" + logReader.Id + "' doesn't exists.");
         }
 
-        return (ProfileLogReaderBase)Activator.CreateInstance(value.ProfileLogReaderType, logReader).NotNull();
+        return (ProfileLogReadBase)Activator.CreateInstance(value.ProfileLogReaderType, logReader).NotNull();
     }
 
-    public ILogReaderProcessor CreateLogReaderProcessor(ProfileLogReaderBase profileLogReader)
+    public ILogReaderProcessor CreateLogReaderProcessor(ProfileLogReadBase profileLogReader)
     {
         if (!_registeredLogReaders.TryGetValue(profileLogReader.LogReader.Id, out var value))
         {
@@ -52,7 +52,7 @@ internal sealed class LogReaderContainer : ILogReaderContainer
     }
 
     public void RegisterLogReader<TProfileLogReader, TLogReaderProcessor>(LogReader logReader)
-        where TProfileLogReader : ProfileLogReaderBase
+        where TProfileLogReader : ProfileLogReadBase
         where TLogReaderProcessor : class, ILogReaderProcessor
     {
         if (_registeredLogReaders.ContainsKey(logReader.Id))

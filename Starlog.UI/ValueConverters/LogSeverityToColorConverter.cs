@@ -2,12 +2,17 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 using Genius.Starlog.Core.Models;
-using Genius.Starlog.UI.ViewModels;
+using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.ValueConverters;
 
 public sealed class LogSeverityToColorConverter : IValueConverter
 {
+    internal static readonly Color ColorForMinor = Colors.DimGray;
+    internal static readonly Color ColorForWarning = Colors.Yellow;
+    internal static readonly Color ColorForMajor = Colors.Red;
+    internal static readonly Color ColorForCritical = Colors.DarkRed;
+
     private readonly Color _standardColor;
 
     public LogSeverityToColorConverter(FrameworkElement anyElement)
@@ -17,17 +22,17 @@ public sealed class LogSeverityToColorConverter : IValueConverter
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is not LogItemViewModel vm)
+        if (value is not ILogItemViewModel vm)
         {
-            throw new InvalidOperationException("Expected a view model of LogItemViewModel type.");
+            throw new InvalidOperationException("Expected a view model of ILogItemViewModel type.");
         }
 
         var color = vm.Record.Level.Severity switch
         {
-            LogSeverity.Minor => Colors.DimGray,
-            LogSeverity.Warning => Colors.Yellow,
-            LogSeverity.Major => Colors.Red,
-            LogSeverity.Critical => Colors.DarkRed,
+            LogSeverity.Minor => ColorForMinor,
+            LogSeverity.Warning => ColorForWarning,
+            LogSeverity.Major => ColorForMajor,
+            LogSeverity.Critical => ColorForCritical,
             _ => _standardColor,
         };
 

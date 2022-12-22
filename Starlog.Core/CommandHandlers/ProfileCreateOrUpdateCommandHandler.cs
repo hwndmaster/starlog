@@ -7,7 +7,7 @@ using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.Core.CommandHandlers;
 
-internal sealed class ProfileCreateOrUpdateCommandHandler:
+internal sealed class ProfileCreateOrUpdateCommandHandler :
     ICommandHandler<ProfileCreateCommand, Guid>,
     ICommandHandler<ProfileUpdateCommand>
 {

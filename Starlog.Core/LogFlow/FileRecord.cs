@@ -12,4 +12,5 @@ public sealed class FileRecord
     public string FullPath { get; }
     public string FileName { get; }
     public long LastReadOffset { get; set; }
+    public FileArtifacts? Artifacts { get; set; }
 }

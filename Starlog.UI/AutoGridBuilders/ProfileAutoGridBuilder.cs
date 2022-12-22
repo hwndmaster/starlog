@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Atom.UI.Forms.WpfBuilders;
-using Genius.Starlog.UI.ViewModels;
+using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.AutoGridBuilders;
 
+[ExcludeFromCodeCoverage]
 public sealed class ProfileAutoGridBuilder : IAutoGridBuilder
 {
     private readonly IAutoGridContextBuilder<ProfileViewModel> _contextBuilder;
@@ -18,9 +20,9 @@ public sealed class ProfileAutoGridBuilder : IAutoGridBuilder
         return _contextBuilder
             .WithColumns(columns =>
                 columns
-                    .AddText(nameof(ProfileViewModel.Name), x => x.Filterable())
-                    .AddText(nameof(ProfileViewModel.Path))
-                    .AddCommand(nameof(ProfileViewModel.LoadProfileCommand), x => x
+                    .AddText(x => x.Name, x => x.Filterable())
+                    .AddText(x => x.Path)
+                    .AddCommand(x => x.LoadProfileCommand, x => x
                         .WithIcon("Play32")
                         .WithStyle(new StylingRecord(Padding: new Thickness(0))))
             )

@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Windows.Data;
 using System.Windows.Media;
-using Genius.Starlog.UI.ViewModels;
+using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.ValueConverters;
 

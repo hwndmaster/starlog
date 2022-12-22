@@ -156,7 +156,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     {
         var fileName = Path.GetFileName(file);
         using var fileStream = _fileService.OpenRead(file);
-        var fileRecord = new FileRecord(file, fileName, fileStream.Length);
+        var fileRecord = new FileRecord(file, fileName, 0);
 
         await ReadLogsAsync(fileStream, fileRecord);
 
@@ -175,7 +175,16 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
         var tp = TracePerf.Start<LogContainer>(nameof(ReadLogsAsync));
 
         var logReaderProcessor = _logReaderContainer.CreateLogReaderProcessor(Profile.LogReader);
-        var logRecordResult = await logReaderProcessor.ReadAsync(Profile, fileRecord, stream);
+
+        var readFileArtifacts = fileRecord.LastReadOffset == 0 && Profile.FileArtifactLinesCount > 0;
+        var logRecordResult = await logReaderProcessor.ReadAsync(Profile, fileRecord, stream, readFileArtifacts);
+
+        fileRecord.LastReadOffset = stream.Length;
+
+        if (readFileArtifacts)
+        {
+            fileRecord.Artifacts = logRecordResult.FileArtifacts;
+        }
 
         foreach (var logger in logRecordResult.Loggers)
         {

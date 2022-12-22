@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Starlog.Core\Starlog.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <Reference Include="Genius.Atom.Data">
+      <HintPath>..\..\atom\Atom.Data\bin\Debug\net7.0\Genius.Atom.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Genius.Atom.Infrastructure">
+      <HintPath>..\..\atom\Atom.Infrastructure\bin\Debug\net7.0\Genius.Atom.Infrastructure.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <PackageReference Include="Genius.Atom.Data" />
+    <PackageReference Include="Genius.Atom.Infrastructure" />
+  </ItemGroup>
+
+</Project>

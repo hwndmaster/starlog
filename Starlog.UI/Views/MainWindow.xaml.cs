@@ -1,5 +1,4 @@
-﻿using Genius.Starlog.UI.ViewModels;
-using MahApps.Metro.Controls;
+﻿using MahApps.Metro.Controls;
 
 namespace Genius.Starlog.UI.Views;
 

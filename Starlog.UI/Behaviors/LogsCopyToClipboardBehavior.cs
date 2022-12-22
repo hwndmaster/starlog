@@ -1,7 +1,7 @@
 using System.Text;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Genius.Starlog.UI.ViewModels;
+using Genius.Starlog.UI.Views;
 using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;
@@ -35,7 +35,7 @@ public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
             }
 
             sb.Append("File: ").AppendLine(itemGroup.Key);
-            foreach (var fileArtifact in itemGroup.First().Record.FileArtifacts.Artifacts)
+            foreach (var fileArtifact in itemGroup.First().Record.File.Artifacts?.Artifacts ?? Array.Empty<string>())
             {
                 sb.AppendLine(fileArtifact);
             }

@@ -4,19 +4,18 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:Genius.Starlog.UI.ViewModels"
-        xmlns:local="clr-namespace:Genius.Starlog.UI.Views"
+        xmlns:logreaders="clr-namespace:Genius.Starlog.UI.Views.ProfileLogReaders"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
         Header="{Binding PageTitle}"
         Position="Right"
         Width="600">
     <mah:Flyout.Resources>
-        <DataTemplate DataType="{x:Type vm:PlainTextLogReaderViewModel}" >
-            <local:PlainTextLogReaderView DataContext="{Binding .}" />
+        <DataTemplate DataType="{x:Type logreaders:PlainTextLogReaderViewModel}" >
+            <logreaders:PlainTextLogReaderView DataContext="{Binding .}" />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:XmlLogReaderViewModel}" >
-            <local:XmlLogReaderView DataContext="{Binding .}" />
+        <DataTemplate DataType="{x:Type logreaders:XmlLogReaderViewModel}" >
+            <logreaders:XmlLogReaderView DataContext="{Binding .}" />
         </DataTemplate>
     </mah:Flyout.Resources>
 

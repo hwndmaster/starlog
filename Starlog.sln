@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Starlog.UI", "Starlog.UI\St
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Starlog.Core", "Starlog.Core\Starlog.Core.csproj", "{6E5EF892-BA64-4DD7-B8D6-200ACAE3CCCF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Starlog.Core.Tests", "Starlog.Core.Tests\Starlog.Core.Tests.csproj", "{64D6BDCE-0B31-4504-8ED3-F6AE123E1D98}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Starlog.UI.Tests", "Starlog.UI.Tests\Starlog.UI.Tests.csproj", "{370E382B-895A-4E59-88DF-7845E82F5CF9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{6E5EF892-BA64-4DD7-B8D6-200ACAE3CCCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E5EF892-BA64-4DD7-B8D6-200ACAE3CCCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E5EF892-BA64-4DD7-B8D6-200ACAE3CCCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64D6BDCE-0B31-4504-8ED3-F6AE123E1D98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64D6BDCE-0B31-4504-8ED3-F6AE123E1D98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64D6BDCE-0B31-4504-8ED3-F6AE123E1D98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64D6BDCE-0B31-4504-8ED3-F6AE123E1D98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{370E382B-895A-4E59-88DF-7845E82F5CF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{370E382B-895A-4E59-88DF-7845E82F5CF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{370E382B-895A-4E59-88DF-7845E82F5CF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{370E382B-895A-4E59-88DF-7845E82F5CF9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

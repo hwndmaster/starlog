@@ -25,13 +25,13 @@
                     SelectedIndex="{Binding SelectedTabIndex}"
                     mah:TabControlHelper.Underlined="TabItems">
             <TabItem Header="Profiles">
-                <uc:Profiles DataContext="{Binding Path=Tabs[0]}" />
+                <uc:ProfilesView DataContext="{Binding Path=Tabs[0]}" />
             </TabItem>
             <TabItem Header="Logs">
-                <uc:Logs DataContext="{Binding Path=Tabs[1]}" />
+                <uc:LogsView DataContext="{Binding Path=Tabs[1]}" />
             </TabItem>
             <TabItem Header="Settings">
-                <uc:Settings DataContext="{Binding Path=Tabs[2]}" />
+                <uc:SettingsView DataContext="{Binding Path=Tabs[2]}" />
             </TabItem>
         </TabControl>
         <StatusBar Grid.Row="1">

@@ -12,7 +12,7 @@
     <LangVersion>11.0</LangVersion>
 
     <RootNamespace>Genius.$(MSBuildProjectName)</RootNamespace>
-    <AssemblyName>Genius.$(MSBuildProjectName)</AssemblyName>
+    <AssemblyName>$(RootNamespace)</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.UI')) == false">
@@ -30,13 +30,14 @@
   </ItemGroup>
 
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) == false">
-    <InternalsVisibleTo Include="$(AssemblyName).Tests" />
+    <InternalsVisibleTo Include="$(RootNamespace).Tests" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 
   <!-- Automated Testing components -->
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
     <Using Include="AutoFixture" />
+    <Using Include="AutoFixture.AutoMoq" />
     <Using Include="Moq" />
     <Using Include="Xunit" />
   </ItemGroup>
@@ -54,6 +55,7 @@
   </ItemGroup>
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
     <PackageReference Include="AutoFixture" />
+    <PackageReference Include="AutoFixture.AutoMoq" />
     <PackageReference Include="Moq" />
   </ItemGroup>
 </Project>
