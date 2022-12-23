@@ -4,7 +4,7 @@
       "**/obj/": true,
       "build/": true
   },
-  "dotnet-test-explorer.testArguments": "/p:CollectCoverage=true /p:CoverletOutputFormat=\\\"lcov\\\" /p:CoverletOutput=../lcov",
+  "dotnet-test-explorer.testArguments": "/p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=../lcov /p:Exclude=\"[Genius.Atom.*]*\"",
   "coverage-gutters.coverageFileNames": [
       "lcov.info"
   ],

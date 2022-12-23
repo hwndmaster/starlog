@@ -24,13 +24,19 @@
     {
       "label": "test coverage",
       "command": "dotnet",
-      "type": "shell",
+      "type": "process",
       "args": [
         "test",
         "--no-build",
-        "/p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=./lcov.info"
+        "/p:CollectCoverage=true",
+        "/p:CoverletOutputFormat=lcov",
+        "/p:CoverletOutput=${workspaceFolder}/lcov.info",
+        "/p:Exclude=\"[Genius.Atom.*]*\""
       ],
-      "group": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
       "presentation": {
         "reveal": "silent"
       },

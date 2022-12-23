@@ -1,11 +1,12 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.ValueConverters;
 using Genius.Starlog.UI.Views;
 
-namespace Genius.Starlog.Core.Tests.CommandHandlers;
+namespace Genius.Starlog.UI.Tests.ValueConverters;
 
 public sealed class LogSeverityToColorConverterTests
 {
@@ -45,7 +46,7 @@ public sealed class LogSeverityToColorConverterTests
     private void TestForSeverity(LogSeverity severity, Color color)
     {
         // Arrange
-        var dummy = _fixture.Create<LogFlow.LogRecord>();
+        var dummy = _fixture.Create<LogRecord>();
         var logRecord = dummy with { Level = dummy.Level with { Severity = severity } };
         var value = Mock.Of<ILogItemViewModel>(x => x.Record == logRecord);
         var sut = CreateSystemUnderTest();

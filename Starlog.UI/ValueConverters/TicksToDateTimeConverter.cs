@@ -7,7 +7,7 @@ public sealed class TicksToDateTimeConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        long ticks = 0;
+        long ticks;
         if (value is string stringValue)
         {
             long.TryParse(stringValue, NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out ticks);
@@ -15,6 +15,10 @@ public sealed class TicksToDateTimeConverter : IValueConverter
         else if (value is double doubleValue)
         {
             ticks = (long)doubleValue;
+        }
+        else
+        {
+            throw new NotSupportedException($"Provided value is of unsupported type: {value.GetType().FullName}");
         }
 
         var dt = new DateTimeOffset(ticks, TimeSpan.Zero);

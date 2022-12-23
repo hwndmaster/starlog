@@ -8,22 +8,24 @@ namespace Genius.Starlog.UI.ValueConverters;
 
 public sealed class LogThreadToColorConverter : IValueConverter
 {
-    private static readonly Color[] ColorTable = DefineColors();
+    private static readonly Lazy<Color[]> ColorTable = new(() => DefineColors());
 
     private readonly Dictionary<int, Color> _cachedColors = new();
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is not LogItemViewModel vm)
+        if (value is not ILogItemViewModel vm)
         {
             throw new InvalidOperationException("Expected a view model of LogItemViewModel type.");
         }
 
-        var threadHash = vm.Thread.GetHashCode();
+        var threadHash = vm.Record.Thread.GetHashCode();
+
+        var colorTable = ColorTable.Value;
 
         if (!_cachedColors.TryGetValue(threadHash, out var color))
         {
-            color = ColorTable[_cachedColors.Count % ColorTable.Length];
+            color = colorTable[_cachedColors.Count % colorTable.Length];
             _cachedColors.Add(threadHash, color);
         }
 
