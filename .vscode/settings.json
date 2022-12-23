@@ -8,7 +8,7 @@
   "coverage-gutters.coverageFileNames": [
       "lcov.info"
   ],
-  "dotnet-test-explorer.autoWatch": true,
+  "dotnet-test-explorer.autoWatch": false, // temporarily disabled due to perf issues
   "editor.tabSize": 4,
   "cSpell.words": [
     "Regexes",

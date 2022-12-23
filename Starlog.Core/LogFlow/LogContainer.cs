@@ -69,12 +69,28 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
 
         Profile = profile.NotNull();
 
-        var files = _fileService.EnumerateFiles(profile.Path, "*.*", new EnumerationOptions());
-        var tasks = files.Select(async file => await LoadFileAsync(file));
-        await Task.WhenAll(tasks);
+        var isFile = false;
 
-        _fileWatcher.Path = profile.Path;
-        _fileWatcher.EnableRaisingEvents = true;
+        if (Path.Exists(profile.Path))
+        {
+            var pathAttr = File.GetAttributes(profile.Path);
+            IEnumerable<string> files;
+            if (pathAttr.HasFlag(FileAttributes.Directory))
+            {
+                files = _fileService.EnumerateFiles(profile.Path, "*.*", new EnumerationOptions());
+            }
+            else
+            {
+                files = new [] { profile.Path };
+                isFile = true;
+            }
+            var tasks = files.Select(async file => await LoadFileAsync(file));
+            await Task.WhenAll(tasks);
+
+            _fileWatcher.Path = isFile ? Path.GetDirectoryName(profile.Path).NotNull() : profile.Path;
+            _fileWatcher.Filter = isFile ? Path.GetFileName(profile.Path) : "*.*";
+            _fileWatcher.EnableRaisingEvents = true;
+        }
 
         _profileChanged.OnNext(Profile);
     }

@@ -9,7 +9,7 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
 {
     public async Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, bool readFileArtifacts)
     {
-        using var reader = new StreamReader(stream);
+        using var reader = new StreamReader(stream, leaveOpen: true);
         var fileArtifacts = readFileArtifacts ? await ReadFileArtifactsAsync(profile, reader) : null;
 
         if (reader.EndOfStream)
@@ -18,6 +18,10 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
         }
 
         var readerSettings = (PlainTextProfileLogRead)profile.LogReader;
+        if (string.IsNullOrEmpty(readerSettings.LineRegex))
+        {
+            throw new InvalidOperationException("Cannot open profile with empty LineRegex setting.");
+        }
         Regex regex = new(readerSettings.LineRegex);
 
         Dictionary<int, LoggerRecord> loggers = new();
