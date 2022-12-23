@@ -57,11 +57,19 @@ public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
             }
             else if (match.Groups["num"].Success)
             {
-                brush = Brushes.DeepPink;
+                brush = Brushes.Cyan;
             }
             else if (match.Groups["exc"].Success)
             {
                 brush = Brushes.IndianRed;
+            }
+            else if (match.Groups["date"].Success)
+            {
+                brush = Brushes.GreenYellow;
+            }
+            else if (match.Groups["url"].Success)
+            {
+                brush = Brushes.HotPink;
             }
             else if (match.Groups["at"].Success)
             {
@@ -82,6 +90,6 @@ public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
         }
     }
 
-    [GeneratedRegex("(?<str>(?<!\\w)'[^']+')|(?<str2>(?<!\\w)\"[^\"]+\")|(?<num>(?<!\\w)[\\d\\.,]*\\d(?!\\w))|(?<at>[ ]{3}at\\s.+)|(?<exc>\\w+Exception)")]
+    [GeneratedRegex("(?<date>(\\d{4}-\\d{2}-\\d{2})|(\\d{2}-\\d{2}-\\d{4})|(\\d+\\s\\w{3,}\\s\\d{4})|(\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?))|(?<str>(?<!\\w)'[^']+')|(?<str2>(?<!\\w)\"[^\"]+\")|(?<num>(?<!\\w)[\\d\\.,]*\\d(?!\\w))|(?<at>[ ]{3}at\\s.+)|(?<exc>\\w+Exception)|(?<url>\\w+:(\\/\\/|\\\\)[\\w\\.\\/\\\\\\?=_+&%~@#\\(\\)]+)")]
     private static partial Regex FormattedStringRegex();
 }
