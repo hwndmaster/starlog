@@ -7,5 +7,7 @@ public sealed class LogSeveritiesProfileFilter : ProfileFilterBase
     {
     }
 
+    public bool Exclude { get; set; }
+
     public LogSeverity[] LogSeverities { get; set; } = Array.Empty<LogSeverity>();
 }

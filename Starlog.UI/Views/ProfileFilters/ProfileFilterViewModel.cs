@@ -47,14 +47,14 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         {
             if (_profileFilter is not null)
             {
-                ResetForm();
                 Reconcile();
+                FilterSettings.ResetChanges();
             }
         });
 
         // Actions:
         CommitFilterCommand = new ActionCommand(_ => CommitFilter());
-        ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profileFilter is not null);
+        ResetCommand = new ActionCommand(_ => FilterSettings.ResetChanges(), _ => _profileFilter is not null);
     }
 
     public void Reconcile()
@@ -77,6 +77,8 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
             return false;
         }
 
+        FilterSettings.CommitChanges();
+
         var commandResult = await _commandBus.SendAsync(new ProfileFilterCreateOrUpdateCommand
         {
             ProfileId = _currentProfile.Profile.Id,
@@ -89,13 +91,6 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         }
 
         return true;
-    }
-
-    private void ResetForm()
-    {
-        FilterSettings = _profileFilter is null
-            ? FilterSettings
-            : FilterTypes.First(x => x.ProfileFilter.LogFilter.Id == _profileFilter.LogFilter.Id);
     }
 
     public ProfileFilterBase? ProfileFilter => _profileFilter;

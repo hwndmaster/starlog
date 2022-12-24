@@ -9,6 +9,8 @@ public sealed class LoggersFilterProcessor : IFilterProcessor
     {
         var filter = (LoggersProfileFilter)profileFilter;
 
-        return filter.LoggerNames.Contains(log.Logger.Name, StringComparer.OrdinalIgnoreCase);
+        var result = filter.LoggerNames.Contains(log.Logger.Name, StringComparer.OrdinalIgnoreCase);
+
+        return filter.Exclude ? !result : result;
     }
 }

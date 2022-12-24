@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
+using System.Reactive;
+using System.Reactive.Linq;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
-public sealed class LogLevelsProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel
+public sealed class LogLevelsProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<LogLevelsProfileFilter>
 {
     public LogLevelsProfileFilterSettingsViewModel(LogLevelsProfileFilter profileFilter, ILogContainer logContainer)
         : base(profileFilter)
@@ -18,15 +20,40 @@ public sealed class LogLevelsProfileFilterSettingsViewModel : ProfileFilterSetti
         SelectedLogLevels = new ObservableCollection<string>(profileFilter.LogLevels);
 
         // Subscriptions:
-        SelectedLogLevels.WhenCollectionChanged().Subscribe(_ =>
+        SelectedLogLevels.WhenCollectionChanged()
+            .Select(_ => Unit.Default)
+            .Merge(this.WhenChanged(x => x.Exclude).Select(_ => Unit.Default))
+            .Subscribe(_ =>
+            {
+                Name = SelectedLogLevels.Any()
+                    ? LimitNameLength((Exclude ? "Not " : string.Empty) + "Levels: " + string.Join(", ", SelectedLogLevels))
+                    : profileFilter.LogFilter.Name;
+            });
+    }
+
+    protected override void CommitChangesInternal()
+    {
+        _profileFilter.LogLevels = SelectedLogLevels.ToArray();
+        _profileFilter.Exclude = Exclude;
+    }
+
+    protected override void ResetChangesInternal()
+    {
+        SelectedLogLevels.Clear();
+        foreach (var severity in _profileFilter.LogLevels)
         {
-            profileFilter.LogLevels = SelectedLogLevels.ToArray();
-            Name = profileFilter.LogLevels.Any()
-                ? LimitNameLength("Levels: " + string.Join(", ", profileFilter.LogLevels))
-                : profileFilter.LogFilter.Name;
-        });
+            SelectedLogLevels.Add(severity);
+        }
+
+        Exclude = _profileFilter.Exclude;
     }
 
     public ICollection<string> LogLevels { get; }
     public ObservableCollection<string> SelectedLogLevels { get; }
+
+    public bool Exclude
+    {
+        get => GetOrDefault(_profileFilter.Exclude);
+        set => RaiseAndSetIfChanged(value);
+    }
 }

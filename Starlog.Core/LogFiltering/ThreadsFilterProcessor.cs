@@ -9,6 +9,8 @@ public sealed class ThreadsFilterProcessor : IFilterProcessor
     {
         var filter = (ThreadsProfileFilter)profileFilter;
 
-        return filter.Threads.Contains(log.Thread, StringComparer.OrdinalIgnoreCase);
+        var result = filter.Threads.Contains(log.Thread, StringComparer.OrdinalIgnoreCase);
+
+        return filter.Exclude ? !result : result;
     }
 }

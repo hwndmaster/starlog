@@ -9,6 +9,8 @@ public sealed class LogLevelsFilterProcessor : IFilterProcessor
     {
         var filter = (LogLevelsProfileFilter)profileFilter;
 
-        return filter.LogLevels.Contains(log.Level.Name, StringComparer.OrdinalIgnoreCase);
+        var result = filter.LogLevels.Contains(log.Level.Name, StringComparer.OrdinalIgnoreCase);
+
+        return filter.Exclude ? !result : result;
     }
 }

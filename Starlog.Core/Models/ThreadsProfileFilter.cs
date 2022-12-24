@@ -7,5 +7,7 @@ public sealed class ThreadsProfileFilter : ProfileFilterBase
     {
     }
 
+    public bool Exclude { get; set; }
+
     public string[] Threads { get; set; } = Array.Empty<string>();
 }

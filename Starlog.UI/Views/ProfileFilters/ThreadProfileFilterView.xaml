@@ -10,6 +10,10 @@
     <Grid>
         <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
             <DockPanel>
+                <Label>Exclude selected:</Label>
+                <CheckBox IsChecked="{Binding Exclude}" Content="If checked on, the selected threads will be excluded from the output." />
+            </DockPanel>
+            <DockPanel>
                 <Label>Threads:</Label>
                 <ListBox SelectionMode="Multiple"
                          ItemsSource="{Binding Threads}"

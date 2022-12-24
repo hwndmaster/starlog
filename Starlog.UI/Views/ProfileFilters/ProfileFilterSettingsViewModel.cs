@@ -5,20 +5,43 @@ namespace Genius.Starlog.UI.Views.ProfileFilters;
 
 public interface IProfileFilterSettingsViewModel : IViewModel
 {
+    void CommitChanges();
+    void ResetChanges();
+
     ProfileFilterBase ProfileFilter { get; }
     string Name { get; set; }
 }
 
-public abstract class ProfileFilterSettingsViewModel : ViewModelBase, IProfileFilterSettingsViewModel
+public abstract class ProfileFilterSettingsViewModel<TProfileFilter> : ViewModelBase, IProfileFilterSettingsViewModel
+    where TProfileFilter : ProfileFilterBase
 {
     private const int MaxNameLength = 50;
 
-    protected ProfileFilterSettingsViewModel(ProfileFilterBase profileFilter)
+    protected TProfileFilter _profileFilter;
+
+    protected ProfileFilterSettingsViewModel(TProfileFilter profileFilter)
     {
-        ProfileFilter = profileFilter.NotNull();
+        _profileFilter = profileFilter.NotNull();
 
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Name)));
     }
+
+    public void CommitChanges()
+    {
+        ProfileFilter.Name = Name;
+
+        CommitChangesInternal();
+    }
+
+    public void ResetChanges()
+    {
+        Name = ProfileFilter.Name;
+
+        ResetChangesInternal();
+    }
+
+    protected abstract void CommitChangesInternal();
+    protected abstract void ResetChangesInternal();
 
     protected static string LimitNameLength(string name)
     {
@@ -30,7 +53,7 @@ public abstract class ProfileFilterSettingsViewModel : ViewModelBase, IProfileFi
         return name;
     }
 
-    public ProfileFilterBase ProfileFilter { get; }
+    public ProfileFilterBase ProfileFilter => _profileFilter;
 
     public string Name
     {

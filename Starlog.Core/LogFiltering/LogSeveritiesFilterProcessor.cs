@@ -9,6 +9,8 @@ public sealed class LogSeveritiesFilterProcessor : IFilterProcessor
     {
         var filter = (LogSeveritiesProfileFilter)profileFilter;
 
-        return filter.LogSeverities.Contains(log.Level.Severity);
+        var result = filter.LogSeverities.Contains(log.Level.Severity);
+
+        return filter.Exclude ? !result : result;
     }
 }

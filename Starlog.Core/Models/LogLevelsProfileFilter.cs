@@ -7,5 +7,7 @@ public sealed class LogLevelsProfileFilter : ProfileFilterBase
     {
     }
 
+    public bool Exclude { get; set; }
+
     public string[] LogLevels { get; set; } = Array.Empty<string>();
 }

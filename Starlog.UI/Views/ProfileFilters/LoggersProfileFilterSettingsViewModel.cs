@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
+using System.Reactive;
+using System.Reactive.Linq;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
-public sealed class LoggersProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel
+public sealed class LoggersProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<LoggersProfileFilter>
 {
     public LoggersProfileFilterSettingsViewModel(LoggersProfileFilter profileFilter, ILogContainer logContainer)
         : base(profileFilter)
@@ -14,20 +16,45 @@ public sealed class LoggersProfileFilterSettingsViewModel : ProfileFilterSetting
         // Members initialization:
         Loggers = logContainer.GetLoggers().Select(x => x.Name)
             .Union(profileFilter.LoggerNames)
-            .OrderBy(x => x)
+            .Order()
             .ToArray();
         SelectedLoggers = new ObservableCollection<string>(profileFilter.LoggerNames);
 
         // Subscriptions:
-        SelectedLoggers.WhenCollectionChanged().Subscribe(_ =>
+        SelectedLoggers.WhenCollectionChanged()
+            .Select(_ => Unit.Default)
+            .Merge(this.WhenChanged(x => x.Exclude).Select(_ => Unit.Default))
+            .Subscribe(_ =>
         {
-            profileFilter.LoggerNames = SelectedLoggers.ToArray();
-            Name = profileFilter.LoggerNames.Any()
-                ? LimitNameLength("Loggers: " + string.Join(", ", profileFilter.LoggerNames))
+            Name = SelectedLoggers.Any()
+                ? LimitNameLength((Exclude ? "Not " : string.Empty) + "Loggers: " + string.Join(", ", SelectedLoggers))
                 : profileFilter.LogFilter.Name;
         });
     }
 
+    protected override void ResetChangesInternal()
+    {
+        SelectedLoggers.Clear();
+        foreach (var severity in _profileFilter.LoggerNames)
+        {
+            SelectedLoggers.Add(severity);
+        }
+
+        Exclude = _profileFilter.Exclude;
+    }
+
+    protected override void CommitChangesInternal()
+    {
+        _profileFilter.LoggerNames = SelectedLoggers.ToArray();
+        _profileFilter.Exclude = Exclude;
+    }
+
     public ICollection<string> Loggers { get; }
     public ObservableCollection<string> SelectedLoggers { get; }
+
+    public bool Exclude
+    {
+        get => GetOrDefault(_profileFilter.Exclude);
+        set => RaiseAndSetIfChanged(value);
+    }
 }

@@ -7,5 +7,7 @@ public sealed class LoggersProfileFilter : ProfileFilterBase
     {
     }
 
+    public bool Exclude { get; set; }
+
     public string[] LoggerNames { get; set; } = Array.Empty<string>();
 }
