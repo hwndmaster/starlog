@@ -57,7 +57,10 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
             }
 
             var level = match.Groups["level"].Value;
-            var dateTime = DateTimeOffset.ParseExact(match.Groups["datetime"].Value, "yyyy-MM-dd HH:mm:ss.fff", Thread.CurrentThread.CurrentCulture);
+            var dateTime = DateTimeOffset.ParseExact(match.Groups["datetime"].Value,
+                "yyyy-MM-dd HH:mm:ss.fff",
+                Thread.CurrentThread.CurrentCulture,
+                System.Globalization.DateTimeStyles.AssumeUniversal);
             var thread = match.Groups["thread"].Value;
             var logger = match.Groups["logger"].Value;
             var message = match.Groups["message"].Value;

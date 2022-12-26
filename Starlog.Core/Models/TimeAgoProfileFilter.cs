@@ -16,7 +16,7 @@ public sealed class TimeAgoProfileFilter : ProfileFilterBase
     ///   Defines the time span to filter out log records, taken in the past <see cref="TimeAgo" />.
     /// </summary>
     [JsonIgnore]
-    public required TimeSpan TimeAgo { get; set; }
+    public TimeSpan TimeAgo { get; set; }
 
     /// <summary>
     ///   Defines the milliseconds to filter out log records, taken in the past <see cref="MillisecondsAgo" /> ms.

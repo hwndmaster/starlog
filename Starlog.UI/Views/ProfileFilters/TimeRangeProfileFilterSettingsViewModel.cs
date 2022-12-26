@@ -29,13 +29,15 @@ public sealed class TimeRangeProfileFilterSettingsViewModel : ProfileFilterSetti
         // Subscriptions:
         this.WhenAnyChanged(x => x.TimeFrom, x => x.TimeTo)
             .Subscribe(_ =>
-                Name = "Time from " + TimeFrom.ToString() + " to " + TimeTo.ToString());
+                Name = "Time from " + TimeFrom.ToString() + " to " + (
+                    TimeTo.Date == TimeFrom.Date ? TimeTo.ToLongTimeString() : TimeTo.ToString()
+                ));
     }
 
     protected override void CommitChangesInternal()
     {
-        _profileFilter.TimeFrom = TimeFrom;
-        _profileFilter.TimeTo = TimeTo;
+        _profileFilter.TimeFrom = new DateTimeOffset(TimeFrom, TimeSpan.Zero);
+        _profileFilter.TimeTo = new DateTimeOffset(TimeTo, TimeSpan.Zero);
     }
 
     protected override void ResetChangesInternal()

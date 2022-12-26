@@ -16,6 +16,6 @@ public sealed class TimeAgoFilterProcessor : IFilterProcessor
     {
         var filter = (TimeAgoProfileFilter)profileFilter;
 
-        return _dateTime.Now - log.DateTime < filter.TimeAgo;
+        return (DateTimeOffset.Now.UtcDateTime + DateTimeOffset.Now.Offset) - log.DateTime < filter.TimeAgo;
     }
 }

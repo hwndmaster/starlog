@@ -18,7 +18,7 @@ public sealed class TimeAgoProfileFilterSettingsViewModel : ProfileFilterSetting
         // Subscriptions:
         this.WhenAnyChanged(x => x.MinAgo, x => x.SecAgo)
             .Subscribe(_ =>
-                Name = "Time: " + TimeSpan.FromSeconds(MinAgo * 60 + SecAgo).ToDisplayString() + " ago");
+                Name = "Time recent " + TimeSpan.FromSeconds(MinAgo * 60 + SecAgo).ToDisplayString());
     }
 
     protected override void CommitChangesInternal()

@@ -70,7 +70,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                 .Subscribe(_ =>
                 {
                     _suspendUpdate = true;
-                    _uiDispatcher.BeginInvoke(() => LogItems.Clear());
+                    _uiDispatcher.BeginInvoke(() =>
+                    {
+                        LogItems.Clear();
+                        SelectedLogItems.Clear();
+                        SelectedLogItem = null;
+                    });
                 }),
             _currentProfile.ProfileChanged
                 .Subscribe(profile =>
