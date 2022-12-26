@@ -1,0 +1,35 @@
+<UserControl x:Class="Genius.Starlog.UI.Views.ProfileFilters.TimeAgoProfileFilterView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        mc:Ignorable="d"
+        Validation.ErrorTemplate="{x:Null}">
+    <UserControl.Resources>
+        <Thickness x:Key="TimeTextMargin">1 3 0 0</Thickness>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
+            <DockPanel>
+                <Label>Time ago:</Label>
+                <StackPanel Orientation="Horizontal">
+                    <mah:NumericUpDown Value="{Binding MinAgo}"
+                                       Minimum="0" Maximum="59" Interval="1"
+                                       InterceptArrowKeys="True"
+                                       Speedup="True"
+                                       NumericInputMode="Numbers" />
+                    <TextBlock Margin="{StaticResource TimeTextMargin}"> min</TextBlock>
+                    <mah:NumericUpDown Value="{Binding SecAgo}"
+                                       Minimum="0" Maximum="59" Interval="1"
+                                       InterceptArrowKeys="True"
+                                       Speedup="True"
+                                       NumericInputMode="Numbers"
+                                       Margin="5,0,0,0" />
+                    <TextBlock Margin="{StaticResource TimeTextMargin}"> sec</TextBlock>
+                </StackPanel>
+            </DockPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

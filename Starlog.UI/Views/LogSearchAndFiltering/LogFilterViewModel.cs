@@ -14,10 +14,13 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
 
         Icon = profileFilter switch
         {
+            MessageProfileFilter _ => "Message32",
             LoggersProfileFilter _ => "Logger32",
             LogLevelsProfileFilter _ => "LogLevel32",
             LogSeveritiesProfileFilter _ => "LogSeverity32",
             ThreadsProfileFilter _ => "Thread32",
+            TimeAgoProfileFilter _ => "MinusOneHour32",
+            TimeRangeProfileFilter _ => "TimeRange32",
             _ => "FolderFavs32"
         };
 

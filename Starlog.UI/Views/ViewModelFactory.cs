@@ -81,16 +81,20 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
     public IProfileFilterSettingsViewModel CreateProfileFilterSettings(LogFilter logFilter, ProfileFilterBase? profileFilter)
     {
+        var isNewFilter = profileFilter is null;
         profileFilter = profileFilter is not null && logFilter.Id == profileFilter.LogFilter.Id
             ? profileFilter
             : _logFilterContainer.CreateProfileFilter(logFilter);
 
         return profileFilter switch
         {
+            MessageProfileFilter message => new MessageProfileFilterSettingsViewModel(message, _logContainer),
             LoggersProfileFilter loggers => new LoggersProfileFilterSettingsViewModel(loggers, _logContainer),
             LogLevelsProfileFilter logLevels => new LogLevelsProfileFilterSettingsViewModel(logLevels, _logContainer),
             LogSeveritiesProfileFilter logSeverities => new LogSeverityProfileFilterSettingsViewModel(logSeverities),
             ThreadsProfileFilter threads => new ThreadProfileFilterSettingsViewModel(threads, _logContainer),
+            TimeAgoProfileFilter timeAgo => new TimeAgoProfileFilterSettingsViewModel(timeAgo, _logContainer),
+            TimeRangeProfileFilter timeRange => new TimeRangeProfileFilterSettingsViewModel(timeRange, _logContainer, isNewFilter),
             _ => throw new InvalidOperationException($"{nameof(profileFilter)} is of unexpected type {profileFilter.GetType().Name}")
         };
     }

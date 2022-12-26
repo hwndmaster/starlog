@@ -9,17 +9,56 @@ using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.LogFlow;
 
+/// <summary>
+///   The container of all log files for the selected profile.
+/// </summary>
 public interface ILogContainer : IDisposable
 {
+    /// <summary>
+    ///   Loads a specified <paramref name="profile"/>.
+    /// </summary>
+    /// <param name="profile">The profile to load.</param>
+    /// <returns>A task for awaiting purposes.</returns>
     Task LoadProfileAsync(Profile profile);
+
+    /// <summary>
+    ///   Closes down currently loaded profile.
+    /// </summary>
     void CloseProfile();
+
+    /// <summary>
+    ///   Returns all the files, read so far for the selected profile.
+    /// </summary>
     ImmutableArray<FileRecord> GetFiles();
+
+    /// <summary>
+    ///   Returns all the logs, read so far for the selected profile.
+    /// </summary>
     ImmutableArray<LogRecord> GetLogs();
+
+    /// <summary>
+    ///   Returns all unique loggers, read so far for the selected profile.
+    /// </summary>
     ImmutableArray<LoggerRecord> GetLoggers();
+
+    /// <summary>
+    ///   Returns all unique log levels, read so far for the selected profile.
+    /// </summary>
     ImmutableArray<LogLevelRecord> GetLogLevels();
+
+    /// <summary>
+    ///   Returns all unique threads, read so far for the selected profile.
+    /// </summary>
     ImmutableArray<string> GetThreads();
 
+    /// <summary>
+    ///   An observable to handle an event when a new file is read.
+    /// </summary>
     IObservable<FileRecord> FileAdded { get; }
+
+    /// <summary>
+    ///   An observable to handle an event when a bunch of log records are read.
+    /// </summary>
     IObservable<ImmutableArray<LogRecord>> LogsAdded { get; }
 }
 

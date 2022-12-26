@@ -1,6 +1,6 @@
 using System.Globalization;
-using System.Text;
 using System.Windows.Data;
+using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.ValueConverters;
 
@@ -23,20 +23,9 @@ public sealed class TickRangeToTimeConverter : IMultiValueConverter
             {
                 return DependencyProperty.UnsetValue;
             }
+
             var span = new TimeSpan(ticksTo - ticksFrom);
-
-            StringBuilder sb = new();
-            if (span.TotalMinutes >= 1)
-            {
-                sb.Append(Math.Floor(span.TotalMinutes));
-                sb.Append(" min ");
-            }
-            sb.Append(span.Seconds);
-            sb.Append(" sec ");
-            sb.Append(span.Milliseconds);
-            sb.Append(" ms");
-
-            return sb.ToString();
+            return span.ToDisplayString();
         }
 
         return DependencyProperty.UnsetValue;

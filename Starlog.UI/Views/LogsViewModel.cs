@@ -61,6 +61,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
         // Subscriptions:
         _subscriptions = new(
+            this.WhenChanged(x => x.AutoScroll)
+                .Subscribe(_ =>
+                {
+                    // TODO: Implement autoscroll
+                }),
             _currentProfile.ProfileChanging
                 .Subscribe(_ =>
                 {
@@ -202,6 +207,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public FlowDocument? SelectedLogArtifacts
     {
         get => GetOrDefault<FlowDocument>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool AutoScroll
+    {
+        get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
 

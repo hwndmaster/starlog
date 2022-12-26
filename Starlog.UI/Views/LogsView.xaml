@@ -16,6 +16,8 @@
     <UserControl.Resources>
         <vc:TicksToDateTimeConverter x:Key="TicksToDateTimeConverter" />
         <vc:TickRangeToTimeConverter x:Key="TickRangeToTimeConverter" />
+        <Thickness x:Key="TopBarMargin">10 0 0 0</Thickness>
+        <Thickness x:Key="TopBarMarginHalf">5 0 0 0</Thickness>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -29,6 +31,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -37,12 +40,14 @@
 
             <Button Content="Share" Width="Auto" Padding="5,2" Grid.Column="0"
                     Command="{Binding ShareCommand}" />
-            <ComboBox Margin="10,0,0,0" Grid.Column="1"
+
+            <ComboBox Margin="{StaticResource TopBarMargin}" Grid.Column="1"
                       SelectedValue="{Binding ColorizeBy}" SelectedValuePath="Tag">
                 <ComboBoxItem Tag="L">Colorize by Level</ComboBoxItem>
                 <ComboBoxItem Tag="T">Colorize by Thread</ComboBoxItem>
             </ComboBox>
-            <ComboBox Margin="10,0,0,0" Grid.Column="2"
+
+            <ComboBox Margin="{StaticResource TopBarMargin}" Grid.Column="2"
                       SelectedValue="{Binding GroupBy}" SelectedValuePath="Tag">
                 <ComboBoxItem Tag="">No grouping</ComboBoxItem>
                 <ComboBoxItem Tag="M">Group by messages</ComboBoxItem>
@@ -50,29 +55,39 @@
                 <ComboBoxItem Tag="L">Group by loggers</ComboBoxItem>
             </ComboBox>
 
-            <TextBox Text="{Binding Search.Text}" Margin="10,0,0,0" Grid.Column="3"
+            <mah:ToggleSwitch Grid.Column="3"
+                              Margin="{StaticResource TopBarMargin}"
+                              OnContent="AutoScroll"
+                              OffContent="AutoScroll"
+                              IsOn="{Binding AutoScroll}" />
+
+            <TextBox Text="{Binding Search.Text}" Margin="{StaticResource TopBarMargin}" Grid.Column="4"
                      Width="350"
                      mah:TextBoxHelper.Watermark="Type message search text here and press ENTER."
                      mah:TextBoxHelper.ClearTextButton="True"
                      mah:TextBoxHelper.IsClearTextButtonBehaviorEnabled="False"
                      mah:TextBoxHelper.ButtonCommand="{Binding Search.UseRegexSwitchCommand, Mode=OneWay}">
                 <mah:TextBoxHelper.ButtonContent>
-                    <Image DataContext="{Binding Search.UseRegex}"
-                           atombehaviors:ImageConditionalSourceBehavior.WhenTrue="{DynamicResource Regex32}"
-                           atombehaviors:ImageConditionalSourceBehavior.WhenFalse="{DynamicResource RegexBw32}" />
+                    <Image>
+                        <i:Interaction.Behaviors>
+                            <atombehaviors:ImageConditionalSourceBehavior FlagValue="{Binding Search.UseRegex}"
+                                                                          WhenTrue="{DynamicResource Regex32}"
+                                                                          WhenFalse="{DynamicResource RegexBw32}" />
+                        </i:Interaction.Behaviors>
+                    </Image>
                 </mah:TextBoxHelper.ButtonContent>
                 <i:Interaction.Behaviors>
                     <atombehaviors:FilterBoxBehavior />
                 </i:Interaction.Behaviors>
             </TextBox>
 
-            <mah:RangeSlider Grid.Column="4"
+            <mah:RangeSlider Grid.Column="5"
                              Minimum="{Binding Search.MinDateTimeTicks}"
                              Maximum="{Binding Search.MaxDateTimeTicks}"
                              LowerValue="{Binding Search.SelectedDateTimeFromTicks}"
                              UpperValue="{Binding Search.SelectedDateTimeToTicks}"
                              Orientation="Horizontal"
-                             Margin="10,0,0,0"
+                             Margin="{StaticResource TopBarMargin}"
                              Style="{DynamicResource MahApps.Styles.RangeSlider.Win10}"
                              AutoToolTipPlacement="TopLeft"
                              mah:SliderHelper.EnableMouseWheel="MouseHover">
@@ -112,11 +127,11 @@
                     </DataTemplate>
                 </mah:RangeSlider.AutoToolTipRangeValuesTemplate>
             </mah:RangeSlider>
-            <Button Content="1 min" Grid.Column="5" Margin="4,0,0,0"
+            <Button Content="1 min" Grid.Column="6" Margin="{StaticResource TopBarMarginHalf}"
                     Command="{Binding Search.SetTimeRangeTo1MinuteCommand}" />
-            <Button Content="5 sec" Grid.Column="6" Margin="4,0,0,0"
+            <Button Content="5 sec" Grid.Column="7" Margin="{StaticResource TopBarMarginHalf}"
                     Command="{Binding Search.SetTimeRangeTo5SecondCommand}" />
-            <Button Content="Reset" Grid.Column="7" Margin="4,0,0,0"
+            <Button Content="Reset" Grid.Column="8" Margin="{StaticResource TopBarMarginHalf}"
                     Command="{Binding Search.ResetTimeRangeCommand}" />
         </Grid>
 
@@ -145,7 +160,7 @@
 
             <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" />
 
-            <DataGrid Grid.Row="0" Grid.Column="2" Margin="10"
+            <DataGrid Grid.Row="0" Grid.Column="2"
                     autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
                     autogrid:Properties.ItemsSource="{Binding LogItemsView.View}"
                     IsReadOnly="True"
