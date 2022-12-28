@@ -15,4 +15,5 @@ public sealed record LogRecordSearchContext(
 
 public sealed record LogRecordFilterContext(
     HashSet<string> FilesSelected,
-    ImmutableArray<ProfileFilterBase> FiltersSelected);
+    ImmutableArray<ProfileFilterBase> FiltersSelected,
+    bool ShowBookmarked);

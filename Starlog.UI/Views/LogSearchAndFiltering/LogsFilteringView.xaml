@@ -54,6 +54,7 @@
                             <behaviors:TreeViewItemWithDockPanelStretchBehavior />
                             <atombehaviors:TreeViewItemModifiableBehavior />
                             <behaviors:TreeViewItemPinnableBehavior />
+                            <behaviors:TreeViewItemBookmarkableBehavior />
                         </i:Interaction.Behaviors>
                     </DockPanel>
                 </HierarchicalDataTemplate>

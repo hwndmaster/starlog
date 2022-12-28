@@ -15,6 +15,7 @@ namespace Genius.Starlog.UI.Views;
 
 public interface ILogsViewModel : ITabViewModel, IDisposable
 {
+    void UnBookmarkAll();
 }
 
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
@@ -128,6 +129,14 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         );
     }
 
+    public void UnBookmarkAll()
+    {
+        foreach (var item in LogItems)
+        {
+            item.IsBookmarked = false;
+        }
+    }
+
     public void Dispose()
     {
         _subscriptions.Dispose();
@@ -153,6 +162,13 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private void OnLogItemsViewFilter(object sender, FilterEventArgs e)
     {
         var viewModel = (ILogItemViewModel)e.Item;
+
+        if (_filterContext?.Filter.ShowBookmarked == true)
+        {
+            e.Accepted = viewModel.IsBookmarked;
+            return;
+        }
+
         e.Accepted = _logRecordMatcher.IsMatch(_filterContext, viewModel.Record);
     }
 

@@ -1,26 +1,22 @@
 using System.Windows.Controls;
 using System.Windows.Input;
+using Genius.Starlog.UI.Views;
 using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;
 
-public sealed class TreeViewItemPinnableBehavior : Behavior<FrameworkElement>
+public sealed class TreeViewItemBookmarkableBehavior : Behavior<FrameworkElement>
 {
     private TreeViewItem? _treeViewItem;
-    private IHasPinnedFlag? _vm;
+    private ILogsViewModel? _vm;
 
     protected override void OnAttached()
     {
         _treeViewItem = AssociatedObject.FindVisualParent<TreeViewItem>().NotNull();
-        _vm = _treeViewItem.DataContext as IHasPinnedFlag;
+        var logsView = AssociatedObject.FindVisualParent<LogsView>().NotNull();
+        _vm = logsView.DataContext as ILogsViewModel;
 
         if (_vm is null)
-        {
-            return;
-        }
-
-        if (_vm is IHasCanPinFlag canPin
-            && !canPin.CanPin)
         {
             return;
         }
@@ -50,16 +46,16 @@ public sealed class TreeViewItemPinnableBehavior : Behavior<FrameworkElement>
 
         _treeViewItem.ContextMenu.Items.Add(new MenuItem
         {
-            Header = "Pin/Unpin",
-            Command = new ActionCommand(_ => _vm!.IsPinned = !_vm!.IsPinned)
+            Header = "Remove all bookmarks",
+            Command = new ActionCommand(_ => _vm.UnBookmarkAll())
         });
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
-        if (_vm is not null && e.Key == Key.Space)
+        if (_vm is not null && (e.Key == Key.Delete || e.Key == Key.Escape))
         {
-            _vm.IsPinned = !_vm.IsPinned;
+            _vm.UnBookmarkAll();
             e.Handled = true;
         }
     }

@@ -10,6 +10,7 @@ public interface ILogItemViewModel : IViewModel
     bool ColorizeByThread { get; set; }
     string Logger { get; }
     string Message { get; }
+    bool IsBookmarked { get; set; }
     FlowDocument Artifacts { get; }
 }
 
@@ -40,6 +41,12 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
     {
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value, (_, __) => OnPropertyChanged(string.Empty));
+    }
+
+    public bool IsBookmarked
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
     }
 
     public FlowDocument Artifacts => _artifactsLazy.Value;

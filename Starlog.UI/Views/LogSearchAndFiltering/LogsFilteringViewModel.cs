@@ -32,6 +32,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     private readonly LogFilterCategoryViewModel<LogFileViewModel> _filesCategory = new("Files", "FolderFiles32", sort: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _quickFiltersCategory = new("Quick filters", "FolderDown32", expanded: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _userFiltersCategory = new("User filters", "FolderFavs32", expanded: true, canAddChildren: true);
+    private readonly LogFilterCategoryViewModel<LogFilterViewModel> _bookmarkedCategory = new("Bookmarked", "FolderFavs32");
     private readonly CompositeDisposable _subscriptions;
     private readonly ISubject<Unit> _filterChanged = new Subject<Unit>();
     private bool _suspendUpdate = false;
@@ -65,6 +66,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         FilterCategories.Add(_filesCategory);
         FilterCategories.Add(_quickFiltersCategory);
         FilterCategories.Add(_userFiltersCategory);
+        FilterCategories.Add(_bookmarkedCategory);
 
         // Subscriptions:
         _subscriptions = new(
@@ -127,6 +129,11 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
     public LogRecordFilterContext CreateContext()
     {
+        if (SelectedFilters.Any(x => x == _bookmarkedCategory))
+        {
+            return new(new HashSet<string>(0), ImmutableArray<ProfileFilterBase>.Empty, ShowBookmarked: true);
+        }
+
         var filters = SelectedFilters
             .Union(_filesCategory.CategoryItems.Where(x => x.IsPinned))
             .Union(_quickFiltersCategory.CategoryItems.Where(x => x.IsPinned))
@@ -140,7 +147,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
             .Select(x => x.Filter)
             .ToImmutableArray();
 
-        return new(filesSelected, filtersSelected);
+        return new(filesSelected, filtersSelected, ShowBookmarked: false);
     }
 
     public void Dispose()
