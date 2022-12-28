@@ -166,7 +166,8 @@
                     IsReadOnly="True"
                     VirtualizingPanel.IsVirtualizing="True"
                     VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                    EnableRowVirtualization="True">
+                    EnableRowVirtualization="True"
+                    EnableColumnVirtualization="False">
                 <DataGrid.GroupStyle>
                     <GroupStyle>
                         <GroupStyle.ContainerStyle>

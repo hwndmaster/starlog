@@ -15,6 +15,7 @@ public sealed class MessageProfileFilterSettingsViewModel : ProfileFilterSetting
         // Members initialization:
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Pattern)));
         AddValidationRule(new IsRegexValidationRule(nameof(Pattern)), shouldValidatePropertyName: nameof(IsRegex));
+        ResetChangesInternal();
 
         // Subscriptions:
         this.WhenChanged(x => x.Pattern)
@@ -39,25 +40,25 @@ public sealed class MessageProfileFilterSettingsViewModel : ProfileFilterSetting
 
     public string Pattern
     {
-        get => GetOrDefault(_profileFilter.Pattern);
+        get => GetOrDefault<string>();
         set => RaiseAndSetIfChanged(value);
     }
 
     public bool IsRegex
     {
-        get => GetOrDefault(_profileFilter.IsRegex);
+        get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
 
     public bool MatchCasing
     {
-        get => GetOrDefault(_profileFilter.MatchCasing);
+        get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
 
     public bool IncludeArtifacts
     {
-        get => GetOrDefault(_profileFilter.IncludeArtifacts);
+        get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
 }

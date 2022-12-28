@@ -48,7 +48,8 @@
             <TextBox Text="{Binding FilterSettings.Name}" />
         </DockPanel>
         <ContentControl Content="{Binding FilterSettings}"
-                        Validation.ErrorTemplate="{x:Null}" />
+                        Validation.ErrorTemplate="{x:Null}"
+                        Focusable="False" />
         <DockPanel>
             <Grid>
                 <Grid.ColumnDefinitions>
