@@ -36,7 +36,7 @@ public sealed class TickRangeToTimeConverterTests
         var result = _sut.Convert(values, typeof(object), null!, null!) as string;
 
         // Verify
-        Assert.Equal("8 min 40 sec 0 ms", result);
+        Assert.Equal("8 min 40 sec", result);
     }
 
     [Fact]
