@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.UI.Views.ProfileFilters;
 
 namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;

@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
-using Genius.Atom.UI.Forms.WpfBuilders;
+using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.AutoGridBuilders;
@@ -21,6 +21,7 @@ public sealed class LogItemAutoGridBuilder : IAutoGridBuilder
             .WithColumns(columns =>
                 columns
                     .AddToggleButton(x => x.IsBookmarked, x => x
+                        .WithDisplayName(string.Empty)
                         .WithIcons("BookmarkOn32", "BookmarkOff32")
                         .WithStyle(new StylingRecord(Padding: new Thickness(2))))
                     .AddText(x => x.DateTime, x => x.WithDisplayFormat("yyyy-MM-dd HH:mm:ss.fff"))

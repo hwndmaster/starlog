@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Genius.Atom.UI.Forms.Wpf;
 
 namespace Genius.Starlog.UI.Views;
 

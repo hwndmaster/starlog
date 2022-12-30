@@ -1,6 +1,7 @@
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xaml.Behaviors;
+using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Views;
 

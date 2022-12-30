@@ -45,6 +45,7 @@
             <i:Interaction.Behaviors>
                 <autogrid:AttachingBehavior />
                 <behaviors:ProfileDragDropBehavior />
+                <behaviors:ProfileContextMenuBehavior />
             </i:Interaction.Behaviors>
         </DataGrid>
     </Grid>

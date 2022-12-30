@@ -51,7 +51,10 @@
                       SelectedValue="{Binding GroupBy}" SelectedValuePath="Tag">
                 <ComboBoxItem Tag="">No grouping</ComboBoxItem>
                 <ComboBoxItem Tag="M">Group by messages</ComboBoxItem>
-                <ComboBoxItem Tag="MF">Group by messages (fuzzy)</ComboBoxItem>
+                <!--
+                    TODO: To be implemented
+                    <ComboBoxItem Tag="MF">Group by messages (fuzzy)</ComboBoxItem>
+                -->
                 <ComboBoxItem Tag="L">Group by loggers</ComboBoxItem>
             </ComboBox>
 

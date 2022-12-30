@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
-using Genius.Atom.UI.Forms.WpfBuilders;
+using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.AutoGridBuilders;
@@ -23,6 +23,7 @@ public sealed class ProfileAutoGridBuilder : IAutoGridBuilder
                     .AddText(x => x.Name, x => x.Filterable())
                     .AddText(x => x.Path)
                     .AddCommand(x => x.LoadProfileCommand, x => x
+                        .WithDisplayName(string.Empty)
                         .WithIcon("Play32")
                         .WithStyle(new StylingRecord(Padding: new Thickness(0))))
             )

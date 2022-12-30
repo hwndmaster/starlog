@@ -15,6 +15,7 @@ public interface IProfilesViewModel : ITabViewModel, IDisposable
     bool IsAddEditProfileVisible { get; set; }
     IProfileViewModel? EditingProfile { get; }
     ICommand OpenAddProfileFlyoutCommand { get; }
+    ICommand OpenEditProfileFlyoutCommand { get; }
 }
 
 internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
