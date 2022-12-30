@@ -91,7 +91,6 @@ internal sealed class ViewModelFactory : IViewModelFactory
             MessageProfileFilter message => new MessageProfileFilterSettingsViewModel(message, _logContainer),
             LoggersProfileFilter loggers => new LoggersProfileFilterSettingsViewModel(loggers, _logContainer),
             LogLevelsProfileFilter logLevels => new LogLevelsProfileFilterSettingsViewModel(logLevels, _logContainer),
-            LogSeveritiesProfileFilter logSeverities => new LogSeverityProfileFilterSettingsViewModel(logSeverities),
             ThreadsProfileFilter threads => new ThreadProfileFilterSettingsViewModel(threads, _logContainer),
             TimeAgoProfileFilter timeAgo => new TimeAgoProfileFilterSettingsViewModel(timeAgo, _logContainer),
             TimeRangeProfileFilter timeRange => new TimeRangeProfileFilterSettingsViewModel(timeRange, _logContainer, isNewFilter),

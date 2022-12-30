@@ -35,9 +35,9 @@ public sealed class LoggersProfileFilterSettingsViewModel : ProfileFilterSetting
     protected override void ResetChangesInternal()
     {
         SelectedLoggers.Clear();
-        foreach (var severity in _profileFilter.LoggerNames)
+        foreach (var loggerName in _profileFilter.LoggerNames)
         {
-            SelectedLoggers.Add(severity);
+            SelectedLoggers.Add(loggerName);
         }
 
         Exclude = _profileFilter.Exclude;

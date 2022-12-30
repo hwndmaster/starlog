@@ -75,7 +75,7 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
             var logLevelHash = level.GetHashCode();
             if (!logLevels.TryGetValue(logLevelHash, out var logLevelRecord))
             {
-                logLevelRecord = new LogLevelRecord(logLevelHash, level, DetermineLogSeverity(level));
+                logLevelRecord = new LogLevelRecord(logLevelHash, level);
                 logLevels.Add(logLevelHash, logLevelRecord);
             }
 
@@ -98,18 +98,6 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
 
             lastRecordArtifacts.Clear();
         }
-    }
-
-    private static LogSeverity DetermineLogSeverity(string logLevel)
-    {
-        return logLevel.ToLowerInvariant() switch
-        {
-            "debug" or "trace" or "statistics" => LogSeverity.Minor,
-            "warn" or "warning" => LogSeverity.Warning,
-            "err" or "error" or "exception" => LogSeverity.Major,
-            "fatal" => LogSeverity.Critical,
-            _ => LogSeverity.Normal
-        };
     }
 
     private static async Task<FileArtifacts> ReadFileArtifactsAsync(Profile profile, StreamReader reader)

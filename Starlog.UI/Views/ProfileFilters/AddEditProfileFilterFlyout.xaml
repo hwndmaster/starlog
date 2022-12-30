@@ -14,9 +14,6 @@
         <DataTemplate DataType="{x:Type local:MessageProfileFilterSettingsViewModel}">
             <local:MessageProfileFilterView DataContext="{Binding .}" />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type local:LogSeverityProfileFilterSettingsViewModel}">
-            <local:LogSeverityProfileFilterView DataContext="{Binding .}" />
-        </DataTemplate>
         <DataTemplate DataType="{x:Type local:LoggersProfileFilterSettingsViewModel}">
             <local:LoggersProfileFilterView DataContext="{Binding .}" />
         </DataTemplate>

@@ -38,7 +38,6 @@ public static class Module
         services.AddTransient<IFilterProcessor, MessageFilterProcessor>();
         services.AddTransient<IFilterProcessor, LoggersFilterProcessor>();
         services.AddTransient<IFilterProcessor, LogLevelsFilterProcessor>();
-        services.AddTransient<IFilterProcessor, LogSeveritiesFilterProcessor>();
         services.AddTransient<IFilterProcessor, ThreadsFilterProcessor>();
         services.AddTransient<IFilterProcessor, TimeAgoFilterProcessor>();
         services.AddTransient<IFilterProcessor, TimeRangeFilterProcessor>();
@@ -74,8 +73,6 @@ public static class Module
             new LogFilter(new Guid("ad1398bc-a17e-4584-b7fa-d82fa547b5fe"), "Logger filter"));
         logFilterContainer.RegisterLogFilter<LogLevelsProfileFilter, LogLevelsFilterProcessor>(
             new LogFilter(new Guid("bd1ffa05-8534-4555-ab17-92fd3f53fe13"), "Level filter"));
-        logFilterContainer.RegisterLogFilter<LogSeveritiesProfileFilter, LogSeveritiesFilterProcessor>(
-            new LogFilter(new Guid("1123d366-5aa1-4e00-b16f-7832b0880ee8"), "Severity filter"));
         logFilterContainer.RegisterLogFilter<ThreadsProfileFilter, ThreadsFilterProcessor>(
             new LogFilter(new Guid("11235ba9-cf84-413c-b094-d2c2c6672f4f"), "Thread filter"));
         logFilterContainer.RegisterLogFilter<TimeAgoProfileFilter, TimeAgoFilterProcessor>(
@@ -93,7 +90,6 @@ public static class Module
         typeDiscriminators.AddMapping<MessageProfileFilter>("msg-profile-filter");
         typeDiscriminators.AddMapping<LoggersProfileFilter>("loggers-profile-filter");
         typeDiscriminators.AddMapping<LogLevelsProfileFilter>("loglevels-profile-filter");
-        typeDiscriminators.AddMapping<LogSeveritiesProfileFilter>("logseverities-profile-filter");
         typeDiscriminators.AddMapping<ThreadsProfileFilter>("threads-profile-filter");
         typeDiscriminators.AddMapping<TimeAgoProfileFilter>("timeago-profile-filter");
         typeDiscriminators.AddMapping<TimeRangeProfileFilter>("timerange-profile-filter");

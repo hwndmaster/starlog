@@ -40,9 +40,9 @@ public sealed class LogLevelsProfileFilterSettingsViewModel : ProfileFilterSetti
     protected override void ResetChangesInternal()
     {
         SelectedLogLevels.Clear();
-        foreach (var severity in _profileFilter.LogLevels)
+        foreach (var logLevel in _profileFilter.LogLevels)
         {
-            SelectedLogLevels.Add(severity);
+            SelectedLogLevels.Add(logLevel);
         }
 
         Exclude = _profileFilter.Exclude;

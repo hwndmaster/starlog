@@ -1,12 +1,11 @@
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
-using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.ValueConverters;
 
-public sealed class LogSeverityToColorConverter : IValueConverter
+public sealed class LogLevelToColorConverter : IValueConverter
 {
     internal static readonly Color ColorForMinor = Colors.DimGray;
     internal static readonly Color ColorForWarning = Colors.Yellow;
@@ -15,7 +14,7 @@ public sealed class LogSeverityToColorConverter : IValueConverter
 
     private readonly Color _standardColor;
 
-    public LogSeverityToColorConverter(FrameworkElement anyElement)
+    public LogLevelToColorConverter(FrameworkElement anyElement)
     {
         _standardColor = (Color)anyElement.FindResource("MahApps.Colors.ThemeForeground");
     }
@@ -27,13 +26,13 @@ public sealed class LogSeverityToColorConverter : IValueConverter
             throw new InvalidOperationException("Expected a view model of ILogItemViewModel type.");
         }
 
-        var color = vm.Record.Level.Severity switch
+        var color = vm.Record.Level.Name.ToLowerInvariant() switch
         {
-            LogSeverity.Minor => ColorForMinor,
-            LogSeverity.Warning => ColorForWarning,
-            LogSeverity.Major => ColorForMajor,
-            LogSeverity.Critical => ColorForCritical,
-            _ => _standardColor,
+            "debug" or "trace" or "statistics" => ColorForMinor,
+            "warn" or "warning" => ColorForWarning,
+            "err" or "error" or "exception" => ColorForMajor,
+            "fatal" => ColorForCritical,
+            _ => _standardColor
         };
 
         return new SolidColorBrush(color);

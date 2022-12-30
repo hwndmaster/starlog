@@ -2,13 +2,12 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using Genius.Starlog.Core.LogFlow;
-using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.ValueConverters;
 using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.Tests.ValueConverters;
 
-public sealed class LogSeverityToColorConverterTests
+public sealed class LogLevelToColorConverterTests
 {
     private static readonly Color _standardColor = Colors.LightGoldenrodYellow;
     private readonly IFixture _fixture = new Fixture();
@@ -16,38 +15,43 @@ public sealed class LogSeverityToColorConverterTests
     [StaFact]
     public void Convert_WhenLogLevelSeverityIsMinor_ThenCorrectColorReturned()
     {
-        TestForSeverity(LogSeverity.Minor, LogSeverityToColorConverter.ColorForMinor);
+        TestForLogLevel("debug", LogLevelToColorConverter.ColorForMinor);
+        TestForLogLevel("trace", LogLevelToColorConverter.ColorForMinor);
+        TestForLogLevel("statistics", LogLevelToColorConverter.ColorForMinor);
     }
 
     [StaFact]
     public void Convert_WhenLogLevelSeverityIsWarning_ThenCorrectColorReturned()
     {
-        TestForSeverity(LogSeverity.Warning, LogSeverityToColorConverter.ColorForWarning);
+        TestForLogLevel("warn", LogLevelToColorConverter.ColorForWarning);
+        TestForLogLevel("warning", LogLevelToColorConverter.ColorForWarning);
     }
 
     [StaFact]
     public void Convert_WhenLogLevelSeverityIsMajor_ThenCorrectColorReturned()
     {
-        TestForSeverity(LogSeverity.Major, LogSeverityToColorConverter.ColorForMajor);
+        TestForLogLevel("err", LogLevelToColorConverter.ColorForMajor);
+        TestForLogLevel("error", LogLevelToColorConverter.ColorForMajor);
+        TestForLogLevel("exception", LogLevelToColorConverter.ColorForMajor);
     }
 
     [StaFact]
     public void Convert_WhenLogLevelSeverityIsCritical_ThenCorrectColorReturned()
     {
-        TestForSeverity(LogSeverity.Critical, LogSeverityToColorConverter.ColorForCritical);
+        TestForLogLevel("fatal", LogLevelToColorConverter.ColorForCritical);
     }
 
     [StaFact]
     public void Convert_WhenLogLevelSeverityIsUndefined_ThenStandardColorReturned()
     {
-        TestForSeverity((LogSeverity)9999, _standardColor);
+        TestForLogLevel("9999", _standardColor);
     }
 
-    private void TestForSeverity(LogSeverity severity, Color color)
+    private void TestForLogLevel(string logLevel, Color color)
     {
         // Arrange
         var dummy = _fixture.Create<LogRecord>();
-        var logRecord = dummy with { Level = dummy.Level with { Severity = severity } };
+        var logRecord = dummy with { Level = dummy.Level with { Name = logLevel } };
         var value = Mock.Of<ILogItemViewModel>(x => x.Record == logRecord);
         var sut = CreateSystemUnderTest();
 
@@ -59,7 +63,7 @@ public sealed class LogSeverityToColorConverterTests
         Assert.Equal(color, ((SolidColorBrush)result).Color);
     }
 
-    private static LogSeverityToColorConverter CreateSystemUnderTest()
+    private static LogLevelToColorConverter CreateSystemUnderTest()
     {
         var element = new FrameworkElement();
         element.Resources.Add("MahApps.Colors.ThemeForeground", _standardColor);
