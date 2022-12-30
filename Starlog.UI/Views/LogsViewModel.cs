@@ -8,6 +8,7 @@ using Genius.Starlog.Core;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.UI.AutoGridBuilders;
+using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views.LogSearchAndFiltering;
 
@@ -37,8 +38,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         ILogArtifactsFormatter artifactsFormatter,
         ILogsFilteringViewModel logsFilteringViewModel,
         ILogsSearchViewModel logsSearchViewModel,
+        IMainController controller,
         IUiDispatcher uiDispatcher)
     {
+        Guard.NotNull(controller);
+
         // Dependencies:
         _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
@@ -54,11 +58,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         LogItemsView.Filter += OnLogItemsViewFilter;
 
         // Actions:
-        ShareCommand = new ActionCommand(_ =>
-        {
-            // TODO: Implement sharing
-            throw new NotImplementedException();
-        });
+        ShareCommand = new ActionCommand(async _ =>
+            await controller.ShowShareViewAsync(SelectedLogItems));
 
         // Subscriptions:
         _subscriptions = new(

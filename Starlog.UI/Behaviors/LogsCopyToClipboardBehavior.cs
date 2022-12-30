@@ -1,6 +1,6 @@
-using System.Text;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using Microsoft.Xaml.Behaviors;
 
@@ -15,6 +15,13 @@ public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
         AssociatedObject.PreviewKeyDown += OnPreviewKeyDown;
     }
 
+    protected override void OnDetaching()
+    {
+        AssociatedObject.PreviewKeyDown -= OnPreviewKeyDown;
+
+        base.OnDetaching();
+    }
+
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.C || !Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
@@ -22,43 +29,10 @@ public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
             return;
         }
 
-        var itemGroups = AssociatedObject.SelectedItems.OfType<LogItemViewModel>()
-            .GroupBy(x => x.File);
-        StringBuilder sb = new();
-        foreach (var itemGroup in itemGroups)
-        {
-            if (sb.Length > 0)
-            {
-                sb.AppendLine();
-                sb.AppendLine("---------------------------------------");
-                sb.AppendLine();
-            }
+        var content = CopyToClipboardHelper.CreateLogsStringForClipboard(
+            AssociatedObject.SelectedItems.OfType<ILogItemViewModel>());
+        CopyToClipboardHelper.CopyToClipboard(content);
 
-            sb.Append("File: ").AppendLine(itemGroup.Key);
-            foreach (var fileArtifact in itemGroup.First().Record.File.Artifacts?.Artifacts ?? Array.Empty<string>())
-            {
-                sb.AppendLine(fileArtifact);
-            }
-
-            bool addSpace = false;
-            foreach (var item in itemGroup)
-            {
-                if (addSpace)
-                {
-                    sb.AppendLine();
-                }
-                var d = item.DateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                sb.AppendLine($"{d}\t\t{item.Level}\t{item.Logger}\tThread {item.Thread}\t{item.Message}");
-
-                if (!string.IsNullOrEmpty(item.Record.LogArtifacts))
-                {
-                    sb.AppendLine(item.Record.LogArtifacts);
-                    addSpace = true;
-                }
-            }
-        }
-
-        Clipboard.SetText(sb.ToString());
         e.Handled = true;
     }
 }
