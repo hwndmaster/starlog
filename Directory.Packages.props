@@ -15,11 +15,11 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
 
     <!-- Atom Framework -->
-    <PackageVersion Include="Genius.Atom.Data" Version="0.0.20" />
-    <PackageVersion Include="Genius.Atom.Infrastructure" Version="0.0.20" />
-    <PackageVersion Include="Genius.Atom.Infrastructure.TestingUtil" Version="0.0.20" />
-    <PackageVersion Include="Genius.Atom.UI.Forms" Version="0.0.20" />
-    <PackageVersion Include="Genius.Atom.UI.Forms.TestingUtil" Version="0.0.20" />
+    <PackageVersion Include="Genius.Atom.Data" Version="0.0.21" />
+    <PackageVersion Include="Genius.Atom.Infrastructure" Version="0.0.21" />
+    <PackageVersion Include="Genius.Atom.Infrastructure.TestingUtil" Version="0.0.21" />
+    <PackageVersion Include="Genius.Atom.UI.Forms" Version="0.0.21" />
+    <PackageVersion Include="Genius.Atom.UI.Forms.TestingUtil" Version="0.0.21" />
 
     <!-- WPF/UI related dependencies -->
     <PackageVersion Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />

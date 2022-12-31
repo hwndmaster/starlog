@@ -4,6 +4,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
@@ -28,7 +29,7 @@ public sealed class ThreadProfileFilterSettingsViewModel : ProfileFilterSettings
             .Subscribe(_ =>
             {
                 Name = SelectedThreads.Any()
-                    ? LimitNameLength((Exclude ? "Not " : string.Empty) + "Threads: " + string.Join(", ", SelectedThreads))
+                    ? LogFilterHelpers.ProposeNameForStringList("Threads", SelectedThreads, Exclude)
                     : profileFilter.LogFilter.Name;
             });
     }

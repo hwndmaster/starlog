@@ -17,6 +17,7 @@ namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 public interface ILogsFilteringViewModel : IDisposable
 {
     LogRecordFilterContext CreateContext();
+    void ShowFlyoutForAddingNewFilter(ProfileFilterBase? profileFilter);
 
     IObservable<Unit> FilterChanged { get; }
 }
@@ -101,25 +102,8 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                 .Where(_ => !_suspendUpdate)
                 .Subscribe(x => AddFiles(new [] { x })),
 
-            _userFiltersCategory.AddChildCommand.Executed.Subscribe(_ =>
-            {
-                IsAddEditProfileFilterVisible = !IsAddEditProfileFilterVisible;
-                if (IsAddEditProfileFilterVisible)
-                {
-                    EditingProfileFilter = vmFactory.CreateProfileFilter(null);
-                    EditingProfileFilter.CommitFilterCommand
-                        .OnOneTimeExecutedBooleanAction()
-                        .Subscribe(commandResult => {
-                            if (!commandResult || EditingProfileFilter.ProfileFilter is null)
-                                return;
-                            var vm = AddUserFilters(new [] { EditingProfileFilter.ProfileFilter }).First();
-                            IsAddEditProfileFilterVisible = false;
-                            SelectedFilters.Clear();
-                            SelectedFilters.Add(vm);
-                        })
-                        .DisposeWith(_subscriptions!);
-                }
-            }),
+            _userFiltersCategory.AddChildCommand.Executed
+                .Subscribe(_ => ShowFlyoutForAddingNewFilter(null)),
 
             SelectedFilters.WhenCollectionChanged()
                 .Throttle(TimeSpan.FromMilliseconds(50))
@@ -153,6 +137,26 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     public void Dispose()
     {
         _subscriptions.Dispose();
+    }
+
+    public void ShowFlyoutForAddingNewFilter(ProfileFilterBase? profileFilter)
+    {
+        IsAddEditProfileFilterVisible = !IsAddEditProfileFilterVisible;
+        if (IsAddEditProfileFilterVisible)
+        {
+            EditingProfileFilter = _vmFactory.CreateProfileFilter(profileFilter);
+            EditingProfileFilter.CommitFilterCommand
+                .OnOneTimeExecutedBooleanAction()
+                .Subscribe(commandResult => {
+                    if (!commandResult || EditingProfileFilter.ProfileFilter is null)
+                        return;
+                    var vm = AddUserFilters(new [] { EditingProfileFilter.ProfileFilter }).First();
+                    IsAddEditProfileFilterVisible = false;
+                    SelectedFilters.Clear();
+                    SelectedFilters.Add(vm);
+                })
+                .DisposeWith(_subscriptions!);
+        }
     }
 
     private static void SubscribeToPinningEvents(IEnumerable<LogFilterViewModel> items, Action handler)

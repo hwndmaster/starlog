@@ -17,6 +17,9 @@ namespace Genius.Starlog.UI.Views;
 public interface ILogsViewModel : ITabViewModel, IDisposable
 {
     void UnBookmarkAll();
+
+    ILogsFilteringViewModel Filtering { get; }
+    ObservableCollection<ILogItemViewModel> SelectedLogItems { get; }
 }
 
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel

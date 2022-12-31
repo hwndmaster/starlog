@@ -3,6 +3,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
@@ -27,7 +28,7 @@ public sealed class LoggersProfileFilterSettingsViewModel : ProfileFilterSetting
             .Subscribe(_ =>
         {
             Name = SelectedLoggers.Any()
-                ? LimitNameLength((Exclude ? "Not " : string.Empty) + "Loggers: " + string.Join(", ", SelectedLoggers))
+                ? LogFilterHelpers.ProposeNameForStringList("Loggers", SelectedLoggers, Exclude)
                 : profileFilter.LogFilter.Name;
         });
     }

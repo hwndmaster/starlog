@@ -195,6 +195,7 @@
                     <behaviors:LogColorizeBehavior />
                     <behaviors:LogsCopyToClipboardBehavior />
                     <atombehaviors:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
+                    <behaviors:LogsSmartFiltersContextMenuBehavior />
                 </i:Interaction.Behaviors>
             </DataGrid>
 

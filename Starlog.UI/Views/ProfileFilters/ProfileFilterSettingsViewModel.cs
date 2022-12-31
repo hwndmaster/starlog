@@ -15,8 +15,6 @@ public interface IProfileFilterSettingsViewModel : IViewModel
 public abstract class ProfileFilterSettingsViewModel<TProfileFilter> : ViewModelBase, IProfileFilterSettingsViewModel
     where TProfileFilter : ProfileFilterBase
 {
-    private const int MaxNameLength = 50;
-
     protected TProfileFilter _profileFilter;
 
     protected ProfileFilterSettingsViewModel(TProfileFilter profileFilter)
@@ -42,16 +40,6 @@ public abstract class ProfileFilterSettingsViewModel<TProfileFilter> : ViewModel
 
     protected abstract void CommitChangesInternal();
     protected abstract void ResetChangesInternal();
-
-    protected static string LimitNameLength(string name)
-    {
-        if (name.Length > MaxNameLength)
-        {
-            return name[..(MaxNameLength - 1)] + "…";
-        }
-
-        return name;
-    }
 
     public ProfileFilterBase ProfileFilter => _profileFilter;
 

@@ -1,6 +1,7 @@
 using System.Reactive.Linq;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Validation;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
@@ -28,10 +29,7 @@ public sealed class TimeRangeProfileFilterSettingsViewModel : ProfileFilterSetti
 
         // Subscriptions:
         this.WhenAnyChanged(x => x.TimeFrom, x => x.TimeTo)
-            .Subscribe(_ =>
-                Name = "Time from " + TimeFrom.ToString() + " to " + (
-                    TimeTo.Date == TimeFrom.Date ? TimeTo.ToLongTimeString() : TimeTo.ToString()
-                ));
+            .Subscribe(_ => Name = LogFilterHelpers.ProposeNameForTimeRange(TimeFrom, TimeTo));
     }
 
     protected override void CommitChangesInternal()

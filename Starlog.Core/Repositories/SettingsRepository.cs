@@ -22,7 +22,7 @@ internal sealed class SettingsRepository : ISettingsRepository
     private readonly IJsonPersister _persister;
     private readonly ILogger<SettingsRepository> _logger;
 
-    private const string FILENAME = @".\settings.json";
+    private const string FILENAME = @".\Data\Settings.json";
     private Settings _settings;
 
     public SettingsRepository(IEventBus eventBus, IJsonPersister persister, ILogger<SettingsRepository> logger)

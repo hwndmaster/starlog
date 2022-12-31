@@ -2,6 +2,7 @@ using System.Reactive.Linq;
 using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
@@ -19,7 +20,7 @@ public sealed class MessageProfileFilterSettingsViewModel : ProfileFilterSetting
 
         // Subscriptions:
         this.WhenChanged(x => x.Pattern)
-            .Subscribe(_ => Name = LimitNameLength("Contains '" + Pattern + "'"));
+            .Subscribe(_ => Name = LogFilterHelpers.LimitNameLength("Contains '" + Pattern + "'"));
     }
 
     protected override void CommitChangesInternal()
