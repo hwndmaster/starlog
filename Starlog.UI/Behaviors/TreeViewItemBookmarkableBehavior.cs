@@ -2,6 +2,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.UI.Views;
+using Genius.Starlog.UI.Views.LogSearchAndFiltering;
 using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;
@@ -9,18 +10,19 @@ namespace Genius.Starlog.UI.Behaviors;
 public sealed class TreeViewItemBookmarkableBehavior : Behavior<FrameworkElement>
 {
     private TreeViewItem? _treeViewItem;
-    private ILogsViewModel? _vm;
+    private ILogsViewModel? _logsVm;
 
     protected override void OnAttached()
     {
         _treeViewItem = AssociatedObject.FindVisualParent<TreeViewItem>().NotNull();
         var logsView = AssociatedObject.FindVisualParent<LogsView>().NotNull();
-        _vm = logsView.DataContext as ILogsViewModel;
+        _logsVm = logsView.DataContext as ILogsViewModel;
 
-        if (_vm is null)
-        {
+        if (_logsVm is null)
             return;
-        }
+
+        if (_treeViewItem.DataContext is not LogFilterBookmarkedCategoryViewModel)
+            return;
 
         InitializeContextMenu();
 
@@ -38,7 +40,7 @@ public sealed class TreeViewItemBookmarkableBehavior : Behavior<FrameworkElement
 
     private void InitializeContextMenu()
     {
-        if (_vm is null)
+        if (_logsVm is null)
         {
             return;
         }
@@ -48,15 +50,16 @@ public sealed class TreeViewItemBookmarkableBehavior : Behavior<FrameworkElement
         _treeViewItem.ContextMenu.Items.Add(new MenuItem
         {
             Header = "Remove all bookmarks",
-            Command = new ActionCommand(_ => _vm.UnBookmarkAll())
+            Command = new ActionCommand(_ => _logsVm.UnBookmarkAll())
         });
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
-        if (_vm is not null && (e.Key == Key.Delete || e.Key == Key.Escape))
+        if (_logsVm is not null && (e.Key == Key.Delete || e.Key == Key.Escape))
         {
-            _vm.UnBookmarkAll();
+            _logsVm.UnBookmarkAll();
+
             e.Handled = true;
         }
     }

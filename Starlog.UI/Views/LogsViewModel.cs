@@ -152,6 +152,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         {
             item.IsBookmarked = false;
         }
+
+        Filtering.DropBookmarkedFilter();
     }
 
     public void Dispose()

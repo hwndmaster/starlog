@@ -72,17 +72,16 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         CommitProfileCommand = new ActionCommand(_ => CommitProfile());
         LoadProfileCommand = new ActionCommand(async _ => {
             _controller.SetBusy(true);
-            try
+            await Task.Delay(10);
+            await Task.Run(async() =>
             {
                 Guard.NotNull(_profile);
                 await _logContainer.LoadProfileAsync(_profile).ConfigureAwait(false);
                 await _commandBus.SendAsync(new SettingsUpdateAutoLoadingProfileCommand(_profile.Id));
                 _controller.ShowLogsTab();
-            }
-            finally
-            {
-                _controller.SetBusy(false);
-            }
+            })
+            .ContinueWith(_ => _controller.SetBusy(false), TaskContinuationOptions.None)
+            .ConfigureAwait(false);
         });
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profile is not null);
     }

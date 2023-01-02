@@ -18,6 +18,7 @@ public interface ILogsFilteringViewModel : IDisposable
 {
     LogRecordFilterContext CreateContext();
     void DropAllFilters();
+    void DropBookmarkedFilter();
     void ShowFlyoutForAddingNewFilter(ProfileFilterBase? profileFilter);
 
     IObservable<Unit> FilterChanged { get; }
@@ -34,7 +35,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     private readonly LogFilterCategoryViewModel<LogFileViewModel> _filesCategory = new("Files", "FolderFiles32", sort: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _quickFiltersCategory = new("Quick filters", "FolderDown32", expanded: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _userFiltersCategory = new("User filters", "FolderFavs32", expanded: true, canAddChildren: true);
-    private readonly LogFilterCategoryViewModel<LogFilterViewModel> _bookmarkedCategory = new("Bookmarked", "FolderFavs32");
+    private readonly LogFilterCategoryViewModel<LogFilterViewModel> _bookmarkedCategory = new LogFilterBookmarkedCategoryViewModel();
     private readonly CompositeDisposable _subscriptions;
     private readonly ISubject<Unit> _filterChanged = new Subject<Unit>();
     private bool _suspendUpdate = false;
@@ -161,6 +162,11 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     public void DropAllFilters()
     {
         SelectedFilters.Clear();
+    }
+
+    public void DropBookmarkedFilter()
+    {
+        SelectedFilters.Remove(_bookmarkedCategory);
     }
 
     public void ShowFlyoutForAddingNewFilter(ProfileFilterBase? profileFilter)

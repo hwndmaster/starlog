@@ -3,7 +3,7 @@ using System.Windows.Data;
 
 namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 
-public sealed class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase, ILogFilterNodeViewModel
+public class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase, ILogFilterNodeViewModel
     where TChildViewModel : ILogFilterNodeViewModel
 {
     public LogFilterCategoryViewModel(string title, string icon, bool sort = false, bool expanded = false, bool canAddChildren = false)
