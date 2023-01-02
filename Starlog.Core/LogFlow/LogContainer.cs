@@ -57,6 +57,16 @@ public interface ILogContainer : IDisposable
     IObservable<FileRecord> FileAdded { get; }
 
     /// <summary>
+    ///   An observable to handle an event when an existing file has been renamed.
+    /// </summary>
+    IObservable<(FileRecord OldRecord, FileRecord NewRecord)> FileRenamed { get; }
+
+    /// <summary>
+    ///   An observable to handle an event when a file has been removed.
+    /// </summary>
+    IObservable<FileRecord> FileRemoved { get; }
+
+    /// <summary>
     ///   An observable to handle an event when a bunch of log records are read.
     /// </summary>
     IObservable<ImmutableArray<LogRecord>> LogsAdded { get; }
@@ -77,6 +87,8 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     private readonly Subject<Unit> _profileChanging = new();
     private readonly Subject<Profile> _profileChanged = new();
     private readonly Subject<FileRecord> _fileAdded = new();
+    private readonly Subject<(FileRecord OldRecord, FileRecord NewRecord)> _fileRenamed = new();
+    private readonly Subject<FileRecord> _fileRemoved = new();
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
     private readonly ReaderWriterLockSlim _lock = new();
 
@@ -92,10 +104,14 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
         {
             EnableRaisingEvents = false,
             Filter = "*.*",
+            InternalBufferSize = 65536
         };
         _fileWatcher.Created += FileWatcher_CreatedOrChanged;
         _fileWatcher.Changed += FileWatcher_CreatedOrChanged;
-        _fileWatcher.NotifyFilter = NotifyFilters.LastWrite;
+        _fileWatcher.Renamed += FileWatcher_Renamed;
+        _fileWatcher.Deleted += FileWatcher_CreatedOrChanged;
+        _fileWatcher.Error += FileWatcher_Error;
+        _fileWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite;
     }
 
     public async Task LoadProfileAsync(Profile profile)
@@ -188,30 +204,75 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
         }
         else if (e.ChangeType == WatcherChangeTypes.Changed)
         {
-            if (_files.TryGetValue(e.FullPath, out var fileRecord))
+            _scheduler.ScheduleAsync(async () =>
             {
-                _scheduler.ScheduleAsync(async () =>
+                if (_files.TryGetValue(e.FullPath, out var fileRecord))
                 {
-                    using Stream fileStream = _fileService.OpenRead(e.FullPath);
+                    using var fileStream = _fileService.OpenReadNoLock(e.FullPath);
                     fileStream.Seek(fileRecord.LastReadOffset, SeekOrigin.Begin);
-
-                    fileRecord.LastReadOffset = fileStream.Length;
-
+                    _logger.LogDebug("File {FileName} seeking to {LastReadOffset}", fileRecord.FileName, fileRecord.LastReadOffset);
                     await ReadLogsAsync(fileStream, fileRecord).ConfigureAwait(false);
-                });
-            }
-            else
+                }
+                else
+                {
+                    _scheduler.ScheduleAsync(async () => await LoadFileAsync(e.FullPath));
+                }
+            });
+        }
+        else if (e.ChangeType == WatcherChangeTypes.Deleted)
+        {
+            if (_files.TryRemove(e.FullPath, out var record))
             {
-                _scheduler.ScheduleAsync(async () => await LoadFileAsync(e.FullPath));
+                _fileRemoved.OnNext(record);
             }
         }
     }
 
+    private void FileWatcher_Renamed(object sender, RenamedEventArgs e)
+    {
+        _logger.LogDebug("File {OldFullPath} is renamed to {FullPath}", e.OldFullPath, e.FullPath);
+
+        FileRecord newRecord;
+        if (!_files.TryRemove(e.OldFullPath, out var record))
+            return;
+
+        _lock.EnterWriteLock();
+        try
+        {
+            newRecord = record.WithNewName(e.FullPath);
+            _files.TryAdd(record.FileName, newRecord);
+
+            foreach (var log in _logs.ToArray())
+            {
+                if (log.File == record)
+                {
+                    var logToRemove = log;
+                    _logs.TryTake(out logToRemove);
+                    _logs.Add(log with { File = newRecord });
+                }
+            }
+        }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
+
+        _fileRenamed.OnNext((record, newRecord));
+    }
+
+    private void FileWatcher_Error(object sender, ErrorEventArgs e)
+    {
+        var ex = e.GetException();
+        _logger.LogError(ex, ex.Message);
+    }
+
     private async Task LoadFileAsync(string file)
     {
-        var fileName = Path.GetFileName(file);
-        using var fileStream = _fileService.OpenRead(file);
-        var fileRecord = new FileRecord(file, fileName, 0);
+        if (!_fileService.FileExists(file))
+            return;
+
+        using var fileStream = _fileService.OpenReadNoLock(file);
+        var fileRecord = new FileRecord(file, 0);
 
         await ReadLogsAsync(fileStream, fileRecord);
 
@@ -233,6 +294,8 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
 
         var readFileArtifacts = fileRecord.LastReadOffset == 0 && Profile.FileArtifactLinesCount > 0;
         var logRecordResult = await logReaderProcessor.ReadAsync(Profile, fileRecord, stream, readFileArtifacts);
+
+        _logger.LogDebug("File {FileName} read {RecordsCount} logs", fileRecord.FileName, logRecordResult.Records.Length);
 
         fileRecord.LastReadOffset = stream.Length;
 
@@ -272,5 +335,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     public IObservable<Unit> ProfileChanging => _profileChanging;
     public IObservable<Profile> ProfileChanged => _profileChanged;
     public IObservable<FileRecord> FileAdded => _fileAdded;
+    public IObservable<(FileRecord OldRecord, FileRecord NewRecord)> FileRenamed => _fileRenamed;
+    public IObservable<FileRecord> FileRemoved => _fileRemoved;
     public IObservable<ImmutableArray<LogRecord>> LogsAdded => _logsAdded;
 }

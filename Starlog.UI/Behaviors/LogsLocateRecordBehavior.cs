@@ -69,15 +69,14 @@ public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>
         AssociatedObject.Items.MoveCurrentTo(AssociatedObject.SelectedItem);
         //AssociatedObject.ScrollIntoView(AssociatedObject.SelectedItem);
 
-        DataGridRow a;
         var scrollViewer = AssociatedObject.FindChild<ScrollViewer>().NotNull();
         var element = AssociatedObject.ItemContainerGenerator.ContainerFromItem(AssociatedObject.SelectedItem) as FrameworkElement;
         if (element is not null)
         {
             // TODO: Scrolling doesn't work yet
-            Point offset = element.TransformToAncestor(scrollViewer).Transform(new Point(0, 0));
-            element.TranslatePoint(new Point(0, 0), (UIElement)element.Parent)
-            scrollViewer.ScrollToVerticalOffset(offset.Y);
+            //Point offset = element.TransformToAncestor(scrollViewer).Transform(new Point(0, 0));
+            //element.TranslatePoint(new Point(0, 0), (UIElement)element.Parent);
+            //scrollViewer.ScrollToVerticalOffset(offset.Y);
         }
     }
 }

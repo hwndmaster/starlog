@@ -101,8 +101,8 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
     public void Reconcile(int existingLogsCount, ICollection<LogRecord> addedLogs)
     {
         var wasMaxTime = MaxDateTimeTicks == SelectedDateTimeToTicks;
-        MinDateTimeTicks = addedLogs.Min(x => x.DateTime).UtcTicks;
-        MaxDateTimeTicks = SelectedDateTimeToTicks = addedLogs.Max(x => x.DateTime).UtcTicks;
+        MinDateTimeTicks = Math.Min(MinDateTimeTicks, addedLogs.Min(x => x.DateTime).UtcTicks);
+        MaxDateTimeTicks = SelectedDateTimeToTicks = Math.Max(MaxDateTimeTicks, addedLogs.Max(x => x.DateTime).UtcTicks);
 
         if (existingLogsCount == 0)
         {

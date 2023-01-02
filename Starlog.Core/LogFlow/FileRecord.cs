@@ -1,3 +1,5 @@
+using System.Diagnostics.Contracts;
+
 namespace Genius.Starlog.Core.LogFlow;
 
 /// <summary>
@@ -5,11 +7,20 @@ namespace Genius.Starlog.Core.LogFlow;
 /// </summary>
 public sealed class FileRecord
 {
-    public FileRecord(string fullPath, string fileName, long lastReadOffset)
+    public FileRecord(string fullPath, long lastReadOffset)
     {
         FullPath = fullPath.NotNull();
+
+        var fileName = Path.GetFileName(fullPath);
         FileName = fileName.NotNull();
+
         LastReadOffset = lastReadOffset;
+    }
+
+    [Pure]
+    public FileRecord WithNewName(string newFullPath)
+    {
+        return new FileRecord(newFullPath, LastReadOffset);
     }
 
     /// <summary>

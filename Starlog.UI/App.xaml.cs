@@ -10,6 +10,7 @@ using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using Genius.Starlog.UI.Views.LogSearchAndFiltering;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.UI;
 
@@ -43,7 +44,13 @@ public partial class App : Application
         Starlog.Core.Module.Configure(services);
 
         // Framework:
-        services.AddLogging();
+        services.AddLogging(x =>
+        {
+#if DEBUG
+            x.SetMinimumLevel(LogLevel.Trace);
+            x.AddDebug();
+#endif
+        });
 
         // Views, View models, View model factories, Controllers
         services.AddSingleton<MainWindow>();

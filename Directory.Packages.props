@@ -13,13 +13,14 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
 
     <!-- Atom Framework -->
-    <PackageVersion Include="Genius.Atom.Data" Version="0.0.22" />
-    <PackageVersion Include="Genius.Atom.Infrastructure" Version="0.0.22" />
-    <PackageVersion Include="Genius.Atom.Infrastructure.TestingUtil" Version="0.0.22" />
-    <PackageVersion Include="Genius.Atom.UI.Forms" Version="0.0.22" />
-    <PackageVersion Include="Genius.Atom.UI.Forms.TestingUtil" Version="0.0.22" />
+    <PackageVersion Include="Genius.Atom.Data" Version="0.0.23" />
+    <PackageVersion Include="Genius.Atom.Infrastructure" Version="0.0.23" />
+    <PackageVersion Include="Genius.Atom.Infrastructure.TestingUtil" Version="0.0.23" />
+    <PackageVersion Include="Genius.Atom.UI.Forms" Version="0.0.23" />
+    <PackageVersion Include="Genius.Atom.UI.Forms.TestingUtil" Version="0.0.23" />
 
     <!-- WPF/UI related dependencies -->
     <PackageVersion Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />

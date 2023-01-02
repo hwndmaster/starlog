@@ -6,6 +6,8 @@ namespace Genius.Starlog.UI.Views;
 
 public interface ILogItemViewModel : IViewModel
 {
+    void HandleFileRenamed(FileRecord newRecord);
+
     LogRecord Record { get; }
     bool ColorizeByThread { get; set; }
     string Logger { get; }
@@ -27,12 +29,24 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
             artifactsFormatter.CreateArtifactsDocument(Record.File.Artifacts, Record.LogArtifacts));
     }
 
-    public LogRecord Record { get; }
+    public void HandleFileRenamed(FileRecord newRecord)
+    {
+        Record = Record with { File = newRecord };
+        File = Record.File.FileName;
+    }
+
+    public LogRecord Record { get; private set; }
 
     public DateTimeOffset DateTime => Record.DateTime;
     public string Level => Record.Level.Name;
     public string Thread => Record.Thread;
-    public string File => Record.File.FileName;
+
+    public string File
+    {
+        get => GetOrDefault(Record.File.FileName);
+        set => RaiseAndSetIfChanged(value);
+    }
+
     public string Logger => Record.Logger.Name;
     public string Message => Record.Message;
     public string? ArtifactsIcon => string.IsNullOrEmpty(Record.LogArtifacts) ? null : "Note32";

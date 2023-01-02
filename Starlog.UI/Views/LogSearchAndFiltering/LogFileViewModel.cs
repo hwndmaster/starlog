@@ -12,8 +12,19 @@ public sealed class LogFileViewModel : ViewModelBase, ILogFilterNodeViewModel
         PinCommand = new ActionCommand(_ => IsPinned = !IsPinned);
     }
 
-    public FileRecord File { get; }
-    public string Title => File.FileName;
+    internal void HandleFileRenamed(FileRecord newRecord)
+    {
+        File = newRecord;
+        Title = File.FileName;
+    }
+
+    public FileRecord File { get; private set; }
+    public string Title
+    {
+        get => GetOrDefault(File.FileName);
+        set => RaiseAndSetIfChanged(value);
+    }
+
     public string Icon => "LogFile32";
     public bool CanAddChildren => false;
     public bool CanModifyOrDelete => false;

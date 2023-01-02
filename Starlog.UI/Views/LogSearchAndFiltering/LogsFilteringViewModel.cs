@@ -101,7 +101,23 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                 }),
             _logContainer.FileAdded
                 .Where(_ => !_suspendUpdate)
-                .Subscribe(x => AddFiles(new [] { x })),
+                .Subscribe(x => _uiDispatcher.BeginInvoke(() =>
+                    AddFiles(new[] { x }))),
+            _logContainer.FileRenamed
+                .Where(_ => !_suspendUpdate)
+                .Subscribe(x =>
+                {
+                    var item = _filesCategory.CategoryItems.FirstOrDefault(ci => ci.File == x.OldRecord);
+                    _uiDispatcher.BeginInvoke(() => item?.HandleFileRenamed(x.NewRecord));
+                }),
+            _logContainer.FileRemoved
+                .Where(_ => !_suspendUpdate)
+                .Subscribe(x =>
+                {
+                    var item = _filesCategory.CategoryItems.FirstOrDefault(ci => ci.File == x);
+                    if (item is not null)
+                        _uiDispatcher.BeginInvoke(() => _filesCategory.RemoveItem(item));
+                }),
 
             _userFiltersCategory.AddChildCommand.Executed
                 .Subscribe(_ => ShowFlyoutForAddingNewFilter(null)),

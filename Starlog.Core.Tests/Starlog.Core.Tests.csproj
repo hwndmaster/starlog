@@ -4,7 +4,7 @@
     <ProjectReference Include="..\Starlog.Core\Starlog.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+  <ItemGroup Condition="$(PERSONAL_ENV) == true">
     <Reference Include="Genius.Atom.Data">
       <HintPath>..\..\atom\Atom.Data\bin\Debug\net7.0\Genius.Atom.Data.dll</HintPath>
     </Reference>
@@ -12,7 +12,7 @@
       <HintPath>..\..\atom\Atom.Infrastructure\bin\Debug\net7.0\Genius.Atom.Infrastructure.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+  <ItemGroup Condition="$(PERSONAL_ENV) != true">
     <PackageReference Include="Genius.Atom.Data" />
     <PackageReference Include="Genius.Atom.Infrastructure" />
   </ItemGroup>

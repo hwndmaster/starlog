@@ -29,6 +29,15 @@ public sealed class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase,
         CategoryItemsView.View.Refresh();
     }
 
+    internal void Remove(IEnumerable<TChildViewModel> items)
+    {
+        foreach (var item in items)
+        {
+            CategoryItems.Add(item);
+        }
+        CategoryItemsView.View.Refresh();
+    }
+
     internal void RemoveItem(TChildViewModel item)
     {
         CategoryItems.Remove(item);

@@ -8,7 +8,7 @@
     <PackageReference Include="Xunit.StaFact" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+  <ItemGroup Condition="$(PERSONAL_ENV) == true">
     <Reference Include="Genius.Atom.Data">
       <HintPath>..\..\atom\Atom.Data\bin\Debug\net7.0\Genius.Atom.Data.dll</HintPath>
     </Reference>
@@ -27,7 +27,7 @@
       <HintPath>..\..\atom\Atom.UI.Forms.Demo\bin\Debug\net7.0-windows\DotNetProjects.Input.Toolkit.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+  <ItemGroup Condition="$(PERSONAL_ENV) != true">
     <PackageReference Include="Genius.Atom.Data" />
     <PackageReference Include="Genius.Atom.Infrastructure" />
     <PackageReference Include="Genius.Atom.UI.Forms" />

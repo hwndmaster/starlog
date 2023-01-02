@@ -96,7 +96,19 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                 }),
             _logContainer.LogsAdded
                 .Where(_ => !_suspendUpdate)
-                .Subscribe(x => AddLogs(x)),
+                .Subscribe(x => _uiDispatcher.BeginInvoke(() => AddLogs(x))),
+            _logContainer.FileRenamed
+                .Subscribe(args =>
+                {
+                    _uiDispatcher.BeginInvoke(() => {
+                        foreach (var logItem in LogItems)
+                        {
+                            if (logItem.Record.File.FileName.Equals(args.OldRecord.FileName, StringComparison.Ordinal))
+                            {
+                                logItem.HandleFileRenamed(args.NewRecord);
+                            }
+                        }});
+                }),
             Filtering.FilterChanged.Merge(Search.SearchChanged)
                 .Subscribe(_ => RefreshFilteredItems()),
             this.WhenChanged(x => x.ColorizeBy).Subscribe(_ =>
