@@ -170,19 +170,32 @@
                     VirtualizingPanel.IsVirtualizing="True"
                     VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                     EnableRowVirtualization="True"
-                    EnableColumnVirtualization="False">
+                    EnableColumnVirtualization="False"
+                    ScrollViewer.CanContentScroll="True">
                 <DataGrid.GroupStyle>
                     <GroupStyle>
+                        <!-- <GroupStyle.Panel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel Orientation="Vertical" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Standard"/>
+                            </ItemsPanelTemplate>
+                        </GroupStyle.Panel> -->
                         <GroupStyle.ContainerStyle>
                             <Style TargetType="GroupItem">
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type GroupItem}">
-                                            <StackPanel Margin="5, 10, 0, 10">
-                                                <TextBlock FontWeight="Bold" FontSize="16"
-                                                        Text="{Binding Name}" Margin="0,0,0,3"/>
-                                                <ItemsPresenter/>
-                                            </StackPanel>
+                                            <Expander IsExpanded="True">
+                                                <Expander.Header>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock FontWeight="Bold" FontSize="16"
+                                                            Text="{Binding Name}" Margin="0,0,0,3"/>
+                                                        <TextBlock Text=" ("/>
+                                                        <TextBlock Text="{Binding Path=ItemCount}"/>
+                                                        <TextBlock Text=")"/>
+                                                    </StackPanel>
+                                                </Expander.Header>
+                                                <ItemsPresenter />
+                                            </Expander>
                                         </ControlTemplate>
                                     </Setter.Value>
                                 </Setter>
@@ -192,10 +205,12 @@
                 </DataGrid.GroupStyle>
                 <i:Interaction.Behaviors>
                     <autogrid:AttachingBehavior />
-                    <behaviors:LogColorizeBehavior />
-                    <behaviors:LogsCopyToClipboardBehavior />
                     <atombehaviors:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
+                    <behaviors:LogColorizeBehavior />
                     <behaviors:LogsSmartFiltersContextMenuBehavior />
+                    <behaviors:LogsCopyToClipboardBehavior />
+                    <!-- TODO: Temporarily disabled due to datagrid scrolling bugs in the behavior
+                      <behaviors:LogsLocateRecordBehavior /> -->
                 </i:Interaction.Behaviors>
             </DataGrid>
 

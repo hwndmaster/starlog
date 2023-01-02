@@ -19,6 +19,7 @@ public interface ILogsViewModel : ITabViewModel, IDisposable
     void UnBookmarkAll();
 
     ILogsFilteringViewModel Filtering { get; }
+    ILogsSearchViewModel Search { get; }
     ObservableCollection<ILogItemViewModel> SelectedLogItems { get; }
 }
 
@@ -198,9 +199,9 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         });
     }
 
-    public ILogsSearchViewModel Search { get; }
-
     public ILogsFilteringViewModel Filtering { get; }
+
+    public ILogsSearchViewModel Search { get; }
 
     public string ColorizeBy
     {

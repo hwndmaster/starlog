@@ -101,24 +101,20 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
 
     protected override void OnAttached()
     {
-        var contextMenu = AssociatedObject.RowStyle?.Setters
-            .OfType<Setter>()
-            .FirstOrDefault(x => x.Property == FrameworkElement.ContextMenuProperty)
-            ?.Value as ContextMenu;
-        var existedBefore = contextMenu is not null;
-        contextMenu ??= new ContextMenu();
-
+        var contextMenu = XamlHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
         contextMenu.Items.Add(_menuItemCreateFilter);
         contextMenu.ContextMenuOpening += OnContextMenuOpening;
 
-        if (!existedBefore)
-        {
-            var rowStyle = new Style(typeof(DataGridRow), AssociatedObject.RowStyle);
-            rowStyle.Setters.Add(new Setter(FrameworkElement.ContextMenuProperty, contextMenu));
-            AssociatedObject.RowStyle = rowStyle;
-        }
-
         base.OnAttached();
+    }
+
+    protected override void OnDetaching()
+    {
+        var contextMenu = XamlHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
+        contextMenu.Items.Remove(_menuItemCreateFilter);
+        contextMenu.ContextMenuOpening -= OnContextMenuOpening;
+
+        base.OnDetaching();
     }
 
     private void OnContextMenuOpening(object sender, ContextMenuEventArgs e)

@@ -15,6 +15,7 @@ namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 public interface ILogsSearchViewModel : IViewModel
 {
     LogRecordSearchContext CreateContext();
+    void DropAllSearches();
     void Reconcile(int existingLogsCount, ICollection<LogRecord> logs);
 
     IObservable<Unit> SearchChanged { get; }
@@ -65,7 +66,7 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
         var messageSearchIncluded = !string.IsNullOrWhiteSpace(Text);
 
         Regex? filterRegex = null;
-        if (UseRegex)
+        if (UseRegex && messageSearchIncluded)
         {
             try
             {
@@ -86,7 +87,15 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
             dateTo = new DateTimeOffset((long)SelectedDateTimeToTicks, TimeSpan.Zero);
         }
 
-        return new(messageSearchIncluded, Text, filterRegex, dateFrom, dateTo);
+        return new(HasAnythingSpecified: messageSearchIncluded || dateFrom is not null || dateTo is not null,
+            messageSearchIncluded, Text, filterRegex, dateFrom, dateTo);
+    }
+
+    public void DropAllSearches()
+    {
+        Text = string.Empty;
+        SelectedDateTimeFromTicks = MinDateTimeTicks;
+        SelectedDateTimeToTicks = MaxDateTimeTicks;
     }
 
     public void Reconcile(int existingLogsCount, ICollection<LogRecord> addedLogs)

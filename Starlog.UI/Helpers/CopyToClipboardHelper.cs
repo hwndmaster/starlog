@@ -5,10 +5,14 @@ namespace Genius.Starlog.UI.Helpers;
 
 public static class CopyToClipboardHelper
 {
+    public static string CreateLogMessagesStringForClipboard(IEnumerable<ILogItemViewModel> items)
+    {
+        return string.Join(Environment.NewLine, items.Select(x => x.Record.Message).Distinct());
+    }
+
     public static string CreateLogsStringForClipboard(IEnumerable<ILogItemViewModel> items)
     {
-        var itemGroups = items.OfType<ILogItemViewModel>()
-            .GroupBy(x => x.Record.File.FileName, x => x.Record);
+        var itemGroups = items.GroupBy(x => x.Record.File.FileName, x => x.Record);
         StringBuilder sb = new();
         foreach (var itemGroup in itemGroups)
         {

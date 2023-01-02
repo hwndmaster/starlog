@@ -17,6 +17,7 @@ namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 public interface ILogsFilteringViewModel : IDisposable
 {
     LogRecordFilterContext CreateContext();
+    void DropAllFilters();
     void ShowFlyoutForAddingNewFilter(ProfileFilterBase? profileFilter);
 
     IObservable<Unit> FilterChanged { get; }
@@ -115,7 +116,8 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     {
         if (SelectedFilters.Any(x => x == _bookmarkedCategory))
         {
-            return new(new HashSet<string>(0), ImmutableArray<ProfileFilterBase>.Empty, ShowBookmarked: true);
+            return new(HasAnythingSpecified: true,
+                new HashSet<string>(0), ImmutableArray<ProfileFilterBase>.Empty, ShowBookmarked: true);
         }
 
         var filters = SelectedFilters
@@ -131,12 +133,18 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
             .Select(x => x.Filter)
             .ToImmutableArray();
 
-        return new(filesSelected, filtersSelected, ShowBookmarked: false);
+        return new(HasAnythingSpecified: filesSelected.Any() || filtersSelected.Any(),
+            filesSelected, filtersSelected, ShowBookmarked: false);
     }
 
     public void Dispose()
     {
         _subscriptions.Dispose();
+    }
+
+    public void DropAllFilters()
+    {
+        SelectedFilters.Clear();
     }
 
     public void ShowFlyoutForAddingNewFilter(ProfileFilterBase? profileFilter)
