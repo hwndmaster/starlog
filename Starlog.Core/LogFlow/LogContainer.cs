@@ -22,11 +22,6 @@ public interface ILogContainer : IDisposable
     Task LoadProfileAsync(Profile profile);
 
     /// <summary>
-    ///   Closes down currently loaded profile.
-    /// </summary>
-    void CloseProfile();
-
-    /// <summary>
     ///   Returns all the files, read so far for the selected profile.
     /// </summary>
     ImmutableArray<FileRecord> GetFiles();
@@ -84,7 +79,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
     private readonly ConcurrentDictionary<string, byte> _logThreads = new();
     private readonly ConcurrentDictionary<string, FileRecord> _files = new();
-    private readonly Subject<Unit> _profileChanging = new();
+    private readonly Subject<Unit> _profileClosed = new();
     private readonly Subject<Profile> _profileChanged = new();
     private readonly Subject<FileRecord> _fileAdded = new();
     private readonly Subject<(FileRecord OldRecord, FileRecord NewRecord)> _fileRenamed = new();
@@ -117,8 +112,6 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     public async Task LoadProfileAsync(Profile profile)
     {
         _logger.LogDebug("Loading profile: {profileId}", profile.Id);
-
-        _profileChanging.OnNext(Unit.Default);
 
         CloseProfile();
 
@@ -153,6 +146,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     public void CloseProfile()
     {
         _fileWatcher.EnableRaisingEvents = false;
+        _profileClosed.OnNext(Unit.Default);
         _files.Clear();
         _loggers.Clear();
         _logLevels.Clear();
@@ -332,7 +326,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     }
 
     public Profile? Profile { get; private set; }
-    public IObservable<Unit> ProfileChanging => _profileChanging;
+    public IObservable<Unit> ProfileClosed => _profileClosed;
     public IObservable<Profile> ProfileChanged => _profileChanged;
     public IObservable<FileRecord> FileAdded => _fileAdded;
     public IObservable<(FileRecord OldRecord, FileRecord NewRecord)> FileRenamed => _fileRenamed;

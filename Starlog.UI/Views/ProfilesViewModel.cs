@@ -4,6 +4,7 @@ using System.Reactive.Linq;
 using System.Windows.Input;
 using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
+using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
@@ -26,6 +27,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 
     public ProfilesViewModel(
         ICommandBus commandBus,
+        ICurrentProfile currentProfile,
         IProfileQueryService profileQuery,
         ISettingsQueryService settingsQuery,
         IViewModelFactory vmFactory,
@@ -33,6 +35,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         ProfileAutoGridBuilder autoGridBuilder)
     {
         Guard.NotNull(commandBus);
+        Guard.NotNull(currentProfile);
         Guard.NotNull(settingsQuery);
         Guard.NotNull(ui);
 
@@ -78,6 +81,11 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                 return;
 
             Profiles.Remove(selectedProfile);
+
+            if (currentProfile.Profile?.Id == selectedProfile.Id)
+            {
+                currentProfile.CloseProfile();
+            }
 
             if (selectedProfile.Id is not null)
             {

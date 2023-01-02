@@ -72,12 +72,13 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                 {
                     // TODO: Implement autoscroll
                 }),
-            _currentProfile.ProfileChanging
+            _currentProfile.ProfileClosed
                 .Subscribe(_ =>
                 {
                     _suspendUpdate = true;
                     _uiDispatcher.BeginInvoke(() =>
                     {
+                        IsProfileReady = false;
                         LogItems.Clear();
                         SelectedLogItems.Clear();
                         SelectedLogItem = null;
@@ -91,6 +92,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                     _uiDispatcher.BeginInvoke(() =>
                     {
                         AddLogs(_logContainer.GetLogs());
+                        IsProfileReady = true;
                         _suspendUpdate = false;
                     });
                 }),
@@ -211,6 +213,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             //       WARN:   yyy
             //       ERROR:    z
         });
+    }
+
+    public bool IsProfileReady
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
     }
 
     public ILogsFilteringViewModel Filtering { get; }

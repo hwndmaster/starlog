@@ -29,6 +29,9 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
             settings
         }.ToImmutableArray();
 
+        currentProfile.ProfileClosed.Subscribe(_ =>
+            CurrentProfileName = "N/A");
+
         currentProfile.ProfileChanged.Subscribe(profile =>
         {
             CurrentProfileName = profile is null

@@ -73,7 +73,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
         // Subscriptions:
         _subscriptions = new(
-            _currentProfile.ProfileChanging
+            _currentProfile.ProfileClosed
                 .Subscribe(_ =>
                 {
                     _suspendUpdate = true;

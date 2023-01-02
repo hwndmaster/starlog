@@ -19,7 +19,7 @@
         <Thickness x:Key="TopBarMargin">10 0 0 0</Thickness>
         <Thickness x:Key="TopBarMarginHalf">5 0 0 0</Thickness>
     </UserControl.Resources>
-    <Grid>
+    <Grid IsEnabled="{Binding IsProfileReady}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
