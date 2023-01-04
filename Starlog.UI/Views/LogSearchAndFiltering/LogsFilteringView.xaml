@@ -16,6 +16,11 @@
         <TreeView ItemsSource="{Binding FilterCategories}">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource TreeViewItemMultiselect}">
+                    <Style.Resources>
+                        <!-- NOTE: A workaround to fix the TreeViewItem's Border[Name=Bd] state when
+                                   IsSelected && !IsSelectionActive which makes the item grayish -->
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#FF0078D7"/>
+                    </Style.Resources>
                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                 </Style>
             </TreeView.ItemContainerStyle>

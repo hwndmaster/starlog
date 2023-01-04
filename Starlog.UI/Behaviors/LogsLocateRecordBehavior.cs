@@ -1,8 +1,9 @@
+using System.Reactive.Linq;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
-using MahApps.Metro.Controls;
 using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;
@@ -63,20 +64,51 @@ public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>
         vm.Filtering.DropAllFilters();
         vm.Search.DropAllSearches();
 
+        Observable.FromEventPattern<EventHandler, EventArgs>(
+            h => AssociatedObject.LayoutUpdated += h, h => AssociatedObject.LayoutUpdated -= h)
+            .Take(1)
+            .Subscribe(_ =>
+            {
+                Dispatcher.Invoke(() => {
+                    AssociatedObject.Items.MoveCurrentTo(AssociatedObject.SelectedItem);
+                    AssociatedObject.ScrollIntoView(AssociatedObject.SelectedItem);
+                }, DispatcherPriority.ContextIdle);
+            });
+
         vm.SelectedLogItems.Clear();
         vm.SelectedLogItems.Add(item);
-        AssociatedObject.UpdateLayout();
-        AssociatedObject.Items.MoveCurrentTo(AssociatedObject.SelectedItem);
-        //AssociatedObject.ScrollIntoView(AssociatedObject.SelectedItem);
 
-        var scrollViewer = AssociatedObject.FindChild<ScrollViewer>().NotNull();
-        var element = AssociatedObject.ItemContainerGenerator.ContainerFromItem(AssociatedObject.SelectedItem) as FrameworkElement;
-        if (element is not null)
+        /* UNDONE:
+        var dispatcher = App.ServiceProvider.GetRequiredService<IUiDispatcher>();
+
+        dispatcher.BeginInvoke(() => {
+            AssociatedObject.UpdateLayout();
+            ForceUIToUpdate();
+            AssociatedObject.Items.MoveCurrentTo(AssociatedObject.SelectedItem);
+            AssociatedObject.ScrollIntoView(AssociatedObject.SelectedItem);
+
+            var scrollViewer = AssociatedObject.FindChild<ScrollViewer>().NotNull();
+            var element = AssociatedObject.ItemContainerGenerator.ContainerFromItem(AssociatedObject.SelectedItem) as FrameworkElement;
+            if (element is not null)
+            {
+                Point offset = element.TransformToAncestor(scrollViewer).Transform(new Point(0, 0));
+                //var offset = element.TranslatePoint(new Point(0, 0), (UIElement)element.Parent);
+                scrollViewer.ScrollToVerticalOffset(offset.Y);
+            }
+        });
+
+        public static void ForceUIToUpdate()
         {
-            // TODO: Scrolling doesn't work yet
-            //Point offset = element.TransformToAncestor(scrollViewer).Transform(new Point(0, 0));
-            //element.TranslatePoint(new Point(0, 0), (UIElement)element.Parent);
-            //scrollViewer.ScrollToVerticalOffset(offset.Y);
+            DispatcherFrame frame = new DispatcherFrame();
+
+            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Render, new DispatcherOperationCallback(delegate(object parameter)
+            {
+                frame.Continue = false;
+                return null;
+            }), null);
+
+            Dispatcher.PushFrame(frame);
         }
+        */
     }
 }

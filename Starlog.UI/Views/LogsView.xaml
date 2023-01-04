@@ -209,8 +209,7 @@
                     <behaviors:LogColorizeBehavior />
                     <behaviors:LogsSmartFiltersContextMenuBehavior />
                     <behaviors:LogsCopyToClipboardBehavior />
-                    <!-- TODO: Temporarily disabled due to datagrid scrolling bugs in the behavior
-                      <behaviors:LogsLocateRecordBehavior /> -->
+                    <behaviors:LogsLocateRecordBehavior />
                 </i:Interaction.Behaviors>
             </DataGrid>
 
