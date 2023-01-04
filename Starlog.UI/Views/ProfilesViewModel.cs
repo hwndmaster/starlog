@@ -13,10 +13,13 @@ namespace Genius.Starlog.UI.Views;
 
 public interface IProfilesViewModel : ITabViewModel, IDisposable
 {
+    ObservableCollection<IProfileViewModel> Profiles { get; }
     bool IsAddEditProfileVisible { get; set; }
     IProfileViewModel? EditingProfile { get; }
+
     ICommand OpenAddProfileFlyoutCommand { get; }
     ICommand OpenEditProfileFlyoutCommand { get; }
+    ICommand DeleteProfileCommand { get; }
 }
 
 internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel

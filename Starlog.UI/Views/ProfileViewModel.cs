@@ -13,6 +13,8 @@ namespace Genius.Starlog.UI.Views;
 
 public interface IProfileViewModel : ISelectable
 {
+    void CopyFrom(IProfileViewModel source, string? nameSuffix = null);
+
     Guid? Id { get; }
     string Name { get; set; }
     string Path { get; set; }
@@ -84,6 +86,18 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             .ConfigureAwait(false);
         });
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profile is not null);
+    }
+
+    public void CopyFrom(IProfileViewModel source, string? nameSuffix = null)
+    {
+        if (source is not ProfileViewModel sourceProfile)
+            return;
+
+        Name = sourceProfile.Name + (nameSuffix ?? string.Empty);
+        Path = sourceProfile.Path;
+        LogReader = LogReaders.First(x => x.LogReader.LogReader.Id == sourceProfile.LogReader.LogReader.LogReader.Id);
+        LogReader.CopySettingsFrom(sourceProfile.LogReader);
+        FileArtifactLinesCount = sourceProfile.FileArtifactLinesCount;
     }
 
     public void Reconcile()

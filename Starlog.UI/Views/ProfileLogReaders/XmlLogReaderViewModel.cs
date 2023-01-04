@@ -11,4 +11,8 @@ public sealed class XmlLogReaderViewModel : LogReaderViewModel
     {
         _xmlLogReader = logReader.NotNull();
     }
+
+    internal override void CopySettingsFrom(LogReaderViewModel logReader)
+    {
+    }
 }

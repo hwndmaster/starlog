@@ -1,4 +1,5 @@
 using System.Windows.Controls;
+using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Helpers;
@@ -101,7 +102,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
 
     protected override void OnAttached()
     {
-        var contextMenu = XamlHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
+        var contextMenu = WpfHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
         contextMenu.Items.Add(_menuItemCreateFilter);
         contextMenu.ContextMenuOpening += OnContextMenuOpening;
 
@@ -110,7 +111,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
 
     protected override void OnDetaching()
     {
-        var contextMenu = XamlHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
+        var contextMenu = WpfHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
         contextMenu.Items.Remove(_menuItemCreateFilter);
         contextMenu.ContextMenuOpening -= OnContextMenuOpening;
 

@@ -12,4 +12,6 @@ public abstract class LogReaderViewModel : ViewModelBase
 
     public ProfileLogReadBase LogReader { get; }
     public string Name => LogReader.LogReader.Name;
+
+    internal abstract void CopySettingsFrom(LogReaderViewModel logReader);
 }

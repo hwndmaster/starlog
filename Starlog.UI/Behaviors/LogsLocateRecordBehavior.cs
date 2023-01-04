@@ -2,7 +2,7 @@ using System.Reactive.Linq;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
-using Genius.Starlog.UI.Helpers;
+using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.UI.Views;
 using Microsoft.Xaml.Behaviors;
 
@@ -24,15 +24,17 @@ public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>
     {
         AssociatedObject.PreviewKeyDown += OnPreviewKeyDown;
 
-        var contextMenu = XamlHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
+        var contextMenu = WpfHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
         contextMenu.Items.Add(_menuItemLocate);
+
+        base.OnAttached();
     }
 
     protected override void OnDetaching()
     {
         AssociatedObject.PreviewKeyDown -= OnPreviewKeyDown;
 
-        var contextMenu = XamlHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
+        var contextMenu = WpfHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
         contextMenu.Items.Remove(_menuItemLocate);
 
         base.OnDetaching();

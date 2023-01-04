@@ -1,5 +1,6 @@
 using System.Windows.Controls;
 using System.Windows.Input;
+using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using Microsoft.Xaml.Behaviors;
@@ -37,7 +38,7 @@ public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
 
         AssociatedObject.PreviewKeyDown += OnPreviewKeyDown;
 
-        var contextMenu = XamlHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
+        var contextMenu = WpfHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
         contextMenu.Items.Add(_menuItemCopy);
     }
 
@@ -46,7 +47,7 @@ public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
         AssociatedObject.ClipboardCopyMode = _previousClipboardCopyMode;
         AssociatedObject.PreviewKeyDown -= OnPreviewKeyDown;
 
-        var contextMenu = XamlHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
+        var contextMenu = WpfHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
         contextMenu.Items.Remove(_menuItemCopy);
 
         base.OnDetaching();

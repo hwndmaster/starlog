@@ -1,8 +1,8 @@
 using System.Reactive.Linq;
+using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Helpers;
-using Genius.Starlog.UI.Validation;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 

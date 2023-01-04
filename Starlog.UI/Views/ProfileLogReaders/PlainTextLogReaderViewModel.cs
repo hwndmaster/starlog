@@ -29,6 +29,14 @@ public sealed class PlainTextLogReaderViewModel : LogReaderViewModel
         }
     }
 
+    internal override void CopySettingsFrom(LogReaderViewModel logReader)
+    {
+        if (logReader is not PlainTextLogReaderViewModel settings)
+            return;
+
+        LineRegex = settings.LineRegex;
+    }
+
     public ObservableCollection<PlainTextLogReaderLineRegex> LineRegexes { get; } = new();
 
     public string LineRegex
