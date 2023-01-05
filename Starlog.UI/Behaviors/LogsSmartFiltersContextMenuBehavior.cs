@@ -32,8 +32,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
 
             var name = LogFilterHelpers.ProposeNameForTimeRange(minItem.Record.DateTime, maxItem.Record.DateTime);
             var filter = _logFilterContainer.CreateProfileFilter<TimeRangeProfileFilter>(name);
-            filter.TimeFrom = minItem.Record.DateTime;
-            filter.TimeTo = maxItem.Record.DateTime;
+            filter.SetTimeFromToExtended(minItem.Record.DateTime, maxItem.Record.DateTime);
 
             vm.Filtering.ShowFlyoutForAddingNewFilter(filter);
         }) };

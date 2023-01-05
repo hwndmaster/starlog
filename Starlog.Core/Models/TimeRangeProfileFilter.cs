@@ -10,6 +10,12 @@ public sealed class TimeRangeProfileFilter : ProfileFilterBase
     {
     }
 
+    public void SetTimeFromToExtended(DateTimeOffset @from, DateTimeOffset @to)
+    {
+        TimeFrom = @from.AddTicks(- (@from.Ticks % TimeSpan.TicksPerSecond));
+        TimeTo = @to.AddTicks(- (@to.Ticks % TimeSpan.TicksPerSecond) + (TimeSpan.TicksPerSecond - 1));
+    }
+
     /// <summary>
     ///   Defines the beginning time to filter out log records, taken in the specified range.
     /// </summary>

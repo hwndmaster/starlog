@@ -21,7 +21,9 @@ internal sealed class PlainTextLineRegexTemplatesAutoGridBuilder : IAutoGridBuil
                 columns
                     .AddText(x => x.Name)
                     .AddText(x => x.Regex)
-                    .AddCommand(x => x.DeleteCommand, x => x.WithIcon("Trash16"))
+                    .AddCommand(x => x.DeleteCommand, x => x
+                        .WithIcon("Trash16")
+                        .WithDisplayName(string.Empty))
             )
             .Build();
     }

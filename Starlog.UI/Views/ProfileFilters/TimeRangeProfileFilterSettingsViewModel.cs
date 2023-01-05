@@ -34,8 +34,9 @@ public sealed class TimeRangeProfileFilterSettingsViewModel : ProfileFilterSetti
 
     protected override void CommitChangesInternal()
     {
-        _profileFilter.TimeFrom = new DateTimeOffset(TimeFrom, TimeSpan.Zero);
-        _profileFilter.TimeTo = new DateTimeOffset(TimeTo, TimeSpan.Zero);
+        _profileFilter.SetTimeFromToExtended(
+            new DateTimeOffset(TimeFrom, TimeSpan.Zero),
+            new DateTimeOffset(TimeTo, TimeSpan.Zero));
     }
 
     protected override void ResetChangesInternal()

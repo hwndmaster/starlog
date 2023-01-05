@@ -52,11 +52,13 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="0"
-                        Margin="5" Content="Save"
+                        Style="{StaticResource Starlog.ButtonBar.Button}"
+                        Content="Save"
                         Background="DarkGreen"
                         Command="{Binding CommitProfileCommand}" />
                 <Button Grid.Column="1"
-                        Margin="5" Content="Reset"
+                        Style="{StaticResource Starlog.ButtonBar.Button}"
+                        Content="Reset"
                         Command="{Binding ResetCommand}" />
             </Grid>
         </DockPanel>
