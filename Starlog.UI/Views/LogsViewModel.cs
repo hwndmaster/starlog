@@ -67,11 +67,6 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
         // Subscriptions:
         _subscriptions = new(
-            this.WhenChanged(x => x.AutoScroll)
-                .Subscribe(_ =>
-                {
-                    // TODO: Implement autoscroll
-                }),
             _currentProfile.ProfileClosed
                 .Subscribe(_ =>
                 {

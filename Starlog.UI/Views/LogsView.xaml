@@ -213,6 +213,7 @@
                     <behaviors:LogsCopyToClipboardBehavior />
                     <behaviors:LogsBookmarkableBehavior />
                     <behaviors:LogsLocateRecordBehavior />
+                    <behaviors:DataGridAutoScrollBehavior AutoScroll="{Binding AutoScroll}" />
                 </i:Interaction.Behaviors>
             </DataGrid>
 
