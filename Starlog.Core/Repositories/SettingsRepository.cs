@@ -51,7 +51,7 @@ internal sealed class SettingsRepository : ISettingsRepository
     {
         PlainTextLogReaderLineRegexes = new List<SettingStringValue>
         {
-            new SettingStringValue("LEVEL DATETIME [Thread] Logger - Message", @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>.+)\s-\s(?<message>.+)")
+            new SettingStringValue("LEVEL DATETIME [Thread] Logger - Message", @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>[^\s]+)\s-\s(?<message>.+)")
         }
     };
 }
