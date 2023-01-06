@@ -80,6 +80,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
                     _uiDispatcher.BeginInvoke(() =>
                     {
+                        IsAddEditProfileFilterVisible = false;
                         _filesCategory.CategoryItems.Clear();
                         _filesCategory.CategoryItemsView.View.Refresh();
                         _userFiltersCategory.CategoryItems.Clear();
@@ -125,7 +126,11 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
             SelectedFilters.WhenCollectionChanged()
                 .Throttle(TimeSpan.FromMilliseconds(50))
-                .Subscribe(_ => _filterChanged.OnNext(Unit.Default))
+                .Subscribe(_ =>
+                {
+                    IsAddEditProfileFilterVisible = false;
+                    _filterChanged.OnNext(Unit.Default);
+                })
         );
     }
 

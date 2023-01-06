@@ -56,7 +56,7 @@
                                 </Image>
                         </Button>
                         <i:Interaction.Behaviors>
-                            <behaviors:TreeViewItemWithDockPanelStretchBehavior />
+                            <behaviors:TreeViewItemStretchBehavior />
                             <atombehaviors:TreeViewItemModifiableBehavior />
                             <behaviors:TreeViewItemPinnableBehavior />
                             <behaviors:TreeViewItemBookmarkableBehavior />
