@@ -37,6 +37,12 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
 
     public LogRecord Record { get; private set; }
 
+    public bool IsBookmarked
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
     public DateTimeOffset DateTime => Record.DateTime;
     public string Level => Record.Level.Name;
     public string Thread => Record.Thread;
@@ -55,12 +61,6 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
     {
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value, (_, __) => OnPropertyChanged(string.Empty));
-    }
-
-    public bool IsBookmarked
-    {
-        get => GetOrDefault(false);
-        set => RaiseAndSetIfChanged(value);
     }
 
     public FlowDocument Artifacts => _artifactsLazy.Value;

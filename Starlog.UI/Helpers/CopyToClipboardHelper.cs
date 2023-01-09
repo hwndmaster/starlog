@@ -37,7 +37,7 @@ public static class CopyToClipboardHelper
                     sb.AppendLine();
                 }
                 var d = item.DateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                sb.AppendLine($"{d}\t\t{item.Level}\t{item.Logger}\tThread {item.Thread}\t{item.Message}");
+                sb.AppendLine($"{d}\t\t{item.Level.Name}\t{item.Logger.Name}\tThread {item.Thread}\t{item.Message}");
 
                 if (!string.IsNullOrEmpty(item.LogArtifacts))
                 {
