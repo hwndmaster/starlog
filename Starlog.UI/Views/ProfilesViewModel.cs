@@ -3,9 +3,11 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
 
@@ -31,6 +33,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     public ProfilesViewModel(
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
+        IEventBus eventBus,
         IProfileQueryService profileQuery,
         ISettingsQueryService settingsQuery,
         IViewModelFactory vmFactory,
@@ -39,6 +42,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     {
         Guard.NotNull(commandBus);
         Guard.NotNull(currentProfile);
+        Guard.NotNull(eventBus);
         Guard.NotNull(settingsQuery);
         Guard.NotNull(ui);
 
@@ -99,6 +103,10 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         // Subscriptions:
         Deactivated.Executed
             .Subscribe(_ => IsAddEditProfileVisible = false)
+            .DisposeWith(_disposables);
+
+        eventBus.WhenFired<ProfileLoadingErrorEvent>()
+            .Subscribe(args => ui.ShowWarning(args.Reason))
             .DisposeWith(_disposables);
 
         // Final preparation:

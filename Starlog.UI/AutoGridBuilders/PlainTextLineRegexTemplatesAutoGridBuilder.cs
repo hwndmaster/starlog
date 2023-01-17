@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
+using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.UI.Views.Generic;
 
 namespace Genius.Starlog.UI.AutoGridBuilders;
@@ -22,7 +23,7 @@ internal sealed class PlainTextLineRegexTemplatesAutoGridBuilder : IAutoGridBuil
                     .AddText(x => x.Name)
                     .AddText(x => x.Regex)
                     .AddCommand(x => x.DeleteCommand, x => x
-                        .WithIcon("Trash16")
+                        .WithIcon(ImageStock.Trash16)
                         .WithDisplayName(string.Empty))
             )
             .Build();

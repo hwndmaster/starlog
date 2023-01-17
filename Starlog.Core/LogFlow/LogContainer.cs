@@ -2,8 +2,10 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Reactive;
 using System.Reactive.Subjects;
+using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.Infrastructure.Io;
 using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Microsoft.Extensions.Logging;
 
@@ -69,11 +71,12 @@ public interface ILogContainer : IDisposable
 
 internal sealed class LogContainer : ILogContainer, ICurrentProfile
 {
+    private readonly IEventBus _eventBus;
     private readonly IFileService _fileService;
     private readonly ILogReaderContainer _logReaderContainer;
-    private readonly FileSystemWatcher _fileWatcher;
     private readonly ISynchronousScheduler _scheduler;
     private readonly ILogger<LogContainer> _logger;
+    private readonly IFileSystemWatcher _fileWatcher;
     private readonly ConcurrentBag<LogRecord> _logs = new();
     private readonly ConcurrentBag<LoggerRecord> _loggers = new();
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
@@ -87,26 +90,24 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
     private readonly ReaderWriterLockSlim _lock = new();
 
-    public LogContainer(IFileService fileService, ILogReaderContainer logReaderContainer, ISynchronousScheduler scheduler,
+    public LogContainer(IEventBus eventBus, IFileService fileService,
+        IFileSystemWatcher fileWatcher,
+        ILogReaderContainer logReaderContainer, ISynchronousScheduler scheduler,
         ILogger<LogContainer> logger)
     {
+        _eventBus = eventBus.NotNull();
         _fileService = fileService.NotNull();
+        _fileWatcher = fileWatcher.NotNull();
         _logReaderContainer = logReaderContainer.NotNull();
         _scheduler = scheduler.NotNull();
         _logger = logger.NotNull();
 
-        _fileWatcher = new FileSystemWatcher
-        {
-            EnableRaisingEvents = false,
-            Filter = "*.*",
-            InternalBufferSize = 65536
-        };
-        _fileWatcher.Created += FileWatcher_CreatedOrChanged;
-        _fileWatcher.Changed += FileWatcher_CreatedOrChanged;
-        _fileWatcher.Renamed += FileWatcher_Renamed;
-        _fileWatcher.Deleted += FileWatcher_CreatedOrChanged;
-        _fileWatcher.Error += FileWatcher_Error;
-        _fileWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite;
+        _fileWatcher.IncreaseBuffer();
+        _fileWatcher.Created.Subscribe(FileWatcher_CreatedOrChanged);
+        _fileWatcher.Changed.Subscribe(FileWatcher_CreatedOrChanged);
+        _fileWatcher.Renamed.Subscribe(FileWatcher_Renamed);
+        _fileWatcher.Deleted.Subscribe(FileWatcher_CreatedOrChanged);
+        _fileWatcher.Error.Subscribe(FileWatcher_Error);
     }
 
     public async Task LoadProfileAsync(Profile profile)
@@ -115,43 +116,50 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
 
         CloseProfile();
 
-        Profile = profile.NotNull();
-
         var isFile = false;
 
-        if (Path.Exists(profile.Path))
+        if (_fileService.PathExists(profile.Path))
         {
-            var pathAttr = File.GetAttributes(profile.Path);
+            Profile = profile.NotNull();
+            isFile = !_fileService.IsDirectory(profile.Path);
+
             IEnumerable<string> files;
-            if (pathAttr.HasFlag(FileAttributes.Directory))
+            if (isFile)
             {
-                files = _fileService.EnumerateFiles(profile.Path, "*.*", new EnumerationOptions());
+                files = new [] { profile.Path };
             }
             else
             {
-                files = new [] { profile.Path };
-                isFile = true;
+                files = _fileService.EnumerateFiles(profile.Path, "*.*", new EnumerationOptions());
             }
             var tasks = files.Select(async file => await LoadFileAsync(file));
             await Task.WhenAll(tasks);
 
-            _fileWatcher.Path = isFile ? Path.GetDirectoryName(profile.Path).NotNull() : profile.Path;
-            _fileWatcher.Filter = isFile ? Path.GetFileName(profile.Path) : "*.*";
-            _fileWatcher.EnableRaisingEvents = true;
-        }
+            if (!_fileWatcher.StartListening(
+                path: isFile ? Path.GetDirectoryName(profile.Path).NotNull() : profile.Path,
+                filter: isFile ? Path.GetFileName(profile.Path) : "*.*"))
+            {
+                _eventBus.Publish(new ProfileLoadingErrorEvent(profile, $"Couldn't start file monitoring over the profile path: '{profile.Path}'."));
+            }
 
-        _profileChanged.OnNext(Profile);
+            _profileChanged.OnNext(Profile);
+        }
+        else
+        {
+            _eventBus.Publish(new ProfileLoadingErrorEvent(profile, $"Couldn't load profile since the profile path '{profile.Path}' doesn't exist."));
+        }
     }
 
     public void CloseProfile()
     {
-        _fileWatcher.EnableRaisingEvents = false;
-        _profileClosed.OnNext(Unit.Default);
+        _fileWatcher.StopListening();
+        Profile = null;
         _files.Clear();
         _loggers.Clear();
         _logLevels.Clear();
         _logThreads.Clear();
         _logs.Clear();
+        _profileClosed.OnNext(Unit.Default);
     }
 
     public ImmutableArray<FileRecord> GetFiles()
@@ -188,7 +196,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
         _fileWatcher.Dispose();
     }
 
-    private void FileWatcher_CreatedOrChanged(object sender, FileSystemEventArgs e)
+    private void FileWatcher_CreatedOrChanged(FileSystemEventArgs e)
     {
         _logger.LogDebug("File {fullPath} is {changeType}", e.FullPath, e.ChangeType);
 
@@ -222,7 +230,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
         }
     }
 
-    private void FileWatcher_Renamed(object sender, RenamedEventArgs e)
+    private void FileWatcher_Renamed(RenamedEventArgs e)
     {
         _logger.LogDebug("File {OldFullPath} is renamed to {FullPath}", e.OldFullPath, e.FullPath);
 
@@ -254,7 +262,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
         _fileRenamed.OnNext((record, newRecord));
     }
 
-    private void FileWatcher_Error(object sender, ErrorEventArgs e)
+    private void FileWatcher_Error(ErrorEventArgs e)
     {
         var ex = e.GetException();
         _logger.LogError(ex, ex.Message);
