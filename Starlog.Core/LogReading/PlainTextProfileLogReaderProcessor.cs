@@ -7,10 +7,10 @@ namespace Genius.Starlog.Core.LogReading;
 
 public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
 {
-    public async Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, bool readFileArtifacts)
+    public async Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings)
     {
         using var reader = new StreamReader(stream, leaveOpen: true);
-        var fileArtifacts = readFileArtifacts ? await ReadFileArtifactsAsync(profile, reader) : null;
+        var fileArtifacts = settings.ReadFileArtifacts ? await ReadFileArtifactsAsync(profile, reader) : null;
 
         if (reader.EndOfStream)
         {

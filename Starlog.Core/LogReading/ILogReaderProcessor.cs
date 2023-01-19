@@ -5,5 +5,5 @@ namespace Genius.Starlog.Core.LogReading;
 
 public interface ILogReaderProcessor
 {
-    Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, bool readFileArtifacts);
+    Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings);
 }

@@ -93,7 +93,7 @@ public sealed class LogReaderContainerTests
 
     private class DummyLogReaderProcessor : ILogReaderProcessor
     {
-        public Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, bool readFileArtifacts)
+        public Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings)
         {
             throw new NotImplementedException();
         }

@@ -77,7 +77,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     private readonly ISynchronousScheduler _scheduler;
     private readonly ILogger<LogContainer> _logger;
     private readonly IFileSystemWatcher _fileWatcher;
-    private readonly ConcurrentBag<LogRecord> _logs = new();
+    private readonly List<LogRecord> _logs = new();
     private readonly ConcurrentBag<LoggerRecord> _loggers = new();
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
     private readonly ConcurrentDictionary<string, byte> _logThreads = new();
@@ -244,13 +244,11 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
             newRecord = record.WithNewName(e.FullPath);
             _files.TryAdd(record.FileName, newRecord);
 
-            foreach (var log in _logs.ToArray())
+            for (var i = 0; i < _logs.Count; i++)
             {
-                if (log.File == record)
+                if (_logs[i].File == record)
                 {
-                    var logToRemove = log;
-                    _logs.TryTake(out logToRemove);
-                    _logs.Add(log with { File = newRecord });
+                    _logs[i] = _logs[i] with { File = newRecord };
                 }
             }
         }
@@ -294,14 +292,16 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
 
         var logReaderProcessor = _logReaderContainer.CreateLogReaderProcessor(Profile.LogReader);
 
-        var readFileArtifacts = fileRecord.LastReadOffset == 0 && Profile.FileArtifactLinesCount > 0;
-        var logRecordResult = await logReaderProcessor.ReadAsync(Profile, fileRecord, stream, readFileArtifacts);
+        var settings = new LogReadingSettings(
+            ReadFileArtifacts: fileRecord.LastReadOffset == 0 && Profile.FileArtifactLinesCount > 0
+        );
+        var logRecordResult = await logReaderProcessor.ReadAsync(Profile, fileRecord, stream, settings);
 
         _logger.LogDebug("File {FileName} read {RecordsCount} logs", fileRecord.FileName, logRecordResult.Records.Length);
 
         fileRecord.LastReadOffset = stream.Length;
 
-        if (readFileArtifacts)
+        if (settings.ReadFileArtifacts)
         {
             fileRecord.Artifacts = logRecordResult.FileArtifacts;
         }
@@ -322,10 +322,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
         }
 
         _lock.EnterWriteLock();
-        foreach (var record in logRecordResult.Records)
-        {
-            _logs.Add(record);
-        }
+        _logs.AddRange(logRecordResult.Records);
         _lock.ExitWriteLock();
 
         tp.StopAndReport();

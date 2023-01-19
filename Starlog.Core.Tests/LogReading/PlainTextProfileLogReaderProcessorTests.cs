@@ -29,7 +29,7 @@ public sealed class PlainTextProfileLogReaderProcessorTests
             """));
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, readFileArtifacts: true);
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadFileArtifacts: true));
 
         // Verify
         Assert.NotNull(result.FileArtifacts);
@@ -66,7 +66,7 @@ public sealed class PlainTextProfileLogReaderProcessorTests
             """));
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, readFileArtifacts: false);
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadFileArtifacts: false));
 
         // Verify
         Assert.Null(result.FileArtifacts);
