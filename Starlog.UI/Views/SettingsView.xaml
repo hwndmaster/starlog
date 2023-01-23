@@ -22,18 +22,18 @@
                 <Label>Auto load previously opened profile:</Label>
                 <CheckBox IsChecked="{Binding AutoLoadPreviouslyOpenedProfile}" />
             </DockPanel>
-            <Label Style="{StaticResource Category}" Content="Log reader settings" />
+            <Label Style="{StaticResource Category}" Content="Log codec settings" />
             <DockPanel Style="{StaticResource SettingPanel}">
                 <Label>Plain text line regex templates:</Label>
                 <Button Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                        Command="{Binding AddPlainTextLogReaderLineRegexTemplateCommand}"
+                        Command="{Binding AddPlainTextLogCodecLineRegexTemplateCommand}"
                         Padding="0"
                         VerticalAlignment="Top"
                         Height="26">
                     <Image Source="{StaticResource Plus16}" Width="16" />
                 </Button>
-                <DataGrid autogrid:Properties.AutoGridBuilder="{Binding PlainTextLogReaderLineRegexTemplatesBuilder}"
-                          autogrid:Properties.ItemsSource="{Binding PlainTextLogReaderLineRegexTemplates}">
+                <DataGrid autogrid:Properties.AutoGridBuilder="{Binding PlainTextLogCodecLineRegexTemplatesBuilder}"
+                          autogrid:Properties.ItemsSource="{Binding PlainTextLogCodecLineRegexTemplates}">
                     <i:Interaction.Behaviors>
                         <autogrid:AttachingBehavior />
                     </i:Interaction.Behaviors>

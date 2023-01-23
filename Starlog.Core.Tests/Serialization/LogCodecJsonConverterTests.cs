@@ -7,29 +7,29 @@ using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.Core.Tests.Repositories;
 
-public sealed class LogReaderJsonConverterTests
+public sealed class LogCodecJsonConverterTests
 {
     private readonly Fixture _fixture = new();
-    private readonly Mock<ILogReaderContainer> _logReaderContainerMock = new();
-    private readonly LogReaderJsonConverter _sut;
+    private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
+    private readonly LogCodecJsonConverter _sut;
 
-    public LogReaderJsonConverterTests()
+    public LogCodecJsonConverterTests()
     {
-        _sut = new LogReaderJsonConverter(_logReaderContainerMock.Object);
+        _sut = new LogCodecJsonConverter(_logCodecContainerMock.Object);
     }
 
     [Fact]
-    public void Read_RestoresCompleteLogReaderObject()
+    public void Read_RestoresCompleteLogCodecObject()
     {
         // Arrange
-        var value = _fixture.Create<LogReader>();
-        _logReaderContainerMock.Setup(x => x.GetLogReaders()).Returns(new [] { value });
+        var value = _fixture.Create<LogCodec>();
+        _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns(new [] { value });
         var input = Encoding.Default.GetBytes($"\"{value.Id}\"");
         var reader = new Utf8JsonReader(input, true, new JsonReaderState());
         reader.Read();
 
         // Act
-        var result = _sut.Read(ref reader, typeof(LogReader), new JsonSerializerOptions());
+        var result = _sut.Read(ref reader, typeof(LogCodec), new JsonSerializerOptions());
 
         // Verify
         Assert.Equal(value, result);
@@ -41,7 +41,7 @@ public sealed class LogReaderJsonConverterTests
         // Arrange
         var stream = new ArrayBufferWriter<byte>();
         var writer = new Utf8JsonWriter(stream);
-        var value = _fixture.Create<LogReader>();
+        var value = _fixture.Create<LogCodec>();
 
         // Act
         _sut.Write(writer, value, new JsonSerializerOptions());

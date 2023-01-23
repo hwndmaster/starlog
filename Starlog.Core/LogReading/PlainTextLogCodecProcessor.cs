@@ -2,27 +2,35 @@ using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.Core.LogReading;
 
-public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
+public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
 {
-    public async Task<LogReaderResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings)
+    private readonly ISettingsQueryService _settingsQuery;
+
+    public PlainTextLogCodecProcessor(ISettingsQueryService settingsQuery)
+    {
+        _settingsQuery = settingsQuery.NotNull();
+    }
+
+    public async Task<LogReadingResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings)
     {
         using var reader = new StreamReader(stream, leaveOpen: true);
         var fileArtifacts = settings.ReadFileArtifacts ? await ReadFileArtifactsAsync(profile, reader) : null;
 
         if (reader.EndOfStream)
         {
-            return LogReaderResult.Empty;
+            return LogReadingResult.Empty;
         }
 
-        var readerSettings = (PlainTextProfileLogRead)profile.LogReader;
-        if (string.IsNullOrEmpty(readerSettings.LineRegex))
+        var logCodecSettings = (PlainTextProfileLogCodec)profile.LogCodec;
+        if (string.IsNullOrEmpty(logCodecSettings.LineRegex))
         {
             throw new InvalidOperationException("Cannot open profile with empty LineRegex setting.");
         }
-        Regex regex = new(readerSettings.LineRegex);
+        Regex regex = new(logCodecSettings.LineRegex);
 
         Dictionary<int, LoggerRecord> loggers = new();
         Dictionary<int, LogLevelRecord> logLevels = new();
@@ -46,7 +54,7 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
                 if (lastRecord is null)
                 {
                     // Seems a wrong file format, better to stop processing it now
-                    return LogReaderResult.Empty;
+                    return LogReadingResult.Empty;
                 }
                 lastRecordArtifacts.Add(line);
                 continue;
@@ -82,7 +90,7 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
             lastRecord = new LogRecord(dateTime, logLevelRecord, thread, fileRecord, loggerRecord, message, null);
         }
 
-        return new LogReaderResult(fileArtifacts, records.ToImmutableArray(), loggers.Values, logLevels.Values);
+        return new LogReadingResult(fileArtifacts, records.ToImmutableArray(), loggers.Values, logLevels.Values);
 
         void FlushRecentRecord()
         {
@@ -121,5 +129,26 @@ public sealed class PlainTextProfileLogReaderProcessor : ILogReaderProcessor
         }
 
         return new FileArtifacts(artifacts.ToArray());
+    }
+
+    // TODO: To cover with unit tests
+    public bool ReadFromCommandLineArguments(ProfileLogCodecBase profileLogCodec, string[] codecSettings)
+    {
+        Guard.NotNull(profileLogCodec);
+
+        if (codecSettings is null || codecSettings.Length == 0)
+        {
+            return false;
+        }
+
+        var logCodecSettings = (PlainTextProfileLogCodec)profileLogCodec;
+
+        var settings = _settingsQuery.Get();
+        var template = settings.PlainTextLogCodecLineRegexes.FirstOrDefault(x => x.Name.Equals(codecSettings[0], StringComparison.OrdinalIgnoreCase));
+        if (template is null)
+            return false;
+
+        logCodecSettings.LineRegex = template.Value;
+        return true;
     }
 }

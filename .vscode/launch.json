@@ -7,7 +7,15 @@
       "request": "launch",
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/build/net7.0-windows/Starlog.exe",
-      "args": [],
+      "args": [
+        /*"loadpath",
+        "--path",
+        "c:\\Dev\\Lab\\Starlog\\_\\Set 1",
+        "--settings",
+        "LEVEL DATETIME [Thread] Logger - Message",
+        "--artifacts",
+        "3"*/
+      ],
       "cwd": "${workspaceFolder}",
       "console": "internalConsole",
       "stopAtEntry": false

@@ -4,18 +4,18 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:logreaders="clr-namespace:Genius.Starlog.UI.Views.ProfileLogReaders"
+        xmlns:logcodecs="clr-namespace:Genius.Starlog.UI.Views.ProfileLogCodecs"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
         Header="{Binding PageTitle}"
         Position="Right"
         Width="600">
     <mah:Flyout.Resources>
-        <DataTemplate DataType="{x:Type logreaders:PlainTextLogReaderViewModel}" >
-            <logreaders:PlainTextLogReaderView DataContext="{Binding .}" />
+        <DataTemplate DataType="{x:Type logcodecs:PlainTextLogCodecViewModel}" >
+            <logcodecs:PlainTextLogCodecView DataContext="{Binding .}" />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type logreaders:XmlLogReaderViewModel}" >
-            <logreaders:XmlLogReaderView DataContext="{Binding .}" />
+        <DataTemplate DataType="{x:Type logcodecs:XmlLogCodecViewModel}" >
+            <logcodecs:XmlLogCodecView DataContext="{Binding .}" />
         </DataTemplate>
     </mah:Flyout.Resources>
 
@@ -29,14 +29,14 @@
             <TextBox Text="{Binding Path}" />
         </DockPanel>
         <DockPanel>
-            <Label>Log Reader:</Label>
-            <ComboBox ItemsSource="{Binding LogReaders}"
-                      SelectedItem="{Binding LogReader}"
+            <Label>Log Codec:</Label>
+            <ComboBox ItemsSource="{Binding LogCodecs}"
+                      SelectedItem="{Binding LogCodec}"
                       DisplayMemberPath="Name"
                       Validation.ErrorTemplate="{x:Null}">
             </ComboBox>
         </DockPanel>
-        <ContentControl Content="{Binding LogReader}"
+        <ContentControl Content="{Binding LogCodec}"
                         Validation.ErrorTemplate="{x:Null}" />
         <DockPanel>
             <Label>File artifact lines count:</Label>

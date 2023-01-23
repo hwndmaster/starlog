@@ -31,15 +31,15 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _ui = ui.NotNull();
-        PlainTextLogReaderLineRegexTemplatesBuilder = gridBuilder.NotNull();
+        PlainTextLogCodecLineRegexTemplatesBuilder = gridBuilder.NotNull();
 
         // Members initialization:
         _model = settingsQuery.NotNull().Get();
         Reconcile();
 
         // Actions:
-        AddPlainTextLogReaderLineRegexTemplateCommand = new ActionCommand(_ =>
-            AddPlainTextLogReaderLineRegexTemplate(new SettingStringValue("Unnamed", ".*")));
+        AddPlainTextLogCodecLineRegexTemplateCommand = new ActionCommand(_ =>
+            AddPlainTextLogCodecLineRegexTemplate(new SettingStringValue("Unnamed", ".*")));
 
         // Subscriptions:
         eventBus.WhenFired<SettingsUpdatedEvent>()
@@ -56,10 +56,10 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
     {
         AutoLoadPreviouslyOpenedProfile = _model.AutoLoadPreviouslyOpenedProfile;
 
-        PlainTextLogReaderLineRegexTemplates.Clear();
-        foreach (var regex in _model.PlainTextLogReaderLineRegexes)
+        PlainTextLogCodecLineRegexTemplates.Clear();
+        foreach (var regex in _model.PlainTextLogCodecLineRegexes)
         {
-            AddPlainTextLogReaderLineRegexTemplate(regex);
+            AddPlainTextLogCodecLineRegexTemplate(regex);
         }
     }
 
@@ -68,28 +68,28 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         await _commandBus.SendAsync(new SettingsUpdateCommand(_model));
     }
 
-    private void AddPlainTextLogReaderLineRegexTemplate(SettingStringValue stringValue)
+    private void AddPlainTextLogCodecLineRegexTemplate(SettingStringValue stringValue)
     {
         var vm = new RegexValueViewModel(stringValue);
         vm.DeleteCommand.Executed.Subscribe(async _ =>
         {
             if (!_ui.AskForConfirmation($"Confirm removing '{vm.Name}'", "Deletion confirmation"))
                 return;
-            PlainTextLogReaderLineRegexTemplates.Remove(vm);
+            PlainTextLogCodecLineRegexTemplates.Remove(vm);
             await RebindAndSendAsync();
         });
         vm.WhenAnyChanged().Subscribe(async _ =>
         {
-            if (PlainTextLogReaderLineRegexTemplates.Any(x => x.HasErrors))
+            if (PlainTextLogCodecLineRegexTemplates.Any(x => x.HasErrors))
                 return;
 
             await RebindAndSendAsync();
         });
-        PlainTextLogReaderLineRegexTemplates.Add(vm);
+        PlainTextLogCodecLineRegexTemplates.Add(vm);
 
         async Task RebindAndSendAsync()
         {
-            _model.PlainTextLogReaderLineRegexes = PlainTextLogReaderLineRegexTemplates.Select(x => new SettingStringValue(x.Name, x.Regex)).ToList();
+            _model.PlainTextLogCodecLineRegexes = PlainTextLogCodecLineRegexTemplates.Select(x => new SettingStringValue(x.Name, x.Regex)).ToList();
             await SendUpdate();
         }
     }
@@ -100,7 +100,7 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         set => RaiseAndSetIfChanged(value, (_, @new) => _model.AutoLoadPreviouslyOpenedProfile = @new);
     }
 
-    public PlainTextLineRegexTemplatesAutoGridBuilder PlainTextLogReaderLineRegexTemplatesBuilder { get; }
-    public ObservableCollection<RegexValueViewModel> PlainTextLogReaderLineRegexTemplates { get; } = new();
-    public IActionCommand AddPlainTextLogReaderLineRegexTemplateCommand { get; }
+    public PlainTextLineRegexTemplatesAutoGridBuilder PlainTextLogCodecLineRegexTemplatesBuilder { get; }
+    public ObservableCollection<RegexValueViewModel> PlainTextLogCodecLineRegexTemplates { get; } = new();
+    public IActionCommand AddPlainTextLogCodecLineRegexTemplateCommand { get; }
 }

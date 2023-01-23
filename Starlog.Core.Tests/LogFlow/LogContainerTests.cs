@@ -12,7 +12,7 @@ namespace Genius.Starlog.Core.Tests.LogReading;
 
 public sealed class LogContainerTests
 {
-    private record FileWithContentRecord(string FullPath, byte[] Content, LogReaderResult Result);
+    private record FileWithContentRecord(string FullPath, byte[] Content, LogReadingResult Result);
 
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly TestFileService _fileService = new();
@@ -20,24 +20,24 @@ public sealed class LogContainerTests
     private readonly TestEventBus _eventBus = new();
     private readonly TestSynchronousScheduler _scheduler = new();
     private readonly TestLogger<LogContainer> _logger = new();
-    private readonly Mock<ILogReaderContainer> _logReaderContainerMock = new();
+    private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
 
     private readonly LogContainer _sut;
 
     private readonly Profile _sampleProfile;
-    private readonly Mock<ILogReaderProcessor> _logReaderProcessorMock;
+    private readonly Mock<ILogCodecProcessor> _logCodecProcessorMock;
 
     public LogContainerTests()
     {
         new SupportMutableValueTypesCustomization().Customize(_fixture);
 
         _sut = new LogContainer(_eventBus, _fileService, _fileWatcher,
-            _logReaderContainerMock.Object, _scheduler, _logger);
+            _logCodecContainerMock.Object, _scheduler, _logger);
 
         _sampleProfile = _fixture.Create<Profile>();
-        _logReaderProcessorMock = new Mock<ILogReaderProcessor>();
-        _logReaderContainerMock.Setup(x => x.CreateLogReaderProcessor(_sampleProfile.LogReader))
-            .Returns(() => _logReaderProcessorMock.Object);
+        _logCodecProcessorMock = new Mock<ILogCodecProcessor>();
+        _logCodecContainerMock.Setup(x => x.CreateLogCodecProcessor(_sampleProfile.LogCodec))
+            .Returns(() => _logCodecProcessorMock.Object);
     }
 
     [Fact]
@@ -237,7 +237,7 @@ public sealed class LogContainerTests
         var initialLastReadOffset = files[0].Content.Length;
         files[0] = files[0] with {
             Content = files[0].Content.Concat(_fixture.CreateMany<byte>(_fixture.Create<int>())).ToArray(),
-            Result = SampleLogReaderResult(files[0].FullPath)
+            Result = SampleLogReadingResult(files[0].FullPath)
         };
         _fileService.AddFile(files[0].FullPath, files[0].Content);
         SetupProcessorRead(_sampleProfile, files[0], false, verifyLastReadOffset: initialLastReadOffset);
@@ -328,15 +328,15 @@ public sealed class LogContainerTests
         var sampleContent = _fixture.CreateMany<byte>(_fixture.Create<int>()).ToArray();
         var fullPath = Path.Combine(profile.Path, fileName);
         _fileService.AddFile(fullPath, sampleContent);
-        var sampleResults = SampleLogReaderResult(fullPath);
+        var sampleResults = SampleLogReadingResult(fullPath);
         var record = new FileWithContentRecord(fullPath, sampleContent, sampleResults);
         SetupProcessorRead(profile, record, readFileArtifacts);
         return record;
     }
 
-    private LogReaderResult SampleLogReaderResult(string fullPath)
+    private LogReadingResult SampleLogReadingResult(string fullPath)
     {
-        return new LogReaderResult(_fixture.Create<FileArtifacts>(),
+        return new LogReadingResult(_fixture.Create<FileArtifacts>(),
             ImmutableArray.Create(_fixture.Build<LogRecord>()
                 .With(x => x.File, new FileRecord(fullPath, 0))
                 .CreateMany().ToArray()),
@@ -346,7 +346,7 @@ public sealed class LogContainerTests
 
     private void SetupProcessorRead(Profile profile, FileWithContentRecord record, bool readFileArtifacts, int? verifyLastReadOffset = null)
     {
-        _logReaderProcessorMock.Setup(x => x.ReadAsync(profile,
+        _logCodecProcessorMock.Setup(x => x.ReadAsync(profile,
                 It.Is<FileRecord>(fr => fr.FullPath.Equals(record.FullPath, StringComparison.OrdinalIgnoreCase)),
                 It.IsAny<Stream>(),
                 It.Is<LogReadingSettings>(s => s.ReadFileArtifacts == readFileArtifacts)))

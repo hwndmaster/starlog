@@ -10,6 +10,7 @@ using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
+using Genius.Starlog.UI.Controllers;
 
 namespace Genius.Starlog.UI.Views;
 
@@ -26,6 +27,7 @@ public interface IProfilesViewModel : ITabViewModel, IDisposable
 
 internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 {
+    private readonly IMainController _controller;
     private readonly IProfileQueryService _profileQuery;
     private readonly IViewModelFactory _vmFactory;
     private readonly CompositeDisposable _disposables = new();
@@ -34,8 +36,8 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
         IEventBus eventBus,
+        IMainController controller,
         IProfileQueryService profileQuery,
-        ISettingsQueryService settingsQuery,
         IViewModelFactory vmFactory,
         IUserInteraction ui,
         ProfileAutoGridBuilder autoGridBuilder)
@@ -43,10 +45,10 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         Guard.NotNull(commandBus);
         Guard.NotNull(currentProfile);
         Guard.NotNull(eventBus);
-        Guard.NotNull(settingsQuery);
         Guard.NotNull(ui);
 
         // Dependencies:
+        _controller = controller.NotNull();
         _profileQuery = profileQuery.NotNull();
         _vmFactory = vmFactory.NotNull();
         AutoGridBuilder = autoGridBuilder.NotNull();
@@ -110,16 +112,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
             .DisposeWith(_disposables);
 
         // Final preparation:
-        Task.Run(() => ReloadListAsync())
-            .ContinueWith(_ =>
-            {
-                var settings = settingsQuery.Get();
-                if (settings.AutoLoadPreviouslyOpenedProfile && settings.AutoLoadProfile is not null)
-                {
-                    var profile = Profiles.FirstOrDefault(x => x.Id == settings.AutoLoadProfile);
-                    profile?.LoadProfileCommand.Execute(null);
-                }
-            }, TaskContinuationOptions.OnlyOnRanToCompletion);
+        Task.Run(() => ReloadListAsync());
     }
 
     public void Dispose()
@@ -134,6 +127,8 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
             .Select(x => _vmFactory.CreateProfile(x))
             .ToList();
         Profiles.ReplaceItems(profileVms);
+
+        _controller.NotifyProfilesAreLoaded();
     }
 
     public IAutoGridBuilder AutoGridBuilder { get; }

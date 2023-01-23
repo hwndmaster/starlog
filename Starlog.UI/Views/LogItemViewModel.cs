@@ -37,12 +37,6 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
 
     public LogRecord Record { get; private set; }
 
-    public bool IsBookmarked
-    {
-        get => GetOrDefault(false);
-        set => RaiseAndSetIfChanged(value);
-    }
-
     public DateTimeOffset DateTime => Record.DateTime;
     public string Level => Record.Level.Name;
     public string Thread => Record.Thread;
@@ -56,6 +50,12 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
     public string Logger => Record.Logger.Name;
     public string Message => Record.Message;
     public string? ArtifactsIcon => string.IsNullOrEmpty(Record.LogArtifacts) ? null : "Note32";
+
+    public bool IsBookmarked
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
 
     public bool ColorizeByThread
     {

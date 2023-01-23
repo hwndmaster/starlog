@@ -34,15 +34,15 @@ public static class Module
         services.AddSingleton<ICurrentProfile>(x => x.GetRequiredService<LogContainer>());
         services.AddSingleton<ILogContainer>(x => x.GetRequiredService<LogContainer>());
         services.AddSingleton<ILogFilterContainer, LogFilterContainer>();
-        services.AddSingleton<ILogReaderContainer, LogReaderContainer>();
+        services.AddSingleton<ILogCodecContainer, LogCodecContainer>();
         services.AddTransient<IFilterProcessor, MessageFilterProcessor>();
         services.AddTransient<IFilterProcessor, LoggersFilterProcessor>();
         services.AddTransient<IFilterProcessor, LogLevelsFilterProcessor>();
         services.AddTransient<IFilterProcessor, ThreadsFilterProcessor>();
         services.AddTransient<IFilterProcessor, TimeAgoFilterProcessor>();
         services.AddTransient<IFilterProcessor, TimeRangeFilterProcessor>();
-        services.AddTransient<ILogReaderProcessor, PlainTextProfileLogReaderProcessor>();
-        services.AddTransient<ILogReaderProcessor, XmlProfileLogReaderProcessor>();
+        services.AddTransient<ILogCodecProcessor, PlainTextLogCodecProcessor>();
+        services.AddTransient<ILogCodecProcessor, XmlLogCodecProcessor>();
         services.AddTransient<ILogRecordMatcher, LogRecordMatcher>();
         services.AddTransient<IQuickFilterProvider, QuickFilterProvider>();
 
@@ -50,13 +50,14 @@ public static class Module
         // TO BE DONE LATER
 
         // Converters
-        services.AddSingleton<IJsonConverter, LogReaderJsonConverter>();
+        services.AddSingleton<IJsonConverter, LogCodecJsonConverter>();
         services.AddSingleton<IJsonConverter, LogFilterJsonConverter>();
 
         // Command Handlers
         services.AddScoped<ICommandHandler<ProfileCreateCommand, Guid>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileUpdateCommand>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileDeleteCommand>, ProfileDeleteCommandHandler>();
+        services.AddScoped<ICommandHandler<ProfileLoadAnonymousCommand, Profile>, ProfileLoadAnonymousCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileFilterCreateOrUpdateCommand, ProfileFilterCreateOrUpdateCommandResult>, ProfileFilterCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileFilterDeleteCommand>, ProfileFilterDeleteCommandHandler>();
         services.AddScoped<ICommandHandler<SettingsUpdateCommand>, SettingsUpdateCommandHandler>();
@@ -80,11 +81,11 @@ public static class Module
         logFilterContainer.RegisterLogFilter<TimeRangeProfileFilter, TimeRangeFilterProcessor>(
             new LogFilter(new Guid("4ba18116-122b-4580-afc9-97211c0a53af"), "Time range filter"));
 
-        var logReaderContainer = serviceProvider.GetRequiredService<ILogReaderContainer>();
-        logReaderContainer.RegisterLogReader<PlainTextProfileLogRead, PlainTextProfileLogReaderProcessor>(
-            new LogReader(new Guid("a38a40b6-c07f-49d5-a143-5c9f9f42149b"), "Plain Text"));
-        logReaderContainer.RegisterLogReader<XmlProfileLogRead, XmlProfileLogReaderProcessor>(
-            new LogReader(new Guid("0cb976bc-6d87-4450-8202-530d9db09b40"), "XML"));
+        var logCodecContainer = serviceProvider.GetRequiredService<ILogCodecContainer>();
+        logCodecContainer.RegisterLogCodec<PlainTextProfileLogCodec, PlainTextLogCodecProcessor>(
+            new LogCodec(new Guid("a38a40b6-c07f-49d5-a143-5c9f9f42149b"), "Plain Text"));
+        logCodecContainer.RegisterLogCodec<XmlProfileLogCodec, XmlLogCodecProcessor>(
+            new LogCodec(new Guid("0cb976bc-6d87-4450-8202-530d9db09b40"), "XML"));
 
         var typeDiscriminators = serviceProvider.GetRequiredService<ITypeDiscriminators>();
         typeDiscriminators.AddMapping<MessageProfileFilter>("msg-profile-filter");
@@ -93,7 +94,7 @@ public static class Module
         typeDiscriminators.AddMapping<ThreadsProfileFilter>("threads-profile-filter");
         typeDiscriminators.AddMapping<TimeAgoProfileFilter>("timeago-profile-filter");
         typeDiscriminators.AddMapping<TimeRangeProfileFilter>("timerange-profile-filter");
-        typeDiscriminators.AddMapping<PlainTextProfileLogRead>("plaintext-profile-log-read");
-        typeDiscriminators.AddMapping<XmlProfileLogRead>("xml-profile-log-read");
+        typeDiscriminators.AddMapping<PlainTextProfileLogCodec>("plaintext-profile-log-codec");
+        typeDiscriminators.AddMapping<XmlProfileLogCodec>("xml-profile-log-codec");
     }
 }

@@ -1,12 +1,12 @@
 namespace Genius.Starlog.Core.Models;
 
 /// <summary>
-///   The log reader settings for the profile with Plain Text log reader type.
+///   The log codec settings for the profile with Plain Text log codec type.
 /// </summary>
-public sealed class PlainTextProfileLogRead : ProfileLogReadBase
+public sealed class PlainTextProfileLogCodec : ProfileLogCodecBase
 {
-    public PlainTextProfileLogRead(LogReader logReader)
-        : base(logReader)
+    public PlainTextProfileLogCodec(LogCodec logCodec)
+        : base(logCodec)
     {
     }
 

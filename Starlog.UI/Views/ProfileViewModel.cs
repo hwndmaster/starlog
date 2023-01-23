@@ -7,7 +7,7 @@ using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Controllers;
-using Genius.Starlog.UI.Views.ProfileLogReaders;
+using Genius.Starlog.UI.Views.ProfileLogCodecs;
 
 namespace Genius.Starlog.UI.Views;
 
@@ -29,7 +29,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     private readonly IUserInteraction _ui;
     private readonly IMainController _controller;
     private readonly ILogContainer _logContainer;
-    private readonly ILogReaderContainer _logReaderContainer;
+    private readonly ILogCodecContainer _logCodecContainer;
 
     private Profile? _profile;
 
@@ -40,7 +40,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         IProfileQueryService profileQuery,
         IUserInteraction ui,
         ILogContainer logContainer,
-        ILogReaderContainer logReaderContainer,
+        ILogCodecContainer logCodecContainer,
         IViewModelFactory vmFactory)
     {
         // Dependencies:
@@ -49,16 +49,16 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         _profileQuery = profileQuery.NotNull();
         _ui = ui.NotNull();
         _logContainer = logContainer.NotNull();
-        _logReaderContainer = logReaderContainer.NotNull();
+        _logCodecContainer = logCodecContainer.NotNull();
 
         // Members initialization:
         _profile = profile;
 
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Name)));
 
-        foreach (var logReader in _logReaderContainer.GetLogReaders())
+        foreach (var logCodec in _logCodecContainer.GetLogCodecs())
         {
-            LogReaders.Add(vmFactory.CreateLogReader(logReader, _profile?.LogReader));
+            LogCodecs.Add(vmFactory.CreateLogCodec(logCodec, _profile?.LogCodec));
         }
 
         InitializeProperties(() =>
@@ -74,7 +74,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         CommitProfileCommand = new ActionCommand(_ => CommitProfile());
         LoadProfileCommand = new ActionCommand(async _ => {
             _controller.SetBusy(true);
-            await Task.Delay(10);
+            await Task.Delay(10); // TODO: Helps to let the UI to show a 'busy' overlay, find a better way around.
             await Task.Run(async() =>
             {
                 Guard.NotNull(_profile);
@@ -95,8 +95,8 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
         Name = sourceProfile.Name + (nameSuffix ?? string.Empty);
         Path = sourceProfile.Path;
-        LogReader = LogReaders.First(x => x.LogReader.LogReader.Id == sourceProfile.LogReader.LogReader.LogReader.Id);
-        LogReader.CopySettingsFrom(sourceProfile.LogReader);
+        LogCodec = LogCodecs.First(x => x.ProfileLogCodec.LogCodec.Id == sourceProfile.LogCodec.ProfileLogCodec.LogCodec.Id);
+        LogCodec.CopySettingsFrom(sourceProfile.LogCodec);
         FileArtifactLinesCount = sourceProfile.FileArtifactLinesCount;
     }
 
@@ -109,13 +109,13 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
         Name = _profile.Name;
         Path = _profile.Path;
-        LogReader = LogReaders.First(x => x.LogReader.LogReader.Id == _profile.LogReader.LogReader.Id);
+        LogCodec = LogCodecs.First(x => x.ProfileLogCodec.LogCodec.Id == _profile.LogCodec.LogCodec.Id);
         FileArtifactLinesCount = _profile.FileArtifactLinesCount;
     }
 
     private async Task<bool> CommitProfile()
     {
-        if (HasErrors || LogReader.HasErrors)
+        if (HasErrors || LogCodec.HasErrors)
         {
             _ui.ShowWarning("Cannot proceed while there are errors in the form.");
             return false;
@@ -127,7 +127,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             {
                 Name = Name,
                 Path = Path,
-                LogReader = LogReader.LogReader,
+                LogCodec = LogCodec.ProfileLogCodec,
                 FileArtifactLinesCount = FileArtifactLinesCount
             });
             _profile = await _profileQuery.FindByIdAsync(profileId);
@@ -138,7 +138,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             {
                 Name = Name,
                 Path = Path,
-                LogReader = LogReader.LogReader,
+                LogCodec = LogCodec.ProfileLogCodec,
                 FileArtifactLinesCount = FileArtifactLinesCount
             });
         }
@@ -150,14 +150,14 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     {
         Name = _profile?.Name ?? Name;
         Path = _profile?.Path ?? Path;
-        LogReader = _profile is null
-            ? LogReader
-            : LogReaders.First(x => x.LogReader.LogReader.Id == _profile.LogReader.LogReader.Id);
+        LogCodec = _profile is null
+            ? LogCodec
+            : LogCodecs.First(x => x.ProfileLogCodec.LogCodec.Id == _profile.LogCodec.LogCodec.Id);
         FileArtifactLinesCount = _profile?.FileArtifactLinesCount ?? FileArtifactLinesCount;
     }
 
-    public ObservableCollection<LogReaderViewModel> LogReaders { get; }
-        = new TypedObservableList<LogReaderViewModel, LogReaderViewModel>();
+    public ObservableCollection<LogCodecViewModel> LogCodecs { get; }
+        = new TypedObservableList<LogCodecViewModel, LogCodecViewModel>();
 
     public Guid? Id => _profile?.Id;
 
@@ -175,9 +175,9 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
-    public LogReaderViewModel LogReader
+    public LogCodecViewModel LogCodec
     {
-        get => GetOrDefault(LogReaders[0]);
+        get => GetOrDefault(LogCodecs[0]);
         set => RaiseAndSetIfChanged(value);
     }
 

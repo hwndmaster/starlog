@@ -4,7 +4,9 @@ global using System.Linq;
 global using System.Windows;
 global using Genius.Atom.Infrastructure;
 global using Genius.Atom.UI.Forms;
+
 using Genius.Starlog.UI.AutoGridBuilders;
+using Genius.Starlog.UI.Console;
 using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
@@ -33,7 +35,14 @@ public partial class App : Application
         Atom.UI.Forms.Module.Initialize(ServiceProvider);
 
         var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+        var mainController = ServiceProvider.GetRequiredService<IMainController>();
+        var consoleParser = ServiceProvider.GetRequiredService<IConsoleParser>();
+
+        mainWindow.Loaded += (_, __) => mainController.NotifyMainWindowIsLoaded();
         mainWindow.Show();
+
+        consoleParser.Process(e.Args);
+        Task.Run(() => mainController.AutoLoadProfileAsync());
     }
 
     private void ConfigureServices(IServiceCollection services)
@@ -71,6 +80,7 @@ public partial class App : Application
 
         // Services and Helpers:
         services.AddTransient<ILogArtifactsFormatter, LogArtifactsFormatter>();
+        services.AddTransient<IConsoleParser, ConsoleParser>();
     }
 
     private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)

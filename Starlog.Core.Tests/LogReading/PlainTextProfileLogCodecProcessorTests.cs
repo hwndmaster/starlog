@@ -2,13 +2,20 @@ using System.Text;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.Core.Tests.LogReading;
 
-public sealed class PlainTextProfileLogReaderProcessorTests
+public sealed class PlainTextProfileLogCodecProcessorTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly PlainTextProfileLogReaderProcessor _sut = new();
+    private readonly Mock<ISettingsQueryService> _settingsQueryMock = new();
+    private readonly PlainTextLogCodecProcessor _sut;
+
+    public PlainTextProfileLogCodecProcessorTests()
+    {
+        _sut = new(_settingsQueryMock.Object);
+    }
 
     [Fact]
     public async Task ReadAsync_HappyFlowScenario()
@@ -98,7 +105,7 @@ public sealed class PlainTextProfileLogReaderProcessorTests
             Name = _fixture.Create<string>(),
             Path = _fixture.Create<string>(),
             FileArtifactLinesCount = 2,
-            LogReader = new PlainTextProfileLogRead(_fixture.Create<LogReader>())
+            LogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>())
             {
                 LineRegex = @"(?<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3})\s(?<level>\w+)\s(?<thread>\d+)\s(?<logger>\w+)\s(?<message>.*)"
             }

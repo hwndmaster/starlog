@@ -7,6 +7,8 @@ namespace Genius.Starlog.Core.Models;
 /// </summary>
 public sealed class Profile : EntityBase
 {
+    public static readonly Guid AnonymousProfileId = new("00000000-0000-0000-0000-000000000001");
+
     /// <summary>
     ///   The profile name.
     /// </summary>
@@ -17,10 +19,12 @@ public sealed class Profile : EntityBase
     /// </summary>
     public required string Path { get; set; }
 
+    public bool IsAnonymous => Id == AnonymousProfileId;
+
     /// <summary>
-    ///   The log reader which defines the strategy of how the logs are being read.
+    ///   The log codec which defines the strategy of how the logs are being read.
     /// </summary>
-    public required ProfileLogReadBase LogReader { get; set; }
+    public required ProfileLogCodecBase LogCodec { get; set; }
 
     /// <summary>
     ///   The user-defined filters.

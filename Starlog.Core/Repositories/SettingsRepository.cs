@@ -49,7 +49,7 @@ internal sealed class SettingsRepository : ISettingsRepository
 
     private static Settings CreateDefaultSettings() => new()
     {
-        PlainTextLogReaderLineRegexes = new List<SettingStringValue>
+        PlainTextLogCodecLineRegexes = new List<SettingStringValue>
         {
             new SettingStringValue("LEVEL DATETIME [Thread] Logger - Message", @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>[^\s]+)\s-\s(?<message>.+)")
         }

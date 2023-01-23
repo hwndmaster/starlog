@@ -8,13 +8,13 @@ using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Views.ProfileFilters;
-using Genius.Starlog.UI.Views.ProfileLogReaders;
+using Genius.Starlog.UI.Views.ProfileLogCodecs;
 
 namespace Genius.Starlog.UI.Views;
 
 public interface IViewModelFactory
 {
-    LogReaderViewModel CreateLogReader(LogReader logReader, ProfileLogReadBase? profileLogReader);
+    LogCodecViewModel CreateLogCodec(LogCodec logCodec, ProfileLogCodecBase? profileLogCodec);
     IProfileViewModel CreateProfile(Profile? profile);
     IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter);
     IProfileFilterSettingsViewModel CreateProfileFilterSettings(LogFilter logFilter, ProfileFilterBase? profileFilter);
@@ -27,7 +27,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
     private readonly ICurrentProfile _currentProfile;
     private readonly ILogContainer _logContainer;
     private readonly ILogFilterContainer _logFilterContainer;
-    private readonly ILogReaderContainer _logReaderContainer;
+    private readonly ILogCodecContainer _logCodecContainer;
     private readonly IMainController _mainController;
     private readonly IProfileQueryService _profileQuery;
     private readonly ISettingsQueryService _settingsQuery;
@@ -38,7 +38,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
         ICurrentProfile currentProfile,
         ILogContainer logContainer,
         ILogFilterContainer logFilterContainer,
-        ILogReaderContainer logReaderContainer,
+        ILogCodecContainer logCodecContainer,
         IMainController mainController,
         IProfileQueryService profileQuery,
         ISettingsQueryService settingsQuery,
@@ -48,30 +48,30 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
         _logFilterContainer = logFilterContainer.NotNull();
-        _logReaderContainer = logReaderContainer.NotNull();
+        _logCodecContainer = logCodecContainer.NotNull();
         _mainController = mainController.NotNull();
         _profileQuery = profileQuery.NotNull();
         _settingsQuery = settingsQuery.NotNull();
         _ui = ui.NotNull();
     }
 
-    public LogReaderViewModel CreateLogReader(LogReader logReader, ProfileLogReadBase? profileLogReader)
+    public LogCodecViewModel CreateLogCodec(LogCodec logCodec, ProfileLogCodecBase? profileLogCodec)
     {
-        profileLogReader = profileLogReader is not null && logReader.Id == profileLogReader.LogReader.Id
-            ? profileLogReader
-            : _logReaderContainer.CreateProfileLogReader(logReader);
+        profileLogCodec = profileLogCodec is not null && logCodec.Id == profileLogCodec.LogCodec.Id
+            ? profileLogCodec
+            : _logCodecContainer.CreateProfileLogCodec(logCodec);
 
-        return profileLogReader switch
+        return profileLogCodec switch
         {
-            PlainTextProfileLogRead plainText => new PlainTextLogReaderViewModel(plainText, _settingsQuery),
-            XmlProfileLogRead xml => new XmlLogReaderViewModel(xml),
-            _ => throw new InvalidOperationException($"{nameof(profileLogReader)} is of unexpected type {profileLogReader.GetType().Name}")
+            PlainTextProfileLogCodec plainText => new PlainTextLogCodecViewModel(plainText, _settingsQuery),
+            XmlProfileLogCodec xml => new XmlLogCodecViewModel(xml),
+            _ => throw new InvalidOperationException($"{nameof(profileLogCodec)} is of unexpected type {profileLogCodec.GetType().Name}")
         };
     }
 
     public IProfileViewModel CreateProfile(Profile? profile)
     {
-        return new ProfileViewModel(profile, _commandBus, _mainController, _profileQuery, _ui, _logContainer, _logReaderContainer, this);
+        return new ProfileViewModel(profile, _commandBus, _mainController, _profileQuery, _ui, _logContainer, _logCodecContainer, this);
     }
 
     public IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter)

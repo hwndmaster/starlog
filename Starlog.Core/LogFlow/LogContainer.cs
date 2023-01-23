@@ -73,7 +73,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
 {
     private readonly IEventBus _eventBus;
     private readonly IFileService _fileService;
-    private readonly ILogReaderContainer _logReaderContainer;
+    private readonly ILogCodecContainer _logCodecContainer;
     private readonly ISynchronousScheduler _scheduler;
     private readonly ILogger<LogContainer> _logger;
     private readonly IFileSystemWatcher _fileWatcher;
@@ -90,15 +90,18 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
     private readonly ReaderWriterLockSlim _lock = new();
 
-    public LogContainer(IEventBus eventBus, IFileService fileService,
+    public LogContainer(
+        IEventBus eventBus,
+        IFileService fileService,
         IFileSystemWatcher fileWatcher,
-        ILogReaderContainer logReaderContainer, ISynchronousScheduler scheduler,
+        ILogCodecContainer logCodecContainer,
+        ISynchronousScheduler scheduler,
         ILogger<LogContainer> logger)
     {
         _eventBus = eventBus.NotNull();
         _fileService = fileService.NotNull();
         _fileWatcher = fileWatcher.NotNull();
-        _logReaderContainer = logReaderContainer.NotNull();
+        _logCodecContainer = logCodecContainer.NotNull();
         _scheduler = scheduler.NotNull();
         _logger = logger.NotNull();
 
@@ -290,12 +293,12 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
 
         var tp = TracePerf.Start<LogContainer>(nameof(ReadLogsAsync));
 
-        var logReaderProcessor = _logReaderContainer.CreateLogReaderProcessor(Profile.LogReader);
+        var logCodecProcessor = _logCodecContainer.CreateLogCodecProcessor(Profile.LogCodec);
 
         var settings = new LogReadingSettings(
             ReadFileArtifacts: fileRecord.LastReadOffset == 0 && Profile.FileArtifactLinesCount > 0
         );
-        var logRecordResult = await logReaderProcessor.ReadAsync(Profile, fileRecord, stream, settings);
+        var logRecordResult = await logCodecProcessor.ReadAsync(Profile, fileRecord, stream, settings);
 
         _logger.LogDebug("File {FileName} read {RecordsCount} logs", fileRecord.FileName, logRecordResult.Records.Length);
 
