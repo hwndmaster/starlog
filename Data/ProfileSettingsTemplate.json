@@ -1,0 +1,17 @@
+﻿[
+  {
+    "Name": "Starfix",
+    "Settings": {
+      "$type": "profile-settings",
+      "$v": 1,
+      "LogCodec": {
+        "$type": "plaintext-profile-log-codec",
+        "$v": 1,
+        "LineRegex": "(?\u003Clevel\u003E\\w\u002B)\\s(?\u003Cdatetime\u003E[\\d\\-:\\.]\u002B\\s[\\d\\-:\\.]\u002B)\\s\\[(?\u003Cthread\u003E\\w\u002B)\\]\\s(?\u003Clogger\u003E[^\\s]\u002B)\\s-\\s(?\u003Cmessage\u003E.\u002B)",
+        "LogCodec": "a38a40b6-c07f-49d5-a143-5c9f9f42149b"
+      },
+      "FileArtifactLinesCount": 3
+    },
+    "Id": "00000000-0000-0000-0000-000000000010"
+  }
+]
