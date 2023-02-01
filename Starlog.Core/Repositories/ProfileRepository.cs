@@ -24,7 +24,6 @@ internal sealed class ProfileRepository : RepositoryBase<Profile>, IProfileRepos
     {
     }
 
-    // TODO: Cover with unit tests
     public override Task DeleteAsync(Guid entityId)
     {
         if (entityId.Equals(Profile.AnonymousProfileId))
@@ -36,7 +35,6 @@ internal sealed class ProfileRepository : RepositoryBase<Profile>, IProfileRepos
         return base.DeleteAsync(entityId);
     }
 
-    // TODO: Cover with unit tests
     public override Task<Profile?> FindByIdAsync(Guid entityId)
     {
         if (entityId.Equals(Profile.AnonymousProfileId))
@@ -47,7 +45,6 @@ internal sealed class ProfileRepository : RepositoryBase<Profile>, IProfileRepos
         return base.FindByIdAsync(entityId);
     }
 
-    // TODO: Cover with unit tests
     public override Task StoreAsync(params Profile[] entities)
     {
         entities = entities.Where(x => !x.IsAnonymous).ToArray();

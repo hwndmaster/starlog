@@ -129,7 +129,7 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
             IEnumerable<string> files;
             if (isFile)
             {
-                files = new [] { profile.Path };
+                files = profile.Path.Split('|').ToArray();
             }
             else
             {

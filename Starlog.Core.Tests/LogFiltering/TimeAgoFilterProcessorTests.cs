@@ -1,26 +1,41 @@
 using Genius.Atom.Infrastructure;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core.LogFiltering;
+using Genius.Starlog.Core.LogFlow;
+using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.Core.Tests.LogFiltering;
-
-// TODO: Implement tests
 
 public sealed class TimeAgoFilterProcessorTests
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly Mock<IDateTime> _dateTimeMock = new();
+    private readonly TestDateTime _dateTime = new();
+    private readonly TimeAgoFilterProcessor _sut;
 
-    [Fact]
-    public void IsMatch_()
+    public TimeAgoFilterProcessorTests()
+    {
+        _sut = new TimeAgoFilterProcessor(_dateTime);
+    }
+
+    [Theory]
+    [InlineData(100, 50, true)]
+    [InlineData(100, 150, false)]
+    public void IsMatch_Scenarios(ulong filterMs, double subtractFromNowMs, bool expected)
     {
         // Arrange
-        var sut = new TimeAgoFilterProcessor(_dateTimeMock.Object);
+        var profileFilter = new TimeAgoProfileFilter(_fixture.Create<LogFilter>())
+        {
+            MillisecondsAgo = filterMs
+        };
+        _dateTime.SetClock(_fixture.Create<DateTime>());
+        var logRecord = _fixture.Build<LogRecord>()
+            .With(x => x.DateTime, (_dateTime.NowOffsetUtc + _dateTime.NowOffset.Offset).AddMilliseconds(-subtractFromNowMs))
+            .Create();
 
         // Act
-        // TODO: ...
+        var actual = _sut.IsMatch(profileFilter, logRecord);
 
         // Verify
-        Assert.Fail("TBD");
+        Assert.Equal(expected, actual);
     }
 }

@@ -1,4 +1,5 @@
 using System.Text;
+using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
@@ -8,7 +9,7 @@ namespace Genius.Starlog.Core.Tests.LogReading;
 
 public sealed class PlainTextProfileLogCodecProcessorTests
 {
-    private readonly IFixture _fixture = new Fixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly Mock<ISettingsQueryService> _settingsQueryMock = new();
     private readonly PlainTextLogCodecProcessor _sut;
 

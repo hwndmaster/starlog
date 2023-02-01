@@ -72,7 +72,6 @@ internal sealed class MainController : IMainController
         _logger = logger.NotNull();
     }
 
-    // TODO: To cover with unit tests
     public async Task AutoLoadProfileAsync()
     {
         await Loaded;
@@ -91,7 +90,6 @@ internal sealed class MainController : IMainController
         }
     }
 
-    // TODO: To cover with unit tests
     public async Task LoadPathAsync(LoadPathCommandLineOptions options)
     {
         _anonymousProfileToBeLoaded = true;
@@ -103,7 +101,12 @@ internal sealed class MainController : IMainController
         await Task.Run(async() =>
         {
             var codecName = options.Codec ?? "Plain Text";
-            var logCodec = _logCodecContainer.GetLogCodecs().First(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
+            var logCodec = _logCodecContainer.GetLogCodecs().FirstOrDefault(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
+            if (logCodec is null)
+            {
+                _logger.LogWarning("Couldn't load a profile with unknown codec '{codec}'.", codecName);
+                return;
+            }
             var profileLogCodec = _logCodecContainer.CreateProfileLogCodec(logCodec);
             if (options.CodecSettings is not null)
             {
@@ -134,7 +137,6 @@ internal sealed class MainController : IMainController
         _profilesAreLoaded.SetResult();
     }
 
-    // TODO: To cover with unit tests
     public void SetBusy(bool isBusy)
     {
         _mainViewModel.Value.IsBusy = isBusy;
@@ -150,7 +152,6 @@ internal sealed class MainController : IMainController
         tab.EditingProfile!.Path = path;
     }
 
-    // TODO: To cover with unit tests
     public void ShowLogsTab()
     {
         var tab = _mainViewModel.Value.Tabs.OfType<ILogsViewModel>().First();

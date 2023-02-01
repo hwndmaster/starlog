@@ -12,10 +12,16 @@ public sealed record LogRecordSearchContext(
     string SearchText,
     Regex? MessageSearchRegex,
     DateTimeOffset? DateFrom,
-    DateTimeOffset? DateTo);
+    DateTimeOffset? DateTo)
+{
+    public static LogRecordSearchContext CreateEmpty() => new(false, false, string.Empty, null, null, null);
+}
 
 public sealed record LogRecordFilterContext(
     bool HasAnythingSpecified,
     HashSet<string> FilesSelected,
     ImmutableArray<ProfileFilterBase> FiltersSelected,
-    bool ShowBookmarked);
+    bool ShowBookmarked)
+{
+    public static LogRecordFilterContext CreateEmpty() => new(false, new HashSet<string>(), ImmutableArray<ProfileFilterBase>.Empty, false);
+}

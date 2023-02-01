@@ -1,4 +1,5 @@
 using Genius.Atom.Infrastructure.Events;
+using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 
@@ -6,7 +7,7 @@ namespace Genius.Starlog.Core.Tests.CommandHandlers;
 
 public sealed class ProfileHarness
 {
-    private readonly IFixture _fixture = new Fixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly Mock<IProfileRepository> _profileRepoMock = new();
     private readonly Mock<IProfileQueryService> _profileQueryMock = new();
     private readonly Mock<IEventBus> _eventBusMock = new();

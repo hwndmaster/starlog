@@ -1,24 +1,36 @@
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core.LogFiltering;
+using Genius.Starlog.Core.LogFlow;
+using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.Core.Tests.LogFiltering;
-
-// TODO: Implement tests
 
 public sealed class ThreadsFilterProcessorTests
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
 
-    [Fact]
-    public void IsMatch_()
+    [Theory]
+    [InlineData(false, "1|2|3", "2", true)]
+    [InlineData(false, "1|2|3", "4", false)]
+    [InlineData(true, "1|2|3", "2", false)]
+    [InlineData(true, "1|2|3", "4", true)]
+    public void IsMatch_Scenarios(bool exclude, string threadFilters, string thread, bool expected)
     {
         // Arrange
         var sut = new ThreadsFilterProcessor();
+        var profileFilter = new ThreadsProfileFilter(_fixture.Create<LogFilter>())
+        {
+            Threads = threadFilters.Split('|'),
+            Exclude = exclude
+        };
+        var logRecord = _fixture.Build<LogRecord>()
+            .With(x => x.Thread, thread)
+            .Create();
 
         // Act
-        // TODO: ...
+        var actual = sut.IsMatch(profileFilter, logRecord);
 
         // Verify
-        Assert.Fail("TBD");
+        Assert.Equal(expected, actual);
     }
 }

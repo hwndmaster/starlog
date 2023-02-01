@@ -5,7 +5,6 @@ using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.Core.CommandHandlers;
 
-// TODO: Cover with unit tests
 internal sealed class ProfileLoadAnonymousCommandHandler : ICommandHandler<ProfileLoadAnonymousCommand, Profile>
 {
     private readonly IProfileRepository _profileRepo;

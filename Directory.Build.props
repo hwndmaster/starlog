@@ -13,6 +13,8 @@
 
     <RootNamespace>Genius.$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>$(RootNamespace)</AssemblyName>
+
+    <!-- <PERSONAL_ENV>true</PERSONAL_ENV> -->
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.UI')) == false">
