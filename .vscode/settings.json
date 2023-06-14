@@ -13,5 +13,6 @@
   "cSpell.words": [
     "Regexes",
     "Starlog"
-  ]
+  ],
+  "dotnet.defaultSolution": "Starlog.sln"
 }

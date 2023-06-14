@@ -1,3 +1,4 @@
+using Genius.Atom.Infrastructure.Entities;
 using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.Core.LogReading;
@@ -12,7 +13,7 @@ public interface ILogCodecContainer
         where TLogCodec : class, ILogCodecProcessor;
 }
 
-internal sealed class LogCodecContainer : ILogCodecContainer
+internal sealed class LogCodecContainer : ILogCodecContainer, IQueryService<LogCodec>
 {
     private readonly record struct LogCodecRecord(LogCodec Codec, Type ProfileLogCodecType, Type ProcessorType);
 
@@ -43,6 +44,17 @@ internal sealed class LogCodecContainer : ILogCodecContainer
         }
 
         return _processors.Value.First(x => x.GetType() == value.ProcessorType);
+    }
+
+    public Task<LogCodec?> FindByIdAsync(Guid entityId)
+    {
+        var hasRecord = _registeredLogCodecs.TryGetValue(entityId, out var record);
+        return Task.FromResult(hasRecord ? record.Codec : null);
+    }
+
+    public Task<IEnumerable<LogCodec>> GetAllAsync()
+    {
+        return Task.FromResult(GetLogCodecs());
     }
 
     public IEnumerable<LogCodec> GetLogCodecs()

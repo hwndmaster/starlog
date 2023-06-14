@@ -30,6 +30,7 @@ public partial class App : Application
         ConfigureServices(serviceCollection);
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
+        Atom.Data.Module.Initialize(ServiceProvider);
         Atom.Infrastructure.Module.Initialize(ServiceProvider);
         Starlog.Core.Module.Initialize(ServiceProvider);
         Atom.UI.Forms.Module.Initialize(ServiceProvider);

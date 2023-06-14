@@ -21,8 +21,7 @@ internal sealed class ProfileLoadAnonymousCommandHandler : ICommandHandler<Profi
             Id = Profile.AnonymousProfileId,
             Name = "Unnamed",
             Path = command.Path,
-            LogCodec = command.LogCodec,
-            FileArtifactLinesCount = command.FileArtifactLinesCount ?? 0
+            Settings = command.Settings
         };
 
         _profileRepo.SetAnonymous(profile);

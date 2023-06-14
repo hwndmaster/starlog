@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Atom.Infrastructure.TestingUtil.Events;
 using Genius.Atom.Infrastructure.TestingUtil.Io;
+using Genius.Atom.Infrastructure.TestingUtil.Tasks;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Messages;
@@ -36,7 +37,7 @@ public sealed class LogContainerTests
 
         _sampleProfile = _fixture.Create<Profile>();
         _logCodecProcessorMock = new Mock<ILogCodecProcessor>();
-        _logCodecContainerMock.Setup(x => x.CreateLogCodecProcessor(_sampleProfile.LogCodec))
+        _logCodecContainerMock.Setup(x => x.CreateLogCodecProcessor(_sampleProfile.Settings.LogCodec))
             .Returns(() => _logCodecProcessorMock.Object);
     }
 
@@ -207,7 +208,7 @@ public sealed class LogContainerTests
         var files = SampleFiles(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
 
-        var addedFile = SampleFile(_sampleProfile, _sampleProfile.FileArtifactLinesCount > 0);
+        var addedFile = SampleFile(_sampleProfile, _sampleProfile.Settings.FileArtifactLinesCount > 0);
         List<LogRecord> logsAdded = new();
         List<FileRecord> filesAdded = new();
         _sut.LogsAdded.Subscribe(logs => logsAdded.AddRange(logs));
@@ -264,7 +265,7 @@ public sealed class LogContainerTests
         await _sut.LoadProfileAsync(_sampleProfile);
         var oldFilePath = files[0].FullPath;
         var newFilePath = Path.Combine(_sampleProfile.Path, _fixture.Create<string>());
-        _fileService.RenameFile(files[0].FullPath, newFilePath);
+        _fileService.MoveFile(files[0].FullPath, newFilePath);
         files[0] = files[0] with { FullPath = newFilePath };
         FileRecord? fileRenamedEventOldRecord = null, fileRenamedEventNewRecord = null;
         _sut.FileRenamed.Subscribe(x => (fileRenamedEventOldRecord, fileRenamedEventNewRecord) = (x.OldRecord, x.NewRecord));

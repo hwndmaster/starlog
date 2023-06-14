@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
-        xmlns:atombehaviors="clr-namespace:Genius.Atom.UI.Forms.Behaviors;assembly=Genius.Atom.UI.Forms"
+        xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
         xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d">
@@ -29,7 +29,7 @@
             <Label Content="Filter:" Margin="100,0,0,0" />
             <TextBox Text="{Binding Filter}" mah:TextBoxHelper.ClearTextButton="True">
                 <i:Interaction.Behaviors>
-                    <atombehaviors:FilterBoxBehavior />
+                    <atom:FilterBoxBehavior />
                 </i:Interaction.Behaviors>
             </TextBox>
         </DockPanel>

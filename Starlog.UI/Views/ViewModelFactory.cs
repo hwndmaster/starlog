@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Atom.Infrastructure.Events;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
@@ -25,32 +26,41 @@ internal sealed class ViewModelFactory : IViewModelFactory
 {
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
+    private readonly IEventBus _eventBus;
     private readonly ILogContainer _logContainer;
     private readonly ILogFilterContainer _logFilterContainer;
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly IMainController _mainController;
     private readonly IProfileQueryService _profileQuery;
+    private readonly IProfileSettingsTemplateQueryService _profileSettingsTemplateQuery;
     private readonly ISettingsQueryService _settingsQuery;
+    private readonly IUiDispatcher _dispatcher;
     private readonly IUserInteraction _ui;
 
     public ViewModelFactory(
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
+        IEventBus eventBus,
         ILogContainer logContainer,
         ILogFilterContainer logFilterContainer,
         ILogCodecContainer logCodecContainer,
         IMainController mainController,
         IProfileQueryService profileQuery,
+        IProfileSettingsTemplateQueryService profileSettingsTemplateQuery,
         ISettingsQueryService settingsQuery,
+        IUiDispatcher dispatcher,
         IUserInteraction ui)
     {
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
+        _dispatcher = dispatcher.NotNull();
+        _eventBus = eventBus.NotNull();
         _logContainer = logContainer.NotNull();
         _logFilterContainer = logFilterContainer.NotNull();
         _logCodecContainer = logCodecContainer.NotNull();
         _mainController = mainController.NotNull();
         _profileQuery = profileQuery.NotNull();
+        _profileSettingsTemplateQuery = profileSettingsTemplateQuery.NotNull();
         _settingsQuery = settingsQuery.NotNull();
         _ui = ui.NotNull();
     }
@@ -71,7 +81,8 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
     public IProfileViewModel CreateProfile(Profile? profile)
     {
-        return new ProfileViewModel(profile, _commandBus, _mainController, _profileQuery, _ui, _logContainer, _logCodecContainer, this);
+        return new ProfileViewModel(profile, _commandBus, _eventBus, _mainController, _profileQuery,
+            _profileSettingsTemplateQuery, _logContainer, _logCodecContainer, this, _dispatcher, _ui);
     }
 
     public IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter)

@@ -19,11 +19,11 @@ public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
         if (fileArtifacts?.Artifacts.Length > 0)
         {
             var paragraph = new Paragraph();
-            paragraph.Inlines.Add(new Bold(new Run("File artifacts:\r\n")));
+            paragraph.Inlines.Add(new Italic(new Run("File artifacts:\r\n")));
             foreach (var fileArtifact in fileArtifacts.Artifacts)
             {
                 AddFormatted(paragraph, fileArtifact);
-                paragraph.Inlines.Add(new Run(Environment.NewLine));
+                paragraph.Inlines.Add(new LineBreak());
             }
             document.Blocks.Add(paragraph);
         }

@@ -25,6 +25,7 @@ public sealed class MainControllerTests
     private readonly Mock<ILogContainer> _logContainerMock = new();
     private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
     private readonly Mock<ISettingsQueryService> _settingsQueryMock = new();
+    private readonly Mock<IProfileSettingsTemplateQueryService> _templatesQueryMock = new();
     private readonly Mock<IUserInteraction> _uiMock = new();
     private readonly Mock<IMainViewModel> _mainViewModelMock = new();
     private readonly TestLogger<MainController> _logger = new();
@@ -35,7 +36,8 @@ public sealed class MainControllerTests
     public MainControllerTests()
     {
         _sut = new(_commandBus, _dialogCoordinatorMock.Object, _logContainerMock.Object, _logCodecContainerMock.Object,
-            _settingsQueryMock.Object, _uiMock.Object, new Lazy<IMainViewModel>(() => _mainViewModelMock.Object), _logger);
+            _settingsQueryMock.Object, _templatesQueryMock.Object, _uiMock.Object,
+            new Lazy<IMainViewModel>(() => _mainViewModelMock.Object), _logger);
     }
 
     [Fact]
@@ -70,8 +72,8 @@ public sealed class MainControllerTests
         _commandBus.AssertNoCommandsButOfType<ProfileLoadAnonymousCommand>();
         _commandBus.AssertSingleCommand<ProfileLoadAnonymousCommand>(
             x => Assert.Equal(options.Path, x.Path),
-            x => Assert.Equal(profileCodec, x.LogCodec),
-            x => Assert.Equal(options.FileArtifactLinesCount, x.FileArtifactLinesCount));
+            x => Assert.Equal(profileCodec, x.Settings.LogCodec),
+            x => Assert.Equal(options.FileArtifactLinesCount, x.Settings.FileArtifactLinesCount));
         _logContainerMock.Verify(x => x.LoadProfileAsync(actualProfile), Times.Once);
         _mainViewModelMock.VerifySet(x => x.SelectedTabIndex = MAINVIEWMODEL_TABS_COUNT - 1);
         _mainViewModelMock.VerifySet(x => x.IsBusy = false);
@@ -138,7 +140,7 @@ public sealed class MainControllerTests
         var loadProfileCommand = new Mock<IActionCommand>();
         loadProfileCommand.Setup(x => x.Execute(null)).Callback(() => executed = true);
         var profile = Mock.Of<IProfileViewModel>(x => x.Id == settings.AutoLoadProfile && x.LoadProfileCommand == loadProfileCommand.Object);
-        var allProfiles = new ObservableCollection<IProfileViewModel>(_fixture.CreateMany<IProfileViewModel>().Append(profile));
+        var allProfiles = new DelayedObservableCollection<IProfileViewModel>(_fixture.CreateMany<IProfileViewModel>().Append(profile));
         var profileTab = SetupDummyTabsAnd<IProfilesViewModel>();
         Mock.Get(profileTab).Setup(x => x.Profiles).Returns(allProfiles);
 

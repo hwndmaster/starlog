@@ -234,8 +234,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     public IAutoGridBuilder AutoGridBuilder { get; }
 
-    public ObservableCollection<ILogItemViewModel> LogItems { get; }
-        = new TypedObservableList<ILogItemViewModel, LogItemViewModel>();
+    public DelayedObservableCollection<ILogItemViewModel> LogItems { get; }
+        = new TypedObservableCollection<ILogItemViewModel, LogItemViewModel>();
 
     public CollectionViewSource LogItemsView { get; } = new();
 

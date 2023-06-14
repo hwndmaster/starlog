@@ -24,16 +24,10 @@ public sealed class Profile : EntityBase
     /// <summary>
     ///   The log codec which defines the strategy of how the logs are being read.
     /// </summary>
-    public required ProfileLogCodecBase LogCodec { get; set; }
+    public required ProfileSettings Settings { get; set; }
 
     /// <summary>
     ///   The user-defined filters.
     /// </summary>
     public IList<ProfileFilterBase> Filters { get; set; } = new List<ProfileFilterBase>();
-
-    /// <summary>
-    ///   Indicates the number of how many lines in each log file are dedicated for the file artifacts.
-    ///   Such as command line arguments, the time when file logging has been started, etc.
-    /// </summary>
-    public int FileArtifactLinesCount { get; set; } = 0;
 }

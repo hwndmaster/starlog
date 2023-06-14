@@ -28,7 +28,6 @@ public sealed class ProfileLoadAnonymousCommandHandlerTests
             x.Id == Profile.AnonymousProfileId
             && x.Name == "Unnamed"
             && x.Path == command.Path
-            && x.LogCodec == command.LogCodec
-            && x.FileArtifactLinesCount == command.FileArtifactLinesCount)));
+            && x.Settings == command.Settings)));
     }
 }

@@ -3,6 +3,7 @@ using Genius.Atom.Infrastructure.Commands;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Console;
 using Genius.Starlog.UI.Views;
@@ -16,14 +17,14 @@ public interface IMainController
     /// <summary>
     ///   Performs automatic loading of a profile at startup.
     /// </summary>
-    /// <returns>A task for awaiting.</returns>
+    /// <returns>A task for awaiting the operation completion.</returns>
     Task AutoLoadProfileAsync();
 
     /// <summary>
     ///   Loads a file or folder by the specified path with an anonymous not-persisted profile.
     /// </summary>
     /// <param name="options">The options of an anonymous profile.</param>
-    /// <returns>A task for awaiting.</returns>
+    /// <returns>A task for awaiting the operation completion.</returns>
     Task LoadPathAsync(LoadPathCommandLineOptions options);
 
     void NotifyMainWindowIsLoaded();
@@ -44,6 +45,7 @@ internal sealed class MainController : IMainController
     private readonly ILogContainer _logContainer;
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly ISettingsQueryService _settingsQuery;
+    private readonly IProfileSettingsTemplateQueryService _templatesQuery;
     private readonly IUserInteraction _ui;
     private readonly Lazy<IMainViewModel> _mainViewModel;
     private readonly ILogger<MainController> _logger;
@@ -58,6 +60,7 @@ internal sealed class MainController : IMainController
         ILogContainer logContainer,
         ILogCodecContainer logCodecContainer,
         ISettingsQueryService settingsQuery,
+        IProfileSettingsTemplateQueryService templatesQuery,
         IUserInteraction ui,
         Lazy<IMainViewModel> mainViewModel,
         ILogger<MainController> logger)
@@ -67,6 +70,7 @@ internal sealed class MainController : IMainController
         _logContainer = logContainer.NotNull();
         _logCodecContainer = logCodecContainer.NotNull();
         _settingsQuery = settingsQuery.NotNull();
+        _templatesQuery = templatesQuery.NotNull();
         _ui = ui.NotNull();
         _mainViewModel = mainViewModel.NotNull();
         _logger = logger.NotNull();
@@ -100,26 +104,60 @@ internal sealed class MainController : IMainController
         await Task.Delay(10); // TODO: Helps to let the UI to show a 'busy' overlay, find a better way around.
         await Task.Run(async() =>
         {
-            var codecName = options.Codec ?? "Plain Text";
-            var logCodec = _logCodecContainer.GetLogCodecs().FirstOrDefault(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
-            if (logCodec is null)
+            ProfileSettings? settings = null;
+            if (!string.IsNullOrEmpty(options.Template))
             {
-                _logger.LogWarning("Couldn't load a profile with unknown codec '{codec}'.", codecName);
-                return;
-            }
-            var profileLogCodec = _logCodecContainer.CreateProfileLogCodec(logCodec);
-            if (options.CodecSettings is not null)
-            {
-                var processor = _logCodecContainer.CreateLogCodecProcessor(profileLogCodec);
-                if (!processor.ReadFromCommandLineArguments(profileLogCodec, options.CodecSettings.ToArray()))
+                // TODO: Cover this condition with unit tests
+                ProfileSettingsTemplate? template = null;
+                if (Guid.TryParse(options.Template, out var templateId))
                 {
-                    // Couldn't read arguments, terminating...
-                    _logger.LogWarning("Couldn't load a profile from '{path}' with codec '{codec}' and the following settings: {settings}", options.Path, codecName, string.Join(',', options.CodecSettings));
-                    return;
+                    template = await _templatesQuery.FindByIdAsync(templateId);
+                }
+                if (template is null)
+                {
+                    template = (await _templatesQuery.GetAllAsync()).FirstOrDefault(x => x.Name.Equals(options.Template, StringComparison.OrdinalIgnoreCase));
+                }
+                if (template is not null)
+                {
+                    settings = template.Settings;
                 }
             }
 
-            var profile = await _commandBus.SendAsync(new ProfileLoadAnonymousCommand(options.Path, profileLogCodec, options.FileArtifactLinesCount));
+            if (settings is null)
+            {
+                var codecName = options.Codec ?? "Plain Text";
+                var logCodec = _logCodecContainer.GetLogCodecs().FirstOrDefault(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
+                if (logCodec is null)
+                {
+                    _logger.LogWarning("Couldn't load a profile with unknown codec '{codec}'.", codecName);
+                    return;
+                }
+                var profileLogCodec = _logCodecContainer.CreateProfileLogCodec(logCodec);
+                if (profileLogCodec is null)
+                {
+                    // TODO: Cover this condition with unit tests
+                    _logger.LogWarning("Couldn't create profile codec settings for codec '{codec}'.", codecName);
+                    return;
+                }
+                if (options.CodecSettings is not null)
+                {
+                    var processor = _logCodecContainer.CreateLogCodecProcessor(profileLogCodec);
+                    if (!processor.ReadFromCommandLineArguments(profileLogCodec, options.CodecSettings.ToArray()))
+                    {
+                        // Couldn't read arguments, terminating...
+                        _logger.LogWarning("Couldn't load a profile from '{path}' with codec '{codec}' and the following settings: {settings}", options.Path, codecName, string.Join(',', options.CodecSettings));
+                        return;
+                    }
+                }
+
+                settings = new ProfileSettings
+                {
+                    LogCodec = profileLogCodec,
+                    FileArtifactLinesCount = options.FileArtifactLinesCount ?? 0
+                };
+            }
+
+            var profile = await _commandBus.SendAsync(new ProfileLoadAnonymousCommand(options.Path, settings));
             await _logContainer.LoadProfileAsync(profile).ConfigureAwait(false);
             ShowLogsTab();
         })
@@ -129,12 +167,13 @@ internal sealed class MainController : IMainController
 
     public void NotifyMainWindowIsLoaded()
     {
+        // Shouldn't be called more than once from the app.
         _mainWindowIsLoaded.SetResult();
     }
 
     public void NotifyProfilesAreLoaded()
     {
-        _profilesAreLoaded.SetResult();
+        _profilesAreLoaded.TrySetResult();
     }
 
     public void SetBusy(bool isBusy)

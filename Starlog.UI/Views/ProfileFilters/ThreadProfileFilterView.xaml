@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:behaviors="clr-namespace:Genius.Atom.UI.Forms.Behaviors;assembly=Genius.Atom.UI.Forms"
+        xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
         mc:Ignorable="d"
         Validation.ErrorTemplate="{x:Null}">
     <Grid>
@@ -19,7 +19,7 @@
                          ItemsSource="{Binding Threads}"
                          MaxHeight="400">
                     <i:Interaction.Behaviors>
-                        <behaviors:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedThreads}" />
+                        <atom:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedThreads}" />
                     </i:Interaction.Behaviors>
                 </ListBox>
             </DockPanel>

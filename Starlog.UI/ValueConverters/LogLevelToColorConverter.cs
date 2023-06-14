@@ -7,10 +7,10 @@ namespace Genius.Starlog.UI.ValueConverters;
 
 public sealed class LogLevelToColorConverter : IValueConverter
 {
-    internal static readonly Color ColorForMinor = Colors.DimGray;
-    internal static readonly Color ColorForWarning = Colors.Yellow;
-    internal static readonly Color ColorForMajor = Colors.Red;
-    internal static readonly Color ColorForCritical = Colors.DarkRed;
+    internal static readonly Color ColorForMinor = Colors.SlateGray;
+    internal static readonly Color ColorForWarning = Colors.Gold;
+    internal static readonly Color ColorForMajor = Colors.IndianRed;
+    internal static readonly Color ColorForCritical = Colors.Red;
 
     private readonly Color _standardColor;
 

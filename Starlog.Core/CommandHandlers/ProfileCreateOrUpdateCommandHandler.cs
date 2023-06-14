@@ -28,8 +28,7 @@ internal sealed class ProfileCreateOrUpdateCommandHandler :
         {
             Name = command.Name,
             Path = command.Path,
-            LogCodec = command.LogCodec,
-            FileArtifactLinesCount = command.FileArtifactLinesCount
+            Settings = command.Settings
         };
         await _profileRepo.StoreAsync(profile);
 
@@ -45,8 +44,7 @@ internal sealed class ProfileCreateOrUpdateCommandHandler :
 
         profile.Name = command.Name;
         profile.Path = command.Path;
-        profile.LogCodec = command.LogCodec;
-        profile.FileArtifactLinesCount = command.FileArtifactLinesCount;
+        profile.Settings = command.Settings;
 
         await _profileRepo.StoreAsync(profile);
 

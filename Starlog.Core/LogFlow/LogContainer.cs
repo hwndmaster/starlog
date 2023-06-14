@@ -4,6 +4,7 @@ using System.Reactive;
 using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.Infrastructure.Io;
+using Genius.Atom.Infrastructure.Tasks;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
@@ -20,7 +21,7 @@ public interface ILogContainer : IDisposable
     ///   Loads a specified <paramref name="profile"/>.
     /// </summary>
     /// <param name="profile">The profile to load.</param>
-    /// <returns>A task for awaiting purposes.</returns>
+    /// <returns>A task for awaiting the operation completion.</returns>
     Task LoadProfileAsync(Profile profile);
 
     /// <summary>
@@ -293,10 +294,10 @@ internal sealed class LogContainer : ILogContainer, ICurrentProfile
 
         var tp = TracePerf.Start<LogContainer>(nameof(ReadLogsAsync));
 
-        var logCodecProcessor = _logCodecContainer.CreateLogCodecProcessor(Profile.LogCodec);
+        var logCodecProcessor = _logCodecContainer.CreateLogCodecProcessor(Profile.Settings.LogCodec);
 
         var settings = new LogReadingSettings(
-            ReadFileArtifacts: fileRecord.LastReadOffset == 0 && Profile.FileArtifactLinesCount > 0
+            ReadFileArtifacts: fileRecord.LastReadOffset == 0 && Profile.Settings.FileArtifactLinesCount > 0
         );
         var logRecordResult = await logCodecProcessor.ReadAsync(Profile, fileRecord, stream, settings);
 

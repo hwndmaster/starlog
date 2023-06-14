@@ -16,7 +16,7 @@ namespace Genius.Starlog.UI.Views;
 
 public interface IProfilesViewModel : ITabViewModel, IDisposable
 {
-    ObservableCollection<IProfileViewModel> Profiles { get; }
+    DelayedObservableCollection<IProfileViewModel> Profiles { get; }
     bool IsAddEditProfileVisible { get; set; }
     IProfileViewModel? EditingProfile { get; }
 
@@ -133,8 +133,8 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 
     public IAutoGridBuilder AutoGridBuilder { get; }
 
-    public ObservableCollection<IProfileViewModel> Profiles { get; }
-        = new TypedObservableList<IProfileViewModel, ProfileViewModel>();
+    public DelayedObservableCollection<IProfileViewModel> Profiles { get; }
+        = new TypedObservableCollection<IProfileViewModel, ProfileViewModel>();
 
     public bool IsAddEditProfileVisible
     {

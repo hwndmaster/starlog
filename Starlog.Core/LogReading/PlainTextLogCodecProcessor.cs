@@ -18,14 +18,14 @@ public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
     public async Task<LogReadingResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings)
     {
         using var reader = new StreamReader(stream, leaveOpen: true);
-        var fileArtifacts = settings.ReadFileArtifacts ? await ReadFileArtifactsAsync(profile, reader) : null;
+        var fileArtifacts = settings.ReadFileArtifacts ? await ReadFileArtifactsAsync(profile.Settings, reader) : null;
 
         if (reader.EndOfStream)
         {
             return LogReadingResult.Empty;
         }
 
-        var logCodecSettings = (PlainTextProfileLogCodec)profile.LogCodec;
+        var logCodecSettings = (PlainTextProfileLogCodec)profile.Settings.LogCodec;
         if (string.IsNullOrEmpty(logCodecSettings.LineRegex))
         {
             throw new InvalidOperationException("Cannot open profile with empty LineRegex setting.");
@@ -108,15 +108,15 @@ public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
         }
     }
 
-    private static async Task<FileArtifacts> ReadFileArtifactsAsync(Profile profile, StreamReader reader)
+    private static async Task<FileArtifacts> ReadFileArtifactsAsync(ProfileSettings settings, StreamReader reader)
     {
-        if (profile.FileArtifactLinesCount == 0)
+        if (settings.FileArtifactLinesCount == 0)
         {
             return new FileArtifacts(Array.Empty<string>());
         }
 
         List<string> artifacts = new();
-        for (var i = 0; i < profile.FileArtifactLinesCount; i++)
+        for (var i = 0; i < settings.FileArtifactLinesCount; i++)
         {
             var line = await reader.ReadLineAsync().ConfigureAwait(false);
             if (line is null)

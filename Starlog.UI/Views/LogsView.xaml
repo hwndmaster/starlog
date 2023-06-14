@@ -6,7 +6,6 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
         xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
-        xmlns:atombehaviors="clr-namespace:Genius.Atom.UI.Forms.Behaviors;assembly=Genius.Atom.UI.Forms"
         xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
         xmlns:logfilteringviews="clr-namespace:Genius.Starlog.UI.Views.LogSearchAndFiltering"
         xmlns:v="clr-namespace:Genius.Starlog.UI.Views"
@@ -74,14 +73,14 @@
                 <mah:TextBoxHelper.ButtonContent>
                     <Image ToolTip="Use Regular Expression (Alt+R)">
                         <i:Interaction.Behaviors>
-                            <atombehaviors:ImageConditionalSourceBehavior FlagValue="{Binding Search.UseRegex}"
+                            <atom:ImageConditionalSourceBehavior FlagValue="{Binding Search.UseRegex}"
                                                                           WhenTrue="{DynamicResource Regex32}"
                                                                           WhenFalse="{DynamicResource RegexBw32}" />
                         </i:Interaction.Behaviors>
                     </Image>
                 </mah:TextBoxHelper.ButtonContent>
                 <i:Interaction.Behaviors>
-                    <atombehaviors:FilterBoxBehavior />
+                    <atom:FilterBoxBehavior />
                     <behaviors:SearchBoxRegexBindingBehavior />
                 </i:Interaction.Behaviors>
             </TextBox>
@@ -207,7 +206,7 @@
                 </DataGrid.GroupStyle>
                 <i:Interaction.Behaviors>
                     <autogrid:AttachingBehavior />
-                    <atombehaviors:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
+                    <atom:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
                     <behaviors:LogColorizeBehavior />
                     <behaviors:LogsSmartFiltersContextMenuBehavior />
                     <behaviors:LogsCopyToClipboardBehavior />
@@ -218,7 +217,7 @@
             </DataGrid>
 
             <Grid Grid.Row="1" Grid.Column="2">
-                <RichTextBox atombehaviors:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
+                <RichTextBox atom:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
                              IsReadOnly="True"
                              MaxHeight="300"
                              BorderThickness="0,1,0,0" />

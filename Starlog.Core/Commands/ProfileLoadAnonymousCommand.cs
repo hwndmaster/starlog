@@ -5,14 +5,12 @@ namespace Genius.Starlog.Core.Commands;
 
 public sealed class ProfileLoadAnonymousCommand : ICommandMessageExchange<Profile>
 {
-    public ProfileLoadAnonymousCommand(string path, ProfileLogCodecBase logCodec, int? fileArtifactLinesCount)
+    public ProfileLoadAnonymousCommand(string path, ProfileSettings settings)
     {
-        Path = path;
-        LogCodec = logCodec;
-        FileArtifactLinesCount = fileArtifactLinesCount;
+        Path = path.NotNull();
+        Settings = settings.NotNull();
     }
 
     public string Path { get; }
-    public ProfileLogCodecBase LogCodec { get; }
-    public int? FileArtifactLinesCount { get; }
+    public ProfileSettings Settings { get; }
 }

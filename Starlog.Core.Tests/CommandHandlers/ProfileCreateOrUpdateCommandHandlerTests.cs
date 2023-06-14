@@ -28,8 +28,7 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(It.Is<Profile>(x =>
             x.Name == command.Name
             && x.Path == command.Path
-            && x.LogCodec == command.LogCodec
-            && x.FileArtifactLinesCount == command.FileArtifactLinesCount)));
+            && x.Settings == command.Settings)));
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
     }
 
@@ -42,8 +41,7 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         {
             Name = _harness.Create<string>(),
             Path = _harness.Create<string>(),
-            LogCodec = _harness.Create<ProfileLogCodecBase>(),
-            FileArtifactLinesCount = _harness.Create<int>(),
+            Settings = _harness.Create<ProfileSettings>()
         };
 
         // Act
@@ -54,8 +52,7 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
             x.Id == command.ProfileId
             && x.Name == command.Name
             && x.Path == command.Path
-            && x.LogCodec == command.LogCodec
-            && x.FileArtifactLinesCount == command.FileArtifactLinesCount)));
+            && x.Settings == command.Settings)));
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
     }
 
@@ -67,8 +64,7 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         {
             Name = _harness.Create<string>(),
             Path = _harness.Create<string>(),
-            LogCodec = _harness.Create<ProfileLogCodecBase>(),
-            FileArtifactLinesCount = _harness.Create<int>(),
+            Settings = _harness.Create<ProfileSettings>()
         };
 
         // Act
