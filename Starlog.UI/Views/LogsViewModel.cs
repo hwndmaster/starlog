@@ -167,9 +167,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
         Search.Reconcile(LogItems.Count, logs);
 
-        foreach (var log in logs.OrderBy(x => x.DateTime))
+        using (var suppressed = LogItems.DelayNotifications())
         {
-            LogItems.Add(new LogItemViewModel(log, _artifactsFormatter));
+            foreach (var log in logs.OrderBy(x => x.DateTime))
+            {
+                suppressed.Add(new LogItemViewModel(log, _artifactsFormatter));
+            }
         }
 
         RefreshFilteredItems();

@@ -26,6 +26,11 @@ public sealed class MessageProfileFilter : ProfileFilterBase
     public bool MatchCasing { get; set; }
 
     /// <summary>
+    ///   Indicates whether the matching log record should be included or not.
+    /// </summary>
+    public bool Exclude { get; set; }
+
+    /// <summary>
     ///   Indicates whether the filter should also try to match the <see cref="LogFlow.LogRecord.LogArtifacts"/> value.
     /// </summary>
     public bool IncludeArtifacts { get; set; }

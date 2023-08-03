@@ -21,6 +21,10 @@
                 <CheckBox IsChecked="{Binding MatchCasing}" />
             </DockPanel>
             <DockPanel>
+                <Label>Exclude:</Label>
+                <CheckBox IsChecked="{Binding Exclude}" Content="If checked on, the given pattern will be excluded from the output." />
+            </DockPanel>
+            <DockPanel>
                 <Label>Include artifacts:</Label>
                 <CheckBox IsChecked="{Binding IncludeArtifacts}" Content="If checked on, the filter also checks the log record artifacts." />
             </DockPanel>

@@ -47,5 +47,14 @@ public sealed class MessageFilterProcessorTests
 
         // Verify
         Assert.Equal(expected, actual);
+
+        // Arrange over excluded filter
+        profileFilter.Exclude = true;
+
+        // Act
+        actual = sut.IsMatch(profileFilter, logRecord);
+
+        // Verify
+        Assert.Equal(!expected, actual);
     }
 }

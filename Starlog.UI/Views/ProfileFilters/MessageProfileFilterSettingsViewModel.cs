@@ -28,6 +28,7 @@ public sealed class MessageProfileFilterSettingsViewModel : ProfileFilterSetting
         _profileFilter.Pattern = Pattern;
         _profileFilter.IsRegex = IsRegex;
         _profileFilter.MatchCasing = MatchCasing;
+        _profileFilter.Exclude = Exclude;
         _profileFilter.IncludeArtifacts = IncludeArtifacts;
     }
 
@@ -36,6 +37,7 @@ public sealed class MessageProfileFilterSettingsViewModel : ProfileFilterSetting
         Pattern = _profileFilter.Pattern;
         IsRegex = _profileFilter.IsRegex;
         MatchCasing = _profileFilter.MatchCasing;
+        Exclude = _profileFilter.Exclude;
         IncludeArtifacts = _profileFilter.IncludeArtifacts;
     }
 
@@ -52,6 +54,12 @@ public sealed class MessageProfileFilterSettingsViewModel : ProfileFilterSetting
     }
 
     public bool MatchCasing
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool Exclude
     {
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);

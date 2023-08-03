@@ -16,16 +16,19 @@ public sealed class MessageFilterProcessor : IFilterProcessor
         if (filter.IsRegex)
         {
             var regex = CreateRegex(filter);
-            return regex.IsMatch(log.Message)
+            var match = regex.IsMatch(log.Message)
                 || (filter.IncludeArtifacts && log.LogArtifacts is not null && regex.IsMatch(log.LogArtifacts));
+
+            return filter.Exclude ? !match : match;
         }
 
         var stringComparison = filter.MatchCasing
             ? StringComparison.Ordinal
             : StringComparison.OrdinalIgnoreCase;
 
-        return log.Message.Contains(filter.Pattern, stringComparison)
+        var contains = log.Message.Contains(filter.Pattern, stringComparison)
             || (filter.IncludeArtifacts && log.LogArtifacts?.Contains(filter.Pattern, stringComparison) == true);
+        return filter.Exclude ? !contains : contains;
     }
 
     private static Regex CreateRegex(MessageProfileFilter filter)
