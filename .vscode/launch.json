@@ -8,7 +8,7 @@
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/build/net7.0-windows/Starlog.exe",
       "args": [
-        /* Scenario 1: Providing all paramters
+        /* Scenario 1: Providing all parameters
         "loadpath",
         "--path",
         "c:\\Dev\\Lab\\Starlog\\_\\Set 1",
