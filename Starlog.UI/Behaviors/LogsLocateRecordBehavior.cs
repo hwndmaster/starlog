@@ -63,8 +63,11 @@ public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>
             return;
         }
 
+        vm.SelectedLogItems.Clear();
+
         vm.Filtering.DropAllFilters();
         vm.Search.DropAllSearches();
+        vm.ResetGrouping();
 
         Observable.FromEventPattern<EventHandler, EventArgs>(
             h => AssociatedObject.LayoutUpdated += h, h => AssociatedObject.LayoutUpdated -= h)
@@ -77,7 +80,6 @@ public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>
                 }, DispatcherPriority.ContextIdle);
             });
 
-        vm.SelectedLogItems.Clear();
         vm.SelectedLogItems.Add(item);
 
         /* UNDONE:

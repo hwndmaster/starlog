@@ -16,6 +16,7 @@ namespace Genius.Starlog.UI.Views;
 
 public interface ILogsViewModel : ITabViewModel, IDisposable
 {
+    void ResetGrouping();
     void UnBookmarkAll();
 
     ILogsFilteringViewModel Filtering { get; }
@@ -141,6 +142,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             this.WhenChanged(x => x.SelectedLogItem)
                 .Subscribe(_ => SelectedLogArtifacts = SelectedLogItem?.Artifacts)
         );
+    }
+
+    public void ResetGrouping()
+    {
+        GroupBy = string.Empty;
     }
 
     public void UnBookmarkAll()
