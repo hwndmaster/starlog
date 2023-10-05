@@ -29,10 +29,12 @@ public static class Module
         services.AddSingleton<ISettingsRepository>(sp => sp.GetRequiredService<SettingsRepository>());
 
         // LogFlow and LogFiltering services
-        services.AddSingleton<LogContainer>();
-        services.AddSingleton<ICurrentProfile>(x => x.GetRequiredService<LogContainer>());
-        services.AddSingleton<ILogContainer>(x => x.GetRequiredService<LogContainer>());
+        services.AddSingleton<CurrentProfileLogContainer>();
+        services.AddSingleton<ICurrentProfile>(x => x.GetRequiredService<CurrentProfileLogContainer>());
+        services.AddSingleton<ILogContainer>(x => x.GetRequiredService<CurrentProfileLogContainer>());
         services.AddSingleton<ILogFilterContainer, LogFilterContainer>();
+        services.AddSingleton<IProfileLoader, ProfileLoader>();
+        services.AddSingleton<IComparisonService, ComparisonService>();
 
         services.AddSingleton<LogCodecContainer>();
         services.AddSingleton<ILogCodecContainer>(sp => sp.GetRequiredService<LogCodecContainer>());

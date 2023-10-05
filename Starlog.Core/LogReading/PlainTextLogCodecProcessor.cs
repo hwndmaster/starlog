@@ -131,7 +131,6 @@ public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
         return new FileArtifacts(artifacts.ToArray());
     }
 
-    // TODO: To cover with unit tests
     public bool ReadFromCommandLineArguments(ProfileLogCodecBase profileLogCodec, string[] codecSettings)
     {
         Guard.NotNull(profileLogCodec);

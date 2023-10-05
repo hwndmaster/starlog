@@ -5,6 +5,7 @@ using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
+// TODO: Cover with unit tests
 public sealed class TimeAgoProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<TimeAgoProfileFilter>
 {
     public TimeAgoProfileFilterSettingsViewModel(TimeAgoProfileFilter profileFilter, ILogContainer logContainer)

@@ -7,6 +7,7 @@
         xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
         xmlns:uc="clr-namespace:Genius.Starlog.UI.Views"
+        xmlns:uc2="clr-namespace:Genius.Starlog.UI.Views.Comparison"
         mc:Ignorable="d"
         Icon="../Assets/Logo.ico"
         WindowStartupLocation="CenterScreen"
@@ -30,8 +31,11 @@
             <TabItem Header="Logs">
                 <uc:LogsView DataContext="{Binding Path=Tabs[1]}" />
             </TabItem>
+            <TabItem Header="Compare" IsEnabled="{Binding IsComparisonAvailable, Mode=OneWay}">
+                <uc2:ComparisonView DataContext="{Binding Path=Tabs[2]}" />
+            </TabItem>
             <TabItem Header="Settings">
-                <uc:SettingsView DataContext="{Binding Path=Tabs[2]}" />
+                <uc:SettingsView DataContext="{Binding Path=Tabs[3]}" />
             </TabItem>
         </TabControl>
         <StatusBar Grid.Row="1">

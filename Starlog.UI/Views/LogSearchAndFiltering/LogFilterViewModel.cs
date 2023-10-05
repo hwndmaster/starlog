@@ -3,6 +3,7 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 
+// TODO: Cover with unit tests
 public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
     IHasModifyCommand, IHasDeleteCommand, ISelectable
 {

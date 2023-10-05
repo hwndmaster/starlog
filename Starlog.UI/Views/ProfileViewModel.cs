@@ -3,8 +3,8 @@ using System.Reactive.Linq;
 using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.UI.Forms.Validation;
+using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
-using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
@@ -20,19 +20,21 @@ public interface IProfileViewModel : ISelectable
     void CopyFrom(IProfileViewModel source, string? nameSuffix = null);
 
     Guid? Id { get; }
+    Profile? Profile { get; }
     string Name { get; set; }
     string Path { get; set; }
     IActionCommand CommitProfileCommand { get; }
     IActionCommand LoadProfileCommand { get; }
 }
 
+// TODO: Cover with unit tests
 public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 {
     private readonly ICommandBus _commandBus;
     private readonly IProfileQueryService _profileQuery;
     private readonly IProfileSettingsTemplateQueryService _templatesQuery;
     private readonly IMainController _controller;
-    private readonly ILogContainer _logContainer;
+    private readonly ICurrentProfile _currentProfile;
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly IViewModelFactory _vmFactory;
     private readonly IUiDispatcher _dispatcher;
@@ -43,11 +45,11 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     public ProfileViewModel(
         Profile? profile,
         ICommandBus commandBus,
+        ICurrentProfile currentProfile,
         IEventBus eventBus,
         IMainController controller,
         IProfileQueryService profileQuery,
         IProfileSettingsTemplateQueryService templatesQuery,
-        ILogContainer logContainer,
         ILogCodecContainer logCodecContainer,
         IViewModelFactory vmFactory,
         IUiDispatcher dispatcher,
@@ -56,9 +58,9 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _controller = controller.NotNull();
+        _currentProfile = currentProfile.NotNull();
         _dispatcher = dispatcher.NotNull();
         _logCodecContainer = logCodecContainer.NotNull();
-        _logContainer = logContainer.NotNull();
         _profileQuery = profileQuery.NotNull();
         _templatesQuery = templatesQuery.NotNull();
         _vmFactory = vmFactory.NotNull();
@@ -93,7 +95,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             await Task.Run(async() =>
             {
                 Guard.NotNull(_profile);
-                await _logContainer.LoadProfileAsync(_profile).ConfigureAwait(false);
+                await _currentProfile.LoadProfileAsync(_profile).ConfigureAwait(false);
                 await _commandBus.SendAsync(new SettingsUpdateAutoLoadingProfileCommand(_profile.Id));
                 _controller.ShowLogsTab();
             })
@@ -210,6 +212,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         = new TypedObservableCollection<LogCodecViewModel, LogCodecViewModel>();
 
     public Guid? Id => _profile?.Id;
+    public Profile? Profile => _profile;
 
     public string PageTitle => _profile is null ? "Add profile" : "Edit profile";
 

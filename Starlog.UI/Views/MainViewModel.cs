@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Genius.Starlog.Core;
+using Genius.Starlog.UI.Views.Comparison;
 
 namespace Genius.Starlog.UI.Views;
 
@@ -8,24 +9,29 @@ public interface IMainViewModel : IViewModel
     ImmutableArray<ITabViewModel> Tabs { get; }
     int SelectedTabIndex { get; set; }
     bool IsBusy { get; set; }
+    bool IsComparisonAvailable { get; set; }
 }
 
+// TODO: Cover with unit tests
 internal sealed class MainViewModel : ViewModelBase, IMainViewModel
 {
     public MainViewModel(
         IProfilesViewModel profiles,
         ILogsViewModel logs,
+        IComparisonViewModel compare,
         ISettingsViewModel settings,
         ICurrentProfile currentProfile)
     {
         Guard.NotNull(profiles);
         Guard.NotNull(logs);
+        Guard.NotNull(compare);
         Guard.NotNull(settings);
         Guard.NotNull(currentProfile);
 
         Tabs = new ITabViewModel[] {
             profiles,
             logs,
+            compare,
             settings
         }.ToImmutableArray();
 
@@ -58,6 +64,12 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
     }
 
     public bool IsBusy
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool IsComparisonAvailable
     {
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);

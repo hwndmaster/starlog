@@ -81,8 +81,8 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
     public IProfileViewModel CreateProfile(Profile? profile)
     {
-        return new ProfileViewModel(profile, _commandBus, _eventBus, _mainController, _profileQuery,
-            _profileSettingsTemplateQuery, _logContainer, _logCodecContainer, this, _dispatcher, _ui);
+        return new ProfileViewModel(profile, _commandBus, _currentProfile, _eventBus, _mainController, _profileQuery,
+            _profileSettingsTemplateQuery, _logCodecContainer, this, _dispatcher, _ui);
     }
 
     public IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter)

@@ -24,6 +24,7 @@ public interface ILogsViewModel : ITabViewModel, IDisposable
     ObservableCollection<ILogItemViewModel> SelectedLogItems { get; }
 }
 
+// TODO: Cover with unit tests
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 {
     private readonly ICurrentProfile _currentProfile;

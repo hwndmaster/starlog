@@ -13,6 +13,7 @@ public interface IProfileFilterViewModel
     IActionCommand CommitFilterCommand { get; }
 }
 
+// TODO: Cover with unit tests
 public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewModel
 {
     private readonly ICommandBus _commandBus;

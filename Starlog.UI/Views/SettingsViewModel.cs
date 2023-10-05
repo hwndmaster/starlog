@@ -15,6 +15,7 @@ namespace Genius.Starlog.UI.Views;
 public interface ISettingsViewModel : ITabViewModel
 { }
 
+// TODO: Cover with unit tests
 internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
 {
     private readonly ICommandBus _commandBus;

@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.Tests.LogReading;
 
-public sealed class LogContainerTests
+public sealed class CurrentProfileLogContainerTests
 {
     private record FileWithContentRecord(string FullPath, byte[] Content, LogReadingResult Result);
 
@@ -23,17 +23,18 @@ public sealed class LogContainerTests
     private readonly TestLogger<LogContainer> _logger = new();
     private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
 
-    private readonly LogContainer _sut;
+    private readonly CurrentProfileLogContainer _sut;
 
     private readonly Profile _sampleProfile;
     private readonly Mock<ILogCodecProcessor> _logCodecProcessorMock;
 
-    public LogContainerTests()
+    public CurrentProfileLogContainerTests()
     {
         new SupportMutableValueTypesCustomization().Customize(_fixture);
 
-        _sut = new LogContainer(_eventBus, _fileService, _fileWatcher,
-            _logCodecContainerMock.Object, _scheduler, _logger);
+        ProfileLoader profileLoader = new(_fileService, _logCodecContainerMock.Object, new TestLogger<ProfileLoader>());
+        _sut = new CurrentProfileLogContainer(_eventBus, _fileService, _fileWatcher,
+            profileLoader, _scheduler, _logger);
 
         _sampleProfile = _fixture.Create<Profile>();
         _logCodecProcessorMock = new Mock<ILogCodecProcessor>();

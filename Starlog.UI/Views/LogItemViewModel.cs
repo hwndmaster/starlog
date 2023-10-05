@@ -16,6 +16,7 @@ public interface ILogItemViewModel : IViewModel
     FlowDocument Artifacts { get; }
 }
 
+// TODO: Cover with unit tests
 public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
 {
     private readonly Lazy<FlowDocument> _artifactsLazy;

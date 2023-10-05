@@ -3,6 +3,7 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.Generic;
 
+// TODO: Cover with unit tests
 internal sealed class RegexValueViewModel : ViewModelBase
 {
     public RegexValueViewModel(SettingStringValue stringValue)

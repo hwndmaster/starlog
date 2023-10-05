@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Atom.Infrastructure.TestingUtil.Commands;
 using Genius.Atom.UI.Forms;
+using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
@@ -10,6 +10,7 @@ using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Console;
 using Genius.Starlog.UI.Controllers;
+using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Extensions.Logging;
@@ -20,14 +21,16 @@ public sealed class MainControllerTests
 {
     private const int MAINVIEWMODEL_TABS_COUNT = 4;
 
-    private readonly TestCommandBus _commandBus = new();
+    private readonly Mock<IClipboardHelper> _clipboardHelperMock = new();
+    private readonly Mock<IComparisonService> _comparisonServiceMock = new();
+    private readonly Mock<ICurrentProfile> _currentProfileMock = new();
     private readonly Mock<IDialogCoordinator> _dialogCoordinatorMock = new();
-    private readonly Mock<ILogContainer> _logContainerMock = new();
     private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
     private readonly Mock<ISettingsQueryService> _settingsQueryMock = new();
     private readonly Mock<IProfileSettingsTemplateQueryService> _templatesQueryMock = new();
     private readonly Mock<IUserInteraction> _uiMock = new();
     private readonly Mock<IMainViewModel> _mainViewModelMock = new();
+    private readonly TestCommandBus _commandBus = new();
     private readonly TestLogger<MainController> _logger = new();
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
 
@@ -35,7 +38,9 @@ public sealed class MainControllerTests
 
     public MainControllerTests()
     {
-        _sut = new(_commandBus, _dialogCoordinatorMock.Object, _logContainerMock.Object, _logCodecContainerMock.Object,
+        _sut = new(_clipboardHelperMock.Object, _commandBus,
+            _comparisonServiceMock.Object, _dialogCoordinatorMock.Object,
+            _currentProfileMock.Object, _logCodecContainerMock.Object,
             _settingsQueryMock.Object, _templatesQueryMock.Object, _uiMock.Object,
             new Lazy<IMainViewModel>(() => _mainViewModelMock.Object), _logger);
     }
@@ -74,7 +79,7 @@ public sealed class MainControllerTests
             x => Assert.Equal(options.Path, x.Path),
             x => Assert.Equal(profileCodec, x.Settings.LogCodec),
             x => Assert.Equal(options.FileArtifactLinesCount, x.Settings.FileArtifactLinesCount));
-        _logContainerMock.Verify(x => x.LoadProfileAsync(actualProfile), Times.Once);
+        _currentProfileMock.Verify(x => x.LoadProfileAsync(actualProfile), Times.Once);
         _mainViewModelMock.VerifySet(x => x.SelectedTabIndex = MAINVIEWMODEL_TABS_COUNT - 1);
         _mainViewModelMock.VerifySet(x => x.IsBusy = false);
         Assert.DoesNotContain(_logger.Logs, x => x.LogLevel == LogLevel.Warning);
@@ -95,7 +100,7 @@ public sealed class MainControllerTests
 
         // Verify
         _commandBus.AssertNoCommandOfType<ProfileLoadAnonymousCommand>();
-        _logContainerMock.Verify(x => x.LoadProfileAsync(It.IsAny<Profile>()), Times.Never);
+        _currentProfileMock.Verify(x => x.LoadProfileAsync(It.IsAny<Profile>()), Times.Never);
         _mainViewModelMock.VerifySet(x => x.IsBusy = false);
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
     }
@@ -121,7 +126,7 @@ public sealed class MainControllerTests
 
         // Verify
         _commandBus.AssertNoCommandOfType<ProfileLoadAnonymousCommand>();
-        _logContainerMock.Verify(x => x.LoadProfileAsync(It.IsAny<Profile>()), Times.Never);
+        _currentProfileMock.Verify(x => x.LoadProfileAsync(It.IsAny<Profile>()), Times.Never);
         _mainViewModelMock.VerifySet(x => x.IsBusy = false);
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
     }
@@ -167,6 +172,35 @@ public sealed class MainControllerTests
 
         // Verify
         _settingsQueryMock.Verify(x => x.Get(), Times.Never);
+    }
+
+    [StaFact]
+    public async Task ShowShareViewAsync_HappyFlowScenario()
+    {
+        // Arrange
+        var items = _fixture.CreateMany<ILogItemViewModel>().ToArray();
+
+        // Act
+        await _sut.ShowShareViewAsync(items);
+
+        // Verify
+        _uiMock.Verify(x => x.ShowInformation(It.IsAny<string>()), Times.Never);
+        _dialogCoordinatorMock.Verify(x => x.ShowMetroDialogAsync(_mainViewModelMock.Object,
+            It.Is<CustomDialog>(cd => cd.Content is ShareLogsView), It.IsAny<MetroDialogSettings>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ShowShareViewAsync_WhenNoLogsProvided_ThenMessageIsShown()
+    {
+        // Arrange
+        var items = Array.Empty<ILogItemViewModel>();
+
+        // Act
+        await _sut.ShowShareViewAsync(items);
+
+        // Verify
+        _uiMock.Verify(x => x.ShowInformation(It.IsAny<string>()));
+        _dialogCoordinatorMock.Verify(x => x.ShowMetroDialogAsync(It.IsAny<object>(), It.IsAny<BaseMetroDialog>(), It.IsAny<MetroDialogSettings>()), Times.Never);
     }
 
     private T SetupDummyTabsAnd<T>()

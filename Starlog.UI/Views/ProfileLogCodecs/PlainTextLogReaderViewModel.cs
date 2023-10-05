@@ -10,6 +10,7 @@ public sealed record PlainTextLogCodecLineRegex(string Name, string Regex)
     public override string ToString() => Regex;
 }
 
+// TODO: Cover with unit tests
 public sealed class PlainTextLogCodecViewModel : LogCodecViewModel
 {
     private readonly PlainTextProfileLogCodec _plainTextLogCodec;

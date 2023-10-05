@@ -8,6 +8,7 @@ using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
+// TODO: Cover with unit tests
 public sealed class ThreadProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<ThreadsProfileFilter>
 {
     public ThreadProfileFilterSettingsViewModel(ThreadsProfileFilter profileFilter, ILogContainer logContainer)

@@ -1,16 +1,25 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.Helpers;
 
-public static class CopyToClipboardHelper
+public interface IClipboardHelper
 {
-    public static string CreateLogMessagesStringForClipboard(IEnumerable<ILogItemViewModel> items)
+    string CreateLogMessagesStringForClipboard(IEnumerable<ILogItemViewModel> items);
+    string CreateLogsStringForClipboard(IEnumerable<ILogItemViewModel> items);
+    void CopyToClipboard(string content);
+}
+
+// TODO: Cover with unit tests
+internal sealed class ClipboardHelper : IClipboardHelper
+{
+    public string CreateLogMessagesStringForClipboard(IEnumerable<ILogItemViewModel> items)
     {
         return string.Join(Environment.NewLine, items.Select(x => x.Record.Message).Distinct());
     }
 
-    public static string CreateLogsStringForClipboard(IEnumerable<ILogItemViewModel> items)
+    public string CreateLogsStringForClipboard(IEnumerable<ILogItemViewModel> items)
     {
         var itemGroups = items.GroupBy(x => x.Record.File.FileName, x => x.Record);
         StringBuilder sb = new();
@@ -50,7 +59,8 @@ public static class CopyToClipboardHelper
         return sb.ToString();
     }
 
-    public static void CopyToClipboard(string content)
+    [ExcludeFromCodeCoverage]
+    public void CopyToClipboard(string content)
     {
         Clipboard.SetText(content);
     }

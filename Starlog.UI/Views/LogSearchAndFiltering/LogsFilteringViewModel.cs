@@ -24,6 +24,7 @@ public interface ILogsFilteringViewModel : IDisposable
     IObservable<Unit> FilterChanged { get; }
 }
 
+// TODO: Cover with unit tests
 public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewModel
 {
     private readonly ICommandBus _commandBus;

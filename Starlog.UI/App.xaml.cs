@@ -10,6 +10,7 @@ using Genius.Starlog.UI.Console;
 using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
+using Genius.Starlog.UI.Views.Comparison;
 using Genius.Starlog.UI.Views.LogSearchAndFiltering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -72,14 +73,17 @@ public partial class App : Application
         services.AddSingleton<ILogsViewModel, LogsViewModel>();
         services.AddTransient<ILogsFilteringViewModel, LogsFilteringViewModel>();
         services.AddTransient<ILogsSearchViewModel, LogsSearchViewModel>();
+        services.AddSingleton<IComparisonViewModel, ComparisonViewModel>();
         services.AddSingleton<ISettingsViewModel, SettingsViewModel>();
 
         // AutoGrid builders
-        services.AddTransient<ProfileAutoGridBuilder>();
+        services.AddTransient<ComparisonAutoGridBuilder>();
         services.AddTransient<LogItemAutoGridBuilder>();
         services.AddTransient<PlainTextLineRegexTemplatesAutoGridBuilder>();
+        services.AddTransient<ProfileAutoGridBuilder>();
 
         // Services and Helpers:
+        services.AddTransient<IClipboardHelper, ClipboardHelper>();
         services.AddTransient<ILogArtifactsFormatter, LogArtifactsFormatter>();
         services.AddTransient<IConsoleParser, ConsoleParser>();
     }

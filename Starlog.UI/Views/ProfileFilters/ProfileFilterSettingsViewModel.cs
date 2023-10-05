@@ -12,6 +12,7 @@ public interface IProfileFilterSettingsViewModel : IViewModel
     string Name { get; set; }
 }
 
+// TODO: Cover with unit tests
 public abstract class ProfileFilterSettingsViewModel<TProfileFilter> : ViewModelBase, IProfileFilterSettingsViewModel
     where TProfileFilter : ProfileFilterBase
 {

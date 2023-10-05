@@ -3,12 +3,15 @@ using System.Windows.Input;
 using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;
 
 public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
 {
+    private readonly IClipboardHelper _clipboardHelper;
+
     private readonly MenuItem _menuItemCopy;
     private readonly MenuItem _menuItemCopyWhole;
     private readonly MenuItem _menuItemCopyMsg;
@@ -17,13 +20,15 @@ public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
 
     public LogsCopyToClipboardBehavior()
     {
+        _clipboardHelper = App.ServiceProvider.GetRequiredService<IClipboardHelper>();
+
         _menuItemCopyWhole = new MenuItem { Header = "Everything",
             InputGestureText = "Ctrl+C",
             Command = new ActionCommand(_ => CopyToClipboard()) };
         _menuItemCopyMsg = new MenuItem { Header = "Message(s)", Command = new ActionCommand(_ =>
         {
-            var content = CopyToClipboardHelper.CreateLogMessagesStringForClipboard(AssociatedObject.SelectedItems.OfType<ILogItemViewModel>());
-            CopyToClipboardHelper.CopyToClipboard(content);
+            var content = _clipboardHelper.CreateLogMessagesStringForClipboard(AssociatedObject.SelectedItems.OfType<ILogItemViewModel>());
+            _clipboardHelper.CopyToClipboard(content);
         }) };
         _menuItemCopy = new MenuItem { Header = "Copy to clipboard", Items = {
             _menuItemCopyWhole,
@@ -67,8 +72,8 @@ public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
 
     private void CopyToClipboard()
     {
-        var content = CopyToClipboardHelper.CreateLogsStringForClipboard(
+        var content = _clipboardHelper.CreateLogsStringForClipboard(
             AssociatedObject.SelectedItems.OfType<ILogItemViewModel>());
-        CopyToClipboardHelper.CopyToClipboard(content);
+        _clipboardHelper.CopyToClipboard(content);
     }
 }

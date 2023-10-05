@@ -6,6 +6,7 @@ using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
+// TODO: Cover with unit tests
 public sealed class TimeRangeProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<TimeRangeProfileFilter>
 {
     public TimeRangeProfileFilterSettingsViewModel(TimeRangeProfileFilter profileFilter, ILogContainer logContainer, bool isNewFilter)

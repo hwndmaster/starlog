@@ -18,14 +18,26 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <DockPanel Grid.Row="0" Style="{StaticResource Starlog.TabRootContent.DockPanel}">
-            <Button Content="Add profile" Width="Auto" Padding="5,2"
-                    Command="{Binding OpenAddProfileFlyoutCommand}" />
-            <Button Content="Open details" Width="Auto"
-                    Padding="5,2" Margin="{StaticResource TopBarMargin}"
-                    Command="{Binding OpenEditProfileFlyoutCommand}" />
-            <Button Content="Delete" Width="Auto" Margin="{StaticResource TopBarMargin}" Padding="5,2"
-                    Background="DarkRed"
-                    Command="{Binding DeleteProfileCommand}" />
+            <Button Command="{Binding OpenAddProfileFlyoutCommand}"
+                    ToolTip="Add a new profile">
+                <Image Source="{StaticResource Plus16}" Width="16" />
+            </Button>
+            <Button Margin="{StaticResource TopBarMargin}"
+                    Command="{Binding OpenEditProfileFlyoutCommand}"
+                    ToolTip="Open profile details">
+                <Image Source="{StaticResource Pen16}" Width="16" />
+            </Button>
+            <Button Margin="{StaticResource TopBarMargin}"
+                    Command="{Binding CompareSelectedCommand}"
+                    ToolTip="Compare two selected profiles">
+                <Image Source="{StaticResource Copy16}" Width="16" />
+            </Button>
+            <Button Margin="{StaticResource TopBarMargin}"
+                    BorderBrush="DarkRed"
+                    Command="{Binding DeleteProfileCommand}"
+                    ToolTip="Delete selected profile(s)">
+                <Image Source="{StaticResource Trash16}" Width="16" />
+            </Button>
             <Label Content="Filter:" Margin="100,0,0,0" />
             <TextBox Text="{Binding Filter}" mah:TextBoxHelper.ClearTextButton="True">
                 <i:Interaction.Behaviors>

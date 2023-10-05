@@ -6,6 +6,7 @@ using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
+// TODO: Cover with unit tests
 public sealed class MessageProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<MessageProfileFilter>
 {
     public MessageProfileFilterSettingsViewModel(MessageProfileFilter profileFilter, ILogContainer logContainer)

@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
@@ -25,6 +24,7 @@ public interface IProfilesViewModel : ITabViewModel, IDisposable
     ICommand DeleteProfileCommand { get; }
 }
 
+// TODO: Cover with unit tests
 internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 {
     private readonly IMainController _controller;
@@ -54,6 +54,19 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         AutoGridBuilder = autoGridBuilder.NotNull();
 
         // Actions:
+        CompareSelectedCommand = new ActionCommand(async _ => {
+            var selectedProfiles = Profiles
+                .Where(x => x.IsSelected && x.Profile is not null)
+                .Take(2).ToArray();
+            if (selectedProfiles.Length < 2)
+            {
+                ui.ShowWarning("Select two profiles to compare and try again.");
+                return;
+            }
+
+            await _controller.OpenProfilesForComparisonAsync(selectedProfiles[0].Profile!, selectedProfiles[1].Profile!);
+        });
+
         OpenAddProfileFlyoutCommand = new ActionCommand(_ => {
             IsAddEditProfileVisible = !IsAddEditProfileVisible;
             if (IsAddEditProfileVisible)
@@ -155,7 +168,8 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
+    public ICommand CompareSelectedCommand { get; }
+    public ICommand DeleteProfileCommand { get; }
     public ICommand OpenAddProfileFlyoutCommand { get; }
     public ICommand OpenEditProfileFlyoutCommand { get; }
-    public ICommand DeleteProfileCommand { get; }
 }

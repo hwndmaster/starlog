@@ -48,12 +48,14 @@ internal sealed class LogCodecContainer : ILogCodecContainer, IQueryService<LogC
 
     public Task<LogCodec?> FindByIdAsync(Guid entityId)
     {
+        // TODO: Cover with unit tests
         var hasRecord = _registeredLogCodecs.TryGetValue(entityId, out var record);
         return Task.FromResult(hasRecord ? record.Codec : null);
     }
 
     public Task<IEnumerable<LogCodec>> GetAllAsync()
     {
+        // TODO: Cover with unit tests
         return Task.FromResult(GetLogCodecs());
     }
 

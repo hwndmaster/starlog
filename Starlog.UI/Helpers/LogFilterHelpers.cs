@@ -1,5 +1,6 @@
 namespace Genius.Starlog.UI.Helpers;
 
+// TODO: Cover with unit tests
 public static class LogFilterHelpers
 {
     private const int MaxNameLength = 50;

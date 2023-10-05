@@ -1,12 +1,15 @@
 using System.IO;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Console;
+using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
+using Genius.Starlog.UI.Views.Comparison;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Extensions.Logging;
 
@@ -30,6 +33,7 @@ public interface IMainController
     void NotifyMainWindowIsLoaded();
     void NotifyProfilesAreLoaded();
 
+    Task OpenProfilesForComparisonAsync(Profile profile1, Profile profile2);
     void SetBusy(bool isBusy);
     void ShowAddProfileForPath(string path);
     void ShowLogsTab();
@@ -40,9 +44,11 @@ public interface IMainController
 
 internal sealed class MainController : IMainController
 {
+    private readonly IClipboardHelper _clipboardHelper;
     private readonly ICommandBus _commandBus;
+    private readonly IComparisonService _comparisonService;
     private readonly IDialogCoordinator _dialogCoordinator;
-    private readonly ILogContainer _logContainer;
+    private readonly ICurrentProfile _currentProfile;
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly ISettingsQueryService _settingsQuery;
     private readonly IProfileSettingsTemplateQueryService _templatesQuery;
@@ -55,9 +61,11 @@ internal sealed class MainController : IMainController
     private bool _anonymousProfileToBeLoaded;
 
     public MainController(
+        IClipboardHelper clipboardHelper,
         ICommandBus commandBus,
+        IComparisonService comparisonService,
         IDialogCoordinator dialogCoordinator,
-        ILogContainer logContainer,
+        ICurrentProfile currentProfile,
         ILogCodecContainer logCodecContainer,
         ISettingsQueryService settingsQuery,
         IProfileSettingsTemplateQueryService templatesQuery,
@@ -65,9 +73,11 @@ internal sealed class MainController : IMainController
         Lazy<IMainViewModel> mainViewModel,
         ILogger<MainController> logger)
     {
+        _clipboardHelper = clipboardHelper.NotNull();
         _commandBus = commandBus.NotNull();
+        _comparisonService = comparisonService.NotNull();
         _dialogCoordinator = dialogCoordinator.NotNull();
-        _logContainer = logContainer.NotNull();
+        _currentProfile = currentProfile.NotNull();
         _logCodecContainer = logCodecContainer.NotNull();
         _settingsQuery = settingsQuery.NotNull();
         _templatesQuery = templatesQuery.NotNull();
@@ -158,7 +168,7 @@ internal sealed class MainController : IMainController
             }
 
             var profile = await _commandBus.SendAsync(new ProfileLoadAnonymousCommand(options.Path, settings));
-            await _logContainer.LoadProfileAsync(profile).ConfigureAwait(false);
+            await _currentProfile.LoadProfileAsync(profile).ConfigureAwait(false);
             ShowLogsTab();
         })
         .ContinueWith(_ => SetBusy(false), TaskContinuationOptions.None)
@@ -174,6 +184,33 @@ internal sealed class MainController : IMainController
     public void NotifyProfilesAreLoaded()
     {
         _profilesAreLoaded.TrySetResult();
+    }
+
+    // TODO: To cover with unit tests
+    public async Task OpenProfilesForComparisonAsync(Profile profile1, Profile profile2)
+    {
+        var compareTab = _mainViewModel.Value.Tabs.OfType<IComparisonViewModel>().First();
+        _mainViewModel.Value.IsComparisonAvailable = true;
+        _mainViewModel.Value.SelectedTabIndex = _mainViewModel.Value.Tabs.IndexOf(compareTab);
+
+        SetBusy(true);
+
+        try
+        {
+            var context = await _comparisonService.LoadProfilesAsync(profile1, profile2).ConfigureAwait(false);
+            if (context is not null)
+            {
+                compareTab.PopulateProfiles(context);
+            }
+            else
+            {
+                _ui.ShowWarning("Couldn't load one of the selected profiles. Try opening each profile individually to see more details when any if them is failing.");
+            }
+        }
+        finally
+        {
+            SetBusy(false);
+        }
     }
 
     public void SetBusy(bool isBusy)
@@ -197,7 +234,6 @@ internal sealed class MainController : IMainController
         _mainViewModel.Value.SelectedTabIndex = _mainViewModel.Value.Tabs.IndexOf(tab);
     }
 
-    // TODO: To cover with unit tests
     public async Task ShowShareViewAsync(IReadOnlyCollection<ILogItemViewModel> items)
     {
         if (items.Count == 0)
@@ -207,7 +243,7 @@ internal sealed class MainController : IMainController
         }
 
         var customDialog = new CustomDialog { Title = "Share logs" };
-        var viewModel = new ShareLogsViewModel(items, new ActionCommand(async _ =>
+        var viewModel = new ShareLogsViewModel(_clipboardHelper, items, new ActionCommand(async _ =>
             await _dialogCoordinator.HideMetroDialogAsync(_mainViewModel.Value, customDialog)));
         customDialog.Content = new ShareLogsView { DataContext = viewModel };
 
