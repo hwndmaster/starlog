@@ -131,7 +131,10 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                 {
                     IsAddEditProfileFilterVisible = false;
                     _filterChanged.OnNext(Unit.Default);
-                })
+                }),
+
+            this.WhenChanged(x => x.IsOr)
+                .Subscribe(_ => _filterChanged.OnNext(Unit.Default))
         );
     }
 
@@ -140,7 +143,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         if (SelectedFilters.Any(x => x == _bookmarkedCategory))
         {
             return new(HasAnythingSpecified: true,
-                new HashSet<string>(0), ImmutableArray<ProfileFilterBase>.Empty, ShowBookmarked: true);
+                new HashSet<string>(0), ImmutableArray<ProfileFilterBase>.Empty, ShowBookmarked: true, UseOrCombination: IsOr);
         }
 
         var filters = SelectedFilters
@@ -157,7 +160,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
             .ToImmutableArray();
 
         return new(HasAnythingSpecified: filesSelected.Any() || filtersSelected.Any(),
-            filesSelected, filtersSelected, ShowBookmarked: false);
+            filesSelected, filtersSelected, ShowBookmarked: false, UseOrCombination: IsOr);
     }
 
     public void Dispose()
@@ -263,6 +266,12 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     public IProfileFilterViewModel? EditingProfileFilter
     {
         get => GetOrDefault<IProfileFilterViewModel?>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool IsOr
+    {
+        get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
 }

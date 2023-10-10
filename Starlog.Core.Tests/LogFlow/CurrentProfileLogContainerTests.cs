@@ -9,7 +9,7 @@ using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Genius.Starlog.Core.Tests.LogReading;
+namespace Genius.Starlog.Core.Tests.LogFlow;
 
 public sealed class CurrentProfileLogContainerTests
 {

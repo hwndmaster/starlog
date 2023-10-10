@@ -32,8 +32,19 @@ internal sealed class ComparisonService : IComparisonService
             return null;
         }
 
+        var logs = logContainer1.GetLogs();
+        var initialTime = logs[0].DateTime;
+        logContainer1.GetLogs().Select(x => CalculateHash(x));
+
         // TODO: Implement comparison
 
         return new ComparisonContext(profile1, logContainer1, profile2, logContainer2);
+    }
+
+    private int CalculateHash(LogRecord logRecord)
+    {
+        // TODO: Use other fields, optional and obligatory
+        // TODO: Trim digits/symbols from message if needed
+        return logRecord.Message.GetHashCode();
     }
 }

@@ -21,7 +21,8 @@ public sealed record LogRecordFilterContext(
     bool HasAnythingSpecified,
     HashSet<string> FilesSelected,
     ImmutableArray<ProfileFilterBase> FiltersSelected,
-    bool ShowBookmarked)
+    bool ShowBookmarked,
+    bool UseOrCombination)
 {
-    public static LogRecordFilterContext CreateEmpty() => new(false, new HashSet<string>(), ImmutableArray<ProfileFilterBase>.Empty, false);
+    public static LogRecordFilterContext CreateEmpty() => new(false, new HashSet<string>(), ImmutableArray<ProfileFilterBase>.Empty, false, false);
 }

@@ -116,9 +116,9 @@ public sealed class PlainTextProfileLogCodecProcessorTests
 
         // Verify
         Assert.Null(result.FileArtifacts);
-        Assert.Equal(1, result.Loggers.Count);
+        Assert.Single(result.Loggers);
         Assert.Equal("Logger1", result.Loggers.ElementAt(0).Name);
-        Assert.Equal(1, result.LogLevels.Count);
+        Assert.Single(result.LogLevels);
         Assert.Equal("LEVEL1", result.LogLevels.ElementAt(0).Name);
         Assert.Single(result.Records);
         AssertLogRecord(result.Records[0],
@@ -172,7 +172,7 @@ public sealed class PlainTextProfileLogCodecProcessorTests
     }
 
     [Fact]
-    public async Task ReadFromCommandLineArguments_HappyFlowScenario()
+    public void ReadFromCommandLineArguments_HappyFlowScenario()
     {
         // Arrange
         var lineRegexName = _fixture.Create<string>();
@@ -196,7 +196,7 @@ public sealed class PlainTextProfileLogCodecProcessorTests
     }
 
     [Fact]
-    public async Task ReadFromCommandLineArguments_WhenNoCodecSettingsProvided_ReturnsFalse()
+    public void ReadFromCommandLineArguments_WhenNoCodecSettingsProvided_ReturnsFalse()
     {
         // Arrange
         var profileLogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>());
@@ -210,7 +210,7 @@ public sealed class PlainTextProfileLogCodecProcessorTests
     }
 
     [Fact]
-    public async Task ReadFromCommandLineArguments_WhenNoTemplateFound_ReturnsFalse()
+    public void ReadFromCommandLineArguments_WhenNoTemplateFound_ReturnsFalse()
     {
         // Arrange
         var lineRegexName = _fixture.Create<string>();

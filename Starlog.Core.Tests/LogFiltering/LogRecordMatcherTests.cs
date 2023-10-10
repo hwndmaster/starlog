@@ -20,7 +20,7 @@ public sealed class LogRecordMatcherTests
         var recordTime = _fixture.Create<DateTimeOffset>().ToUniversalTime();
         var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
         var context = new LogRecordMatcherContext(
-            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>()),
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), false),
             new LogRecordSearchContext(true, true, _fixture.Create<string>(), null,
                 recordTime - TimeSpan.FromMilliseconds(_fixture.Create<int>()),
                 recordTime + TimeSpan.FromMilliseconds(_fixture.Create<int>())));
@@ -51,7 +51,7 @@ public sealed class LogRecordMatcherTests
         var recordTime = _fixture.Create<DateTimeOffset>().ToUniversalTime();
         var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
         var context = new LogRecordMatcherContext(
-            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>()),
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), false),
             new LogRecordSearchContext(true, true, string.Empty, new Regex("t[es]{2}t"),
                 recordTime - TimeSpan.FromMilliseconds(_fixture.Create<int>()),
                 recordTime + TimeSpan.FromMilliseconds(_fixture.Create<int>())));

@@ -37,13 +37,26 @@ internal sealed class LogRecordMatcher : ILogRecordMatcher
             }
         }
 
+        bool anyFilterMatched = false;
         foreach (var filter in context.Filter.FiltersSelected)
         {
             var processor = _logFilterContainer.GetFilterProcessor(filter);
             if (!processor.IsMatch(filter, item))
             {
+                // TODO: Cover this condition in unit tests
+                if (context.Filter.UseOrCombination)
+                {
+                    continue;
+                }
                 return false;
             }
+
+            anyFilterMatched = true;
+        }
+
+        if (!anyFilterMatched && context.Filter.FiltersSelected.Length > 0)
+        {
+            return false;
         }
 
         if (context.Search.MessageSearchIncluded)

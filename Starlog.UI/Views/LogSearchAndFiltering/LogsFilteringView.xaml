@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
         xmlns:vc="clr-namespace:Genius.Starlog.UI.ValueConverters"
         mc:Ignorable="d">
@@ -12,7 +13,18 @@
         <vc:AppIconConverter x:Key="AppIconConverter" />
     </UserControl.Resources>
     <Grid>
-        <TreeView ItemsSource="{Binding FilterCategories}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal">
+            <Label Content="Combine filters: " VerticalAlignment="Center" />
+            <mah:ToggleSwitch Grid.Row="0"
+                OffContent="AND"
+                OnContent="OR"
+                IsOn="{Binding IsOr}" />
+        </StackPanel>
+        <TreeView Grid.Row="1" ItemsSource="{Binding FilterCategories}">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource TreeViewItemMultiselect}">
                     <Style.Resources>
