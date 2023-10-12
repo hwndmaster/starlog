@@ -29,12 +29,7 @@ public sealed class LogRecordMatcherTests
             .With(x => x.DateTime, recordTime)
             .With(x => x.Message, _fixture.Create<string>() + context.Search.SearchText + _fixture.Create<string>())
             .Create();
-        foreach (var filter in filters)
-        {
-            const bool isMatch = true; // All filter processors report successful matching
-            _logFilterContainerMock.Setup(x => x.GetFilterProcessor(filter))
-                .Returns(Mock.Of<IFilterProcessor>(x => x.IsMatch(filter, logRecord) == isMatch));
-        }
+        SetupFilters(filters, logRecord, _ => true); // All filter processors report successful matching
 
         // Act
         var actual = sut.IsMatch(context, logRecord);
@@ -60,12 +55,7 @@ public sealed class LogRecordMatcherTests
             .With(x => x.DateTime, recordTime)
             .With(x => x.Message, "message test with content")
             .Create();
-        foreach (var filter in filters)
-        {
-            const bool isMatch = true; // All filter processors report successful matching
-            _logFilterContainerMock.Setup(x => x.GetFilterProcessor(filter))
-                .Returns(Mock.Of<IFilterProcessor>(x => x.IsMatch(filter, logRecord) == isMatch));
-        }
+        SetupFilters(filters, logRecord, _ => true); // All filter processors report successful matching
 
         // Act
         var actual = sut.IsMatch(context, logRecord);
@@ -148,18 +138,84 @@ public sealed class LogRecordMatcherTests
         var logRecord = _fixture.Build<LogRecord>()
             .With(x => x.File, new FileRecord(Path.Combine(_fixture.Create<string>(), _fixture.Create<Generator<string>>().First(g => !context.Filter.FilesSelected.Contains(g))), 0))
             .Create();
-        foreach (var filter in filters)
-        {
-            var isMatch = filter != filters.Last(); // To fail on the last filter.
-            _logFilterContainerMock.Setup(x => x.GetFilterProcessor(filter))
-                .Returns(Mock.Of<IFilterProcessor>(x => x.IsMatch(filter, logRecord) == isMatch));
-        }
+        SetupFilters(filters, logRecord, filter => filter != filters.Last()); // To fail on the last filter.
 
         // Act
         var actual = sut.IsMatch(context, logRecord);
 
         // Verify
         Assert.False(actual);
+    }
+
+    [Fact]
+    public void IsMatch_GivenWithOrCombination_WhenOnlyOneFilterMatches_ReturnsTrue()
+    {
+        // Arrange
+        var sut = new LogRecordMatcher(_logFilterContainerMock.Object);
+        var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
+        var context = new LogRecordMatcherContext(
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), UseOrCombination: true),
+            LogRecordSearchContext.CreateEmpty());
+        var logRecord = _fixture.Build<LogRecord>()
+            .With(x => x.File, new FileRecord(Path.Combine(_fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
+            .Create();
+        SetupFilters(filters, logRecord, filter => filter == filters[2]); // Only last filter is matching
+
+        // Act
+        var actual = sut.IsMatch(context, logRecord);
+
+        // Verify
+        Assert.True(actual);
+    }
+
+    [Fact]
+    public void IsMatch_GivenWithOrCombination_WhenNoneFiltersMatch_ReturnsFalse()
+    {
+        // Arrange
+        var sut = new LogRecordMatcher(_logFilterContainerMock.Object);
+        var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
+        var context = new LogRecordMatcherContext(
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), UseOrCombination: true),
+            LogRecordSearchContext.CreateEmpty());
+        var logRecord = _fixture.Build<LogRecord>()
+            .With(x => x.File, new FileRecord(Path.Combine(_fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
+            .Create();
+        SetupFilters(filters, logRecord, _ => false);
+
+        // Act
+        var actual = sut.IsMatch(context, logRecord);
+
+        // Verify
+        Assert.False(actual);
+    }
+
+    [Fact]
+    public void IsMatch_GivenWithOrCombination_OnFirstMatchingFilter_AcceptsMatching()
+    {
+        // Arrange
+        var sut = new LogRecordMatcher(_logFilterContainerMock.Object);
+        var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
+        var context = new LogRecordMatcherContext(
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), UseOrCombination: true),
+            LogRecordSearchContext.CreateEmpty());
+        var logRecord = _fixture.Build<LogRecord>()
+            .With(x => x.File, new FileRecord(Path.Combine(_fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
+            .Create();
+        SetupFilters(filters, logRecord, filter =>
+        {
+            // Should be skipping the first filter, then accepting the second one, and never checking for the third one.
+            if (filter == filters[0])
+                return false;
+            if (filter == filters[1])
+                return true;
+            throw new Exception();
+        });
+
+        // Act
+        var actual = sut.IsMatch(context, logRecord);
+
+        // Verify
+        Assert.True(actual); // Exception now thrown
     }
 
     [Fact]
@@ -204,5 +260,19 @@ public sealed class LogRecordMatcherTests
 
         // Verify
         Assert.False(actual);
+    }
+
+    private void SetupFilters(ImmutableArray<ProfileFilterBase> filters, LogRecord logRecord, Func<ProfileFilterBase, bool> matchHandler)
+    {
+        foreach (var filter in filters)
+        {
+            var capturedFilter = filter;
+            _logFilterContainerMock.Setup(x => x.GetFilterProcessor(filter))
+                .Returns(() =>
+                {
+                    var isMatch = matchHandler(capturedFilter);
+                    return Mock.Of<IFilterProcessor>(x => x.IsMatch(capturedFilter, logRecord) == isMatch);
+                });
+        }
     }
 }

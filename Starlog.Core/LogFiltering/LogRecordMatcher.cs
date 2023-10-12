@@ -43,7 +43,6 @@ internal sealed class LogRecordMatcher : ILogRecordMatcher
             var processor = _logFilterContainer.GetFilterProcessor(filter);
             if (!processor.IsMatch(filter, item))
             {
-                // TODO: Cover this condition in unit tests
                 if (context.Filter.UseOrCombination)
                 {
                     continue;
@@ -52,6 +51,10 @@ internal sealed class LogRecordMatcher : ILogRecordMatcher
             }
 
             anyFilterMatched = true;
+            if (context.Filter.UseOrCombination)
+            {
+                break;
+            }
         }
 
         if (!anyFilterMatched && context.Filter.FiltersSelected.Length > 0)
