@@ -4,6 +4,10 @@
     <ProjectReference Include="..\Starlog.Core\Starlog.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="SpecFlow.xUnit" />
+  </ItemGroup>
+
   <ItemGroup Condition="$(PERSONAL_ENV) == true">
     <Reference Include="Genius.Atom.Data">
       <HintPath>..\..\atom\Atom.Data\bin\Debug\net7.0\Genius.Atom.Data.dll</HintPath>

@@ -38,10 +38,11 @@
     <PackageVersion Include="xunit" Version="2.5.1" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.1" />
     <PackageVersion Include="Xunit.StaFact" Version="1.1.11" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.0" />
-    <PackageVersion Include="coverlet.msbuild" Version="6.0.0" />
     <PackageVersion Include="AutoFixture" Version="4.18.0" />
     <PackageVersion Include="AutoFixture.AutoMoq" Version="4.18.0" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.0" />
+    <PackageVersion Include="coverlet.msbuild" Version="6.0.0" />
     <PackageVersion Include="Moq" Version="4.18.2" />
+    <PackageVersion Include="SpecFlow.xUnit" Version="3.9.74" />
   </ItemGroup>
 </Project>
