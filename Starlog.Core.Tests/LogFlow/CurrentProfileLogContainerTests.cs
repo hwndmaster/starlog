@@ -16,6 +16,7 @@ public sealed class CurrentProfileLogContainerTests
     private record FileWithContentRecord(string FullPath, byte[] Content, LogReadingResult Result);
 
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
+    private readonly TestDirectoryMonitor _directoryMonitor = new();
     private readonly TestFileService _fileService = new();
     private readonly TestFileSystemWatcher _fileWatcher = new();
     private readonly TestEventBus _eventBus = new();
@@ -33,7 +34,7 @@ public sealed class CurrentProfileLogContainerTests
         new SupportMutableValueTypesCustomization().Customize(_fixture);
 
         ProfileLoader profileLoader = new(_fileService, _logCodecContainerMock.Object, new TestLogger<ProfileLoader>());
-        _sut = new CurrentProfileLogContainer(_eventBus, _fileService, _fileWatcher,
+        _sut = new CurrentProfileLogContainer(_eventBus, _directoryMonitor, _fileService, _fileWatcher,
             profileLoader, _scheduler, _logger);
 
         _sampleProfile = _fixture.Create<Profile>();
@@ -49,10 +50,14 @@ public sealed class CurrentProfileLogContainerTests
         var files = SampleFiles(_sampleProfile);
 
         int logsAddedHandled = 0;
+        int logsRemovedHandled = 0;
+        int fileRemovedHandled = 0;
         List<FileRecord> filesAdded = new();
         Profile? profileSelected = null;
         _sut.LogsAdded.Subscribe(_ => logsAddedHandled++);
+        _sut.LogsRemoved.Subscribe(_ => logsRemovedHandled++);
         _sut.FileAdded.Subscribe(filesAdded.Add);
+        _sut.FileRemoved.Subscribe(_ => fileRemovedHandled++);
         _sut.ProfileChanged.Subscribe(x => profileSelected = x);
 
         // Pre-verify
@@ -72,6 +77,8 @@ public sealed class CurrentProfileLogContainerTests
         Assert.Equivalent(filesAdded, _sut.GetFiles(), strict: true);
         Assert.True(_fileWatcher.IsListening);
         Assert.Equal(_sampleProfile.Path, _fileWatcher.ListeningPath);
+        Assert.Equal(0, logsRemovedHandled);
+        Assert.Equal(0, fileRemovedHandled);
     }
 
     [Fact]

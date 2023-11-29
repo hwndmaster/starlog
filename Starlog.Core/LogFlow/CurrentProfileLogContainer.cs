@@ -11,17 +11,21 @@ namespace Genius.Starlog.Core.LogFlow;
 
 internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile, IDisposable
 {
+    private readonly IDirectoryMonitor _directoryMonitor;
     private readonly IEventBus _eventBus;
     private readonly IFileService _fileService;
+    private readonly IFileSystemWatcher _fileWatcher;
     private readonly IProfileLoader _profileLoader;
     private readonly ISynchronousScheduler _scheduler;
     private readonly ILogger<LogContainer> _logger;
-    private readonly IFileSystemWatcher _fileWatcher;
     private readonly Subject<Unit> _profileClosed = new();
     private readonly Subject<Profile> _profileChanged = new();
+    private readonly Subject<Unit> _unknownChangesDetected = new();
+    private long _lastReadSize = 0;
 
     public CurrentProfileLogContainer(
         IEventBus eventBus,
+        IDirectoryMonitor directoryMonitor,
         IFileService fileService,
         IFileSystemWatcher fileWatcher,
         IProfileLoader profileLoader,
@@ -29,6 +33,7 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         ILogger<LogContainer> logger)
     {
         _eventBus = eventBus.NotNull();
+        _directoryMonitor = directoryMonitor.NotNull();
         _fileService = fileService.NotNull();
         _fileWatcher = fileWatcher.NotNull();
         _profileLoader = profileLoader.NotNull();
@@ -36,11 +41,27 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         _logger = logger.NotNull();
 
         _fileWatcher.IncreaseBuffer();
-        _fileWatcher.Created.Subscribe(FileWatcher_CreatedOrChanged);
-        _fileWatcher.Changed.Subscribe(FileWatcher_CreatedOrChanged);
+        _fileWatcher.Created.Subscribe(FileWatcher_CreatedOrChangedOrDeleted);
+        _fileWatcher.Changed.Subscribe(FileWatcher_CreatedOrChangedOrDeleted);
         _fileWatcher.Renamed.Subscribe(FileWatcher_Renamed);
-        _fileWatcher.Deleted.Subscribe(FileWatcher_CreatedOrChanged);
+        _fileWatcher.Deleted.Subscribe(FileWatcher_CreatedOrChangedOrDeleted);
         _fileWatcher.Error.Subscribe(FileWatcher_Error);
+
+        _directoryMonitor.Pulse.Subscribe(async size => await DirectoryMonitor_Pulse(size).ConfigureAwait(false));
+    }
+
+    private async Task DirectoryMonitor_Pulse(long profileDirectorySize)
+    {
+        if (_lastReadSize != profileDirectorySize)
+        {
+            // TODO: Something still doesn't work well here
+            await Task.Delay(5000).ConfigureAwait(false);
+            if (_lastReadSize != profileDirectorySize)
+            {
+                _lastReadSize = profileDirectorySize;
+                _unknownChangesDetected.OnNext(Unit.Default);
+            }
+        }
     }
 
     public async Task LoadProfileAsync(Profile profile)
@@ -57,12 +78,19 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
 
             var isFile = !_fileService.IsDirectory(profile.Path);
 
+            UpdateLastReadSize();
+
             if (!_fileWatcher.StartListening(
                 path: isFile ? Path.GetDirectoryName(profile.Path).NotNull() : profile.Path,
                 filter: isFile ? Path.GetFileName(profile.Path) : "*.*"))
             {
                 // TODO: Cover with unit tests
                 _eventBus.Publish(new ProfileLoadingErrorEvent(profile, $"Couldn't start file monitoring over the profile path: '{profile.Path}'."));
+            }
+
+            if (!isFile)
+            {
+                _directoryMonitor.StartMonitoring(Profile.Path);
             }
 
             _profileChanged.OnNext(Profile);
@@ -75,6 +103,7 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
 
     public void CloseProfile()
     {
+        _directoryMonitor.StopMonitoring();
         _fileWatcher.StopListening();
         Profile = null;
         Clear();
@@ -83,10 +112,11 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
 
     public void Dispose()
     {
+        _directoryMonitor.Dispose();
         _fileWatcher.Dispose();
     }
 
-    private void FileWatcher_CreatedOrChanged(FileSystemEventArgs e)
+    private void FileWatcher_CreatedOrChangedOrDeleted(FileSystemEventArgs e)
     {
         if (Profile is null)
         {
@@ -94,7 +124,9 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
             return;
         }
 
-        _logger.LogDebug("File {fullPath} is {changeType}", e.FullPath, e.ChangeType);
+        _logger.LogDebug("File {fullPath} was {changeType}", e.FullPath, e.ChangeType);
+
+        UpdateLastReadSize();
 
         if (e.ChangeType == WatcherChangeTypes.Created)
         {
@@ -128,17 +160,9 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
 
     private void FileWatcher_Renamed(RenamedEventArgs e)
     {
-        _logger.LogDebug("File {OldFullPath} is renamed to {FullPath}", e.OldFullPath, e.FullPath);
+        _logger.LogDebug("File {OldFullPath} was renamed to {FullPath}", e.OldFullPath, e.FullPath);
 
-        var previousFileRecord = RemoveFile(e.OldFullPath, triggerEvent: false);
-
-        if (previousFileRecord is null)
-        {
-            // TODO: Cover with unit tests
-            return;
-        }
-
-        RenameFile(previousFileRecord, e.FullPath);
+        RenameFile(e.OldFullPath, e.FullPath);
     }
 
     private void FileWatcher_Error(ErrorEventArgs e)
@@ -147,7 +171,20 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         _logger.LogError(ex, ex.Message);
     }
 
+    private void UpdateLastReadSize()
+    {
+        if (Profile is null)
+        {
+            // No active profile
+            return;
+        }
+
+        // TODO: Cover with unit tests
+        _lastReadSize = _fileService.GetDirectorySize(Profile.Path, recursive: true);
+    }
+
     public Profile? Profile { get; private set; }
     public IObservable<Unit> ProfileClosed => _profileClosed;
     public IObservable<Profile> ProfileChanged => _profileChanged;
+    public IObservable<Unit> UnknownChangesDetected => _unknownChangesDetected;
 }

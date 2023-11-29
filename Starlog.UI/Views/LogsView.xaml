@@ -30,6 +30,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="55" /> <!-- Refresh button -->
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -63,7 +64,15 @@
                               OffContent="AutoScroll"
                               IsOn="{Binding AutoScroll}" />
 
-            <TextBox Text="{Binding Search.Text}" Margin="{StaticResource TopBarMargin}" Grid.Column="4"
+            <Button Grid.Column="4"
+                    Content="Refresh" ToolTip="A bunch of unforeseen changes been made to the profile path."
+                    Width="Auto" Padding="5,2"
+                    Foreground="Yellow"
+                    Background="#FF404000"
+                    Visibility="{Binding IsRefreshVisible, Converter={atom:BooleanToVisibilityConverter}}"
+                    Command="{Binding ReloadProfileCommand}" />
+
+            <TextBox Text="{Binding Search.Text}" Margin="{StaticResource TopBarMargin}" Grid.Column="5"
                      Name="SearchBox"
                      Width="350"
                      mah:TextBoxHelper.Watermark="Type message search text here and press ENTER (Ctrl+F)."
@@ -85,7 +94,7 @@
                 </i:Interaction.Behaviors>
             </TextBox>
 
-            <mah:RangeSlider Grid.Column="5"
+            <mah:RangeSlider Grid.Column="6"
                              Minimum="{Binding Search.MinDateTimeTicks}"
                              Maximum="{Binding Search.MaxDateTimeTicks}"
                              LowerValue="{Binding Search.SelectedDateTimeFromTicks}"
@@ -131,11 +140,11 @@
                     </DataTemplate>
                 </mah:RangeSlider.AutoToolTipRangeValuesTemplate>
             </mah:RangeSlider>
-            <Button Content="1 min" Grid.Column="6" Margin="{StaticResource TopBarMarginHalf}"
+            <Button Content="1 min" Grid.Column="7" Margin="{StaticResource TopBarMarginHalf}"
                     Command="{Binding Search.SetTimeRangeTo1MinuteCommand}" />
-            <Button Content="5 sec" Grid.Column="7" Margin="{StaticResource TopBarMarginHalf}"
+            <Button Content="5 sec" Grid.Column="8" Margin="{StaticResource TopBarMarginHalf}"
                     Command="{Binding Search.SetTimeRangeTo5SecondCommand}" />
-            <Button Content="Reset" Grid.Column="8" Margin="{StaticResource TopBarMarginHalf}"
+            <Button Content="Reset" Grid.Column="9" Margin="{StaticResource TopBarMarginHalf}"
                     Command="{Binding Search.ResetTimeRangeCommand}" />
         </Grid>
 

@@ -53,6 +53,7 @@ public static class Module
 
         // Services
         // TO BE DONE LATER
+        services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();
 
         // Converters
         services.AddSingleton<IJsonConverter, LogCodecJsonConverter>();

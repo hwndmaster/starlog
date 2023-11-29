@@ -10,12 +10,13 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
     private readonly ConcurrentDictionary<string, FileRecord> _files = new();
     private readonly List<LogRecord> _logs = new();
     private readonly Subject<FileRecord> _fileAdded = new();
-    private readonly ConcurrentBag<LoggerRecord> _loggers = new();
+    private readonly ConcurrentDictionary<int, LoggerRecord> _loggers = new();
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
     private readonly ConcurrentDictionary<string, byte> _logThreads = new();
     private readonly Subject<(FileRecord OldRecord, FileRecord NewRecord)> _fileRenamed = new();
     private readonly Subject<FileRecord> _fileRemoved = new();
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
+    private readonly Subject<ImmutableArray<LogRecord>> _logsRemoved = new();
 
     public void AddFile(FileRecord fileRecord)
     {
@@ -25,7 +26,7 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
 
     public void AddLogger(LoggerRecord logger)
     {
-        _loggers.Add(logger);
+        _loggers.TryAdd(logger.Id, logger);
     }
 
     public void AddLogLevel(LogLevelRecord logLevel)
@@ -63,7 +64,7 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
 
     public ImmutableArray<LoggerRecord> GetLoggers()
     {
-        return _loggers.ToImmutableArray();
+        return _loggers.Values.ToImmutableArray();
     }
 
     public ImmutableArray<LogLevelRecord> GetLogLevels()
@@ -90,27 +91,65 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
         return _files.TryGetValue(fullPath, out var fileRecord) ? fileRecord : null;
     }
 
-    protected FileRecord? RemoveFile(string fullPath, bool triggerEvent = true)
+    // TODO: Cover with unit tests
+    protected void RemoveFile(string fullPath)
     {
         if (_files.TryRemove(fullPath, out var record))
         {
-            if (triggerEvent)
-            {
-                _fileRemoved.OnNext(record);
-            }
-            return record;
-        }
+            List<LogRecord> logsRemoved = new();
+            HashSet<int> loggersAffected = new();
+            HashSet<string> logThreadsAffected = new();
 
-        return null;
+            // Step 1: Remove logs
+            _logs.RemoveAll(x =>
+            {
+                if (x.File.FullPath.Equals(record.FullPath, StringComparison.InvariantCulture))
+                {
+                    logsRemoved.Add(x);
+                    loggersAffected.Add(x.Logger.Id);
+                    logThreadsAffected.Add(x.Thread);
+                    return true;
+                }
+                return false;
+            });
+
+            // Step 2: Check the validity of the affected sub records
+            var loggersLookup = _logs.ToLookup(x => x.Logger.Id);
+            foreach (var loggerId in loggersAffected)
+            {
+                if (!loggersLookup[loggerId].Any())
+                {
+                    _loggers.TryRemove(loggerId, out var _);
+                }
+            }
+            var threadsLookup = _logs.ToLookup(x => x.Thread);
+            foreach (var thread in logThreadsAffected)
+            {
+                if (!threadsLookup[thread].Any())
+                {
+                    _logThreads.TryRemove(thread, out var _);
+                }
+            }
+
+            // Step 3: Raise events
+            _logsRemoved.OnNext(logsRemoved.ToImmutableArray());
+            _fileRemoved.OnNext(record);
+        }
     }
 
-    protected void RenameFile(FileRecord previousRecord, string fullPath)
+    protected void RenameFile(string oldFullPath, string newFullPath)
     {
         FileRecord newRecord;
         _lock.EnterWriteLock();
+
+        if (!_files.TryRemove(oldFullPath, out var previousRecord))
+        {
+            return;
+        }
+
         try
         {
-            newRecord = previousRecord.WithNewName(fullPath);
+            newRecord = previousRecord.WithNewName(newFullPath);
             _files.TryAdd(previousRecord.FileName, newRecord);
 
             for (var i = 0; i < _logs.Count; i++)
@@ -133,4 +172,5 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
     public IObservable<(FileRecord OldRecord, FileRecord NewRecord)> FileRenamed => _fileRenamed;
     public IObservable<FileRecord> FileRemoved => _fileRemoved;
     public IObservable<ImmutableArray<LogRecord>> LogsAdded => _logsAdded;
+    public IObservable<ImmutableArray<LogRecord>> LogsRemoved => _logsRemoved;
 }

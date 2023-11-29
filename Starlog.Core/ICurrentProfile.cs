@@ -17,7 +17,24 @@ public interface ICurrentProfile
     /// <returns>A task for awaiting the operation completion.</returns>
     Task LoadProfileAsync(Profile profile);
 
+    /// <summary>
+    ///   Gets the currently loaded profile.
+    /// </summary>
+    /// <value></value>
     Profile? Profile { get; }
+
+    /// <summary>
+    ///   Raised when the current profile has been closed.
+    /// </summary>
     IObservable<Unit> ProfileClosed { get; }
+
+    /// <summary>
+    ///   Raised when the current profile has been changed.
+    /// </summary>
     IObservable<Profile?> ProfileChanged { get; }
+
+    /// <summary>
+    ///   Raised when an unknown type of changes were detected by the path of the current profile.
+    /// </summary>
+    IObservable<Unit> UnknownChangesDetected { get; }
 }

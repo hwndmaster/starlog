@@ -33,7 +33,28 @@
         "/p:CollectCoverage=true",
         "/p:CoverletOutputFormat=lcov",
         "/p:CoverletOutput=${workspaceFolder}/lcov.info",
-        "/p:Exclude=\"[Genius.Atom.*]*\""
+        //"/p:Exclude=\"[Genius.Atom.*]*\""
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test coverage newer",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "--no-build",
+        "--collect:\"Code Coverage;Format=Cobertura\"",
+        //"--filter",
+        //"Genius.Starlog"
+        "--settings:CodeCoverage.runsettings"
       ],
       "group": {
         "kind": "test",

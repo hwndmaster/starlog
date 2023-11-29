@@ -48,7 +48,12 @@ public interface ILogContainer
     IObservable<FileRecord> FileRemoved { get; }
 
     /// <summary>
-    ///   An observable to handle an event when a bunch of log records are read.
+    ///   An observable to handle an event when a bunch of log records are added.
     /// </summary>
     IObservable<ImmutableArray<LogRecord>> LogsAdded { get; }
+
+    /// <summary>
+    ///   An observable to handle an event when a bunch of log records are removed.
+    /// </summary>
+    IObservable<ImmutableArray<LogRecord>> LogsRemoved { get; }
 }

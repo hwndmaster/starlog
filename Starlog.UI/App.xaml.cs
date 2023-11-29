@@ -4,7 +4,7 @@ global using System.Linq;
 global using System.Windows;
 global using Genius.Atom.Infrastructure;
 global using Genius.Atom.UI.Forms;
-
+using Genius.Starlog.Core;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Console;
 using Genius.Starlog.UI.Controllers;
@@ -45,6 +45,14 @@ public partial class App : Application
 
         consoleParser.Process(e.Args);
         Task.Run(() => mainController.AutoLoadProfileAsync());
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        var currentProfile = ServiceProvider.GetRequiredService<ICurrentProfile>();
+        (currentProfile as IDisposable)?.Dispose();
+
+        base.OnExit(e);
     }
 
     private void ConfigureServices(IServiceCollection services)

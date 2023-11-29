@@ -3,6 +3,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Data;
 using System.Windows.Documents;
+using DynamicData;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.LogFiltering;
@@ -66,6 +67,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         // Actions:
         ShareCommand = new ActionCommand(async _ =>
             await controller.ShowShareViewAsync(SelectedLogItems));
+        ReloadProfileCommand = new ActionCommand(_ =>
+            {
+                _suspendUpdate = true;
+                // TODO: Reload profile
+            });
 
         // Subscriptions:
         _subscriptions = new(
@@ -76,6 +82,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                     _uiDispatcher.BeginInvoke(() =>
                     {
                         IsProfileReady = false;
+                        IsRefreshVisible = false;
                         LogItems.Clear();
                         SelectedLogItems.Clear();
                         SelectedLogItem = null;
@@ -93,9 +100,14 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                         _suspendUpdate = false;
                     });
                 }),
+            _currentProfile.UnknownChangesDetected
+                .Subscribe(_ => IsRefreshVisible = true),
             _logContainer.LogsAdded
                 .Where(_ => !_suspendUpdate)
                 .Subscribe(x => _uiDispatcher.BeginInvoke(() => AddLogs(x))),
+            _logContainer.LogsRemoved
+                .Where(_ => !_suspendUpdate)
+                .Subscribe(x => _uiDispatcher.BeginInvoke(() => RemoveLogs(x))),
             _logContainer.FileRenamed
                 .Subscribe(args =>
                 {
@@ -185,6 +197,25 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         RefreshFilteredItems();
     }
 
+    private void RemoveLogs(ICollection<LogRecord> logs)
+    {
+        if (!logs.Any())
+        {
+            return;
+        }
+
+        using (var suppressed = LogItems.DelayNotifications())
+        {
+            var toRemove = LogItems.Where(x => logs.Contains(x.Record)).ToList();
+            foreach (var item in toRemove)
+            {
+                suppressed.Remove(item);
+            }
+        }
+
+        RefreshFilteredItems();
+    }
+
     private void OnLogItemsViewFilter(object sender, FilterEventArgs e)
     {
         var viewModel = (ILogItemViewModel)e.Item;
@@ -221,6 +252,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     }
 
     public bool IsProfileReady
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool IsRefreshVisible
     {
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
@@ -276,4 +313,5 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     }
 
     public IActionCommand ShareCommand { get; }
+    public IActionCommand ReloadProfileCommand { get; }
 }
