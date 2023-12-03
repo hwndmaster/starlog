@@ -11,6 +11,7 @@
         "/property:GenerateFullPaths=true",
         // Do not generate summary otherwise it leads to duplicate errors in Problems panel
         "/consoleloggerparameters:NoSummary",
+        //"/verbosity:n"
         //"/property:PERSONAL_ENV=true"
       ],
       "group": {

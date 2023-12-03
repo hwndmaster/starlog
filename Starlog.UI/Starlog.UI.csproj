@@ -21,6 +21,12 @@
     <ProjectReference Include="..\Starlog.Core\Starlog.Core.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <ReferenceAtomData>true</ReferenceAtomData>
+    <ReferenceAtomInfrastructure>true</ReferenceAtomInfrastructure>
+    <ReferenceAtomUiForms>true</ReferenceAtomUiForms>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="CommandLineParser" />
     <PackageReference Include="MahApps.Metro" />
@@ -30,28 +36,6 @@
     <PackageReference Include="ReactiveUI.WPF" />
     <PackageReference Include="System.Reactive" />
     <PackageReference Include="WpfAnimatedGif" />
-  </ItemGroup>
-
-  <ItemGroup Condition="$(PERSONAL_ENV) == true">
-    <Reference Include="Genius.Atom.Data">
-      <HintPath>..\..\atom\Atom.Data\bin\Debug\net7.0\Genius.Atom.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="Genius.Atom.Infrastructure">
-      <HintPath>..\..\atom\Atom.Infrastructure\bin\Debug\net7.0\Genius.Atom.Infrastructure.dll</HintPath>
-    </Reference>
-    <Reference Include="Genius.Atom.UI.Forms">
-      <HintPath>..\..\atom\Atom.UI.Forms\bin\Debug\net7.0-windows\Genius.Atom.UI.Forms.dll</HintPath>
-    </Reference>
-
-    <!-- 3rd-party dependencies from Atom.UI.Forms -->
-    <Reference Include="DotNetProjects.WpfToolkit.Input">
-      <HintPath>..\..\atom\Atom.UI.Forms.Demo\bin\Debug\net7.0-windows\DotNetProjects.Input.Toolkit.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup Condition="$(PERSONAL_ENV) != true">
-    <PackageReference Include="Genius.Atom.Data" />
-    <PackageReference Include="Genius.Atom.Infrastructure" />
-    <PackageReference Include="Genius.Atom.UI.Forms" />
   </ItemGroup>
 
 </Project>

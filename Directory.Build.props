@@ -13,15 +13,13 @@
 
     <RootNamespace>Genius.$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>$(RootNamespace)</AssemblyName>
-
-    <!-- <PERSONAL_ENV>true</PERSONAL_ENV> -->
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.UI')) == false">
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.UI'))">
-    <TargetFramework>net7.0-windows10.0.19041</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,6 +33,8 @@
     <InternalsVisibleTo Include="$(RootNamespace).Tests" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
+
+  <Import Project="./Atom.targets"/>
 
   <!-- Automated Testing components -->
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">

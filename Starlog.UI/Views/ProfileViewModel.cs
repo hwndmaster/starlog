@@ -96,8 +96,12 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             {
                 Guard.NotNull(_profile);
                 await _currentProfile.LoadProfileAsync(_profile).ConfigureAwait(false);
-                await _commandBus.SendAsync(new SettingsUpdateAutoLoadingProfileCommand(_profile.Id));
-                _controller.ShowLogsTab();
+
+                if (_currentProfile.Profile is not null)
+                {
+                    await _commandBus.SendAsync(new SettingsUpdateAutoLoadingProfileCommand(_profile.Id));
+                    _controller.ShowLogsTab();
+                }
             })
             .ContinueWith(_ => _controller.SetBusy(false), TaskContinuationOptions.None)
             .ConfigureAwait(false);
