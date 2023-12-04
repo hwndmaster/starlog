@@ -31,7 +31,8 @@
             <TabItem Header="Logs">
                 <uc:LogsView DataContext="{Binding Path=Tabs[1]}" />
             </TabItem>
-            <TabItem Header="Compare" IsEnabled="{Binding IsComparisonAvailable, Mode=OneWay}">
+            <TabItem Header="Compare" IsEnabled="{Binding IsComparisonAvailable, Mode=OneWay}"
+                Visibility="{Binding ComparisonFeatureEnabled, Converter={atom:BooleanToVisibilityConverter}}">
                 <uc2:ComparisonView DataContext="{Binding Path=Tabs[2]}" />
             </TabItem>
             <TabItem Header="Settings">

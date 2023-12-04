@@ -29,7 +29,8 @@
             </Button>
             <Button Margin="{StaticResource TopBarMargin}"
                     Command="{Binding CompareSelectedCommand}"
-                    ToolTip="Compare two selected profiles">
+                    ToolTip="Compare two selected profiles"
+                    Visibility="{Binding ComparisonFeatureEnabled, Converter={atom:BooleanToVisibilityConverter}}">
                 <Image Source="{StaticResource Copy16}" Width="16" />
             </Button>
             <Button Margin="{StaticResource TopBarMargin}"

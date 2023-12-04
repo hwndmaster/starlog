@@ -74,4 +74,6 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
+
+    public bool ComparisonFeatureEnabled => App.ComparisonFeatureEnabled;
 }

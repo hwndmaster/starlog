@@ -168,6 +168,8 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
+    public bool ComparisonFeatureEnabled => App.ComparisonFeatureEnabled;
+
     public ICommand CompareSelectedCommand { get; }
     public ICommand DeleteProfileCommand { get; }
     public ICommand OpenAddProfileFlyoutCommand { get; }

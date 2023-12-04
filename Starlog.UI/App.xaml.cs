@@ -25,6 +25,9 @@ public partial class App : Application
     public static IServiceProvider ServiceProvider { get; private set; }
 #pragma warning restore CS8618
 
+    // Feature Toggles
+    public static readonly bool ComparisonFeatureEnabled = false;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
