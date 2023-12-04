@@ -145,7 +145,7 @@ public sealed class PlainTextProfileLogCodecProcessorTests
     }
 
     [Fact]
-    public void ReadAsync_WithInvalidLineRegex_ReturnsNoResult()
+    public async Task ReadAsync_WithInvalidLineRegex_ReturnsNoResult()
     {
         // Arrange
         var profile = CreateSampleProfile();
@@ -153,7 +153,7 @@ public sealed class PlainTextProfileLogCodecProcessorTests
         ((PlainTextProfileLogCodec)profile.Settings.LogCodec).LineRegex = string.Empty;
 
         // Act & Verify
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
             _sut.ReadAsync(profile, _fixture.Create<FileRecord>(), stream, new LogReadingSettings(ReadFileArtifacts: false)));
     }
 

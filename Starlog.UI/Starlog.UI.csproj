@@ -15,6 +15,7 @@
   <ItemGroup>
     <Resource Include="Assets\Logo.ico" />
     <Resource Include="Assets\*.png" />
+    <None Include="appsettings.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,10 +31,17 @@
   <ItemGroup>
     <PackageReference Include="CommandLineParser" />
     <PackageReference Include="MahApps.Metro" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
     <PackageReference Include="ReactiveUI.WPF" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Extensions.Logging.File" />
+    <PackageReference Include="Serilog.Settings.Configuration" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="System.Reactive" />
     <PackageReference Include="WpfAnimatedGif" />
   </ItemGroup>

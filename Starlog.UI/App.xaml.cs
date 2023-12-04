@@ -12,8 +12,10 @@ using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using Genius.Starlog.UI.Views.Comparison;
 using Genius.Starlog.UI.Views.LogSearchAndFiltering;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Genius.Starlog.UI;
 
@@ -28,7 +30,10 @@ public partial class App : Application
         base.OnStartup(e);
 
         var serviceCollection = new ServiceCollection();
-        ConfigureServices(serviceCollection);
+
+        var config = LoadConfiguration(serviceCollection);
+        ConfigureLogging(serviceCollection, config);
+        ConfigureServices(serviceCollection, config);
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
         Atom.Data.Module.Initialize(ServiceProvider);
@@ -55,21 +60,12 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    private void ConfigureServices(IServiceCollection services)
+    private void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         Atom.Data.Module.Configure(services);
         Atom.Infrastructure.Module.Configure(services);
         Atom.UI.Forms.Module.Configure(services, this);
         Starlog.Core.Module.Configure(services);
-
-        // Framework:
-        services.AddLogging(x =>
-        {
-#if DEBUG
-            x.SetMinimumLevel(LogLevel.Trace);
-            x.AddDebug();
-#endif
-        });
 
         // Views, View models, View model factories, Controllers
         services.AddSingleton<MainWindow>();
@@ -96,8 +92,38 @@ public partial class App : Application
         services.AddTransient<IConsoleParser, ConsoleParser>();
     }
 
+    private static IConfiguration LoadConfiguration(ServiceCollection serviceCollection)
+    {
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true);
+        IConfiguration config = builder.Build();
+        serviceCollection.AddSingleton<IConfiguration>(config);
+        return config;
+    }
+
+    private static void ConfigureLogging(ServiceCollection services, IConfiguration configuration)
+    {
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration)
+            .CreateLogger();
+
+        // Framework:
+        services.AddLogging(x =>
+        {
+            x.AddSerilog();
+        });
+    }
+
     private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
+        try
+        {
+            var logger = ServiceProvider.GetService<ILogger<App>>();
+            logger?.LogCritical(e.Exception, e.Exception.Message);
+        }
+        catch (Exception) {}
+
 #if !DEBUG
         MessageBox.Show("An unhandled exception just occurred: " + e.Exception.Message, "Unhandled Exception", MessageBoxButton.OK, MessageBoxImage.Warning);
         e.Handled = true;

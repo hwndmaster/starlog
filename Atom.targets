@@ -59,6 +59,11 @@
         <HintPath>$(Path)\bin\Debug\net8.0-windows\Genius.$(Name).dll</HintPath>
       </Reference>
       <PackageReference Include="Genius.$(Name)" Condition="'$(ProjectExists)' != 'true'" />
+
+      <!-- 3rd-party dependencies from Atom.UI.Forms -->
+      <Reference Include="DotNetProjects.WpfToolkit.Input" Condition="'$(ProjectExists)' == 'true'">
+        <HintPath>$(Path).Demo\bin\Debug\net8.0-windows\DotNetProjects.Input.Toolkit.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
     <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
