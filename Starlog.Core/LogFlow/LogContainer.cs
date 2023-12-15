@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 namespace Genius.Starlog.Core.LogFlow;
@@ -9,14 +10,24 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
     private readonly ReaderWriterLockSlim _lock = new();
     private readonly ConcurrentDictionary<string, FileRecord> _files = new();
     private readonly List<LogRecord> _logs = new();
-    private readonly Subject<FileRecord> _fileAdded = new();
     private readonly ConcurrentDictionary<int, LoggerRecord> _loggers = new();
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
     private readonly ConcurrentDictionary<string, byte> _logThreads = new();
+
+    private readonly Subject<FileRecord> _fileAdded = new();
     private readonly Subject<(FileRecord OldRecord, FileRecord NewRecord)> _fileRenamed = new();
     private readonly Subject<FileRecord> _fileRemoved = new();
+    private readonly Subject<int> _filesCountChanged = new();
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
     private readonly Subject<ImmutableArray<LogRecord>> _logsRemoved = new();
+
+    public LogContainer()
+    {
+        // TODO: Cover with unit tests
+        _fileAdded
+            .Concat(_fileRemoved)
+            .Subscribe(_ => _filesCountChanged.OnNext(FilesCount));
+    }
 
     public void AddFile(FileRecord fileRecord)
     {
@@ -171,6 +182,9 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
     public IObservable<FileRecord> FileAdded => _fileAdded;
     public IObservable<(FileRecord OldRecord, FileRecord NewRecord)> FileRenamed => _fileRenamed;
     public IObservable<FileRecord> FileRemoved => _fileRemoved;
+    public IObservable<int> FilesCountChanged => _filesCountChanged;
     public IObservable<ImmutableArray<LogRecord>> LogsAdded => _logsAdded;
     public IObservable<ImmutableArray<LogRecord>> LogsRemoved => _logsRemoved;
+
+    public int FilesCount => _files.Count;
 }

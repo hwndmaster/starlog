@@ -50,15 +50,17 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         _directoryMonitor.Pulse.Subscribe(async size => await DirectoryMonitor_Pulse(size).ConfigureAwait(false));
     }
 
+    // TODO: Cover with unit tests
     private async Task DirectoryMonitor_Pulse(long profileDirectorySize)
     {
         if (_lastReadSize != profileDirectorySize)
         {
-            // TODO: Something still doesn't work well here
-            await Task.Delay(5000).ConfigureAwait(false);
-            if (_lastReadSize != profileDirectorySize)
+            // Wait a little longer to ensure `UpdateLastReadSize()` has finished its work
+            await Task.Delay(500).ConfigureAwait(false);
+
+            if (_lastReadSize != profileDirectorySize && Profile is not null)
             {
-                _lastReadSize = profileDirectorySize;
+                Interlocked.Exchange(ref _lastReadSize, profileDirectorySize);
                 _unknownChangesDetected.OnNext(Unit.Default);
             }
         }
@@ -66,8 +68,6 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
 
     public async Task LoadProfileAsync(Profile profile)
     {
-        _logger.LogDebug("Loading profile: {profileId}", profile.Id);
-
         CloseProfile();
 
         var profileLoaded = await _profileLoader.LoadProfileAsync(profile, this).ConfigureAwait(false);
@@ -82,7 +82,7 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
 
             if (!_fileWatcher.StartListening(
                 path: isFile ? Path.GetDirectoryName(profile.Path).NotNull() : profile.Path,
-                filter: isFile ? Path.GetFileName(profile.Path) : "*.*"))
+                filter: isFile ? Path.GetFileName(profile.Path) : profile.Settings.LogsLookupPattern))
             {
                 // TODO: Cover with unit tests
                 _eventBus.Publish(new ProfileLoadingErrorEvent(profile, $"Couldn't start file monitoring over the profile path: '{profile.Path}'."));
@@ -90,7 +90,7 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
 
             if (!isFile)
             {
-                _directoryMonitor.StartMonitoring(Profile.Path);
+                _directoryMonitor.StartMonitoring(Profile.Path, Profile.Settings.LogsLookupPattern);
             }
 
             _profileChanged.OnNext(Profile);
@@ -106,6 +106,7 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         _directoryMonitor.StopMonitoring();
         _fileWatcher.StopListening();
         Profile = null;
+        _lastReadSize = 0;
         Clear();
         _profileClosed.OnNext(Unit.Default);
     }
@@ -180,7 +181,8 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         }
 
         // TODO: Cover with unit tests
-        _lastReadSize = _fileService.GetDirectorySize(Profile.Path, recursive: true);
+        var lastReadSize = _fileService.GetDirectorySize(Profile.Path, Profile.Settings.LogsLookupPattern, recursive: true);
+        Interlocked.Exchange(ref _lastReadSize, lastReadSize);
     }
 
     public Profile? Profile { get; private set; }

@@ -66,7 +66,7 @@ public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
 
             var level = match.Groups["level"].Value;
             var dateTime = DateTimeOffset.ParseExact(match.Groups["datetime"].Value,
-                "yyyy-MM-dd HH:mm:ss.fff",
+                profile.Settings.DateTimeFormat,
                 Thread.CurrentThread.CurrentCulture,
                 System.Globalization.DateTimeStyles.AssumeUniversal);
             var thread = match.Groups["thread"].Value;

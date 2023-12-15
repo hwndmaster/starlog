@@ -1,13 +1,13 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <AtomLocation>..\..\atom\</AtomLocation>
+    <AtomLocation>..\atom\</AtomLocation>
   </PropertyGroup>
 
   <Target Name="AtomDataReference" BeforeTargets="CollectPackageReferences"
     Condition="'$(ReferenceAtomData)' == 'true'">
     <PropertyGroup>
       <Name>Atom.Data</Name>
-      <Path>$(MSBuildThisFileDirectory)..\atom\$(Name)</Path>
+      <Path>$(MSBuildThisFileDirectory)$(AtomLocation)$(Name)</Path>
       <ProjectExists Condition="Exists('$(Path)')">true</ProjectExists>
     </PropertyGroup>
 
@@ -26,7 +26,7 @@
     Condition="'$(ReferenceAtomInfrastructure)' == 'true'">
     <PropertyGroup>
       <Name>Atom.Infrastructure</Name>
-      <Path>$(MSBuildThisFileDirectory)..\atom\$(Name)</Path>
+      <Path>$(MSBuildThisFileDirectory)$(AtomLocation)$(Name)</Path>
       <ProjectExists Condition="Exists('$(Path)')">true</ProjectExists>
     </PropertyGroup>
 
@@ -50,7 +50,7 @@
     Condition="'$(ReferenceAtomUiForms)' == 'true'">
     <PropertyGroup>
       <Name>Atom.UI.Forms</Name>
-      <Path>$(MSBuildThisFileDirectory)..\atom\$(Name)</Path>
+      <Path>$(MSBuildThisFileDirectory)$(AtomLocation)$(Name)</Path>
       <ProjectExists Condition="Exists('$(Path)')">true</ProjectExists>
     </PropertyGroup>
 

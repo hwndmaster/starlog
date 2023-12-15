@@ -34,12 +34,12 @@ public sealed class QuickFilterProvider : IQuickFilterProvider
         yield return filter3;
 
         var filter4 = _logFilterContainer.CreateProfileFilter<ThreadsProfileFilter>("Main Thread");
-        filter4.Threads = new [] { "Main", "1" };
+        filter4.Threads = new [] { "Main", "1", string.Empty };
         yield return filter4;
 
         var filter5 = _logFilterContainer.CreateProfileFilter<ThreadsProfileFilter>("Other Threads");
         filter5.Exclude = true;
-        filter5.Threads = new [] { "Main", "1" };
+        filter5.Threads = new [] { "Main", "1", string.Empty };
         yield return filter5;
     }
 }

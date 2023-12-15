@@ -1,9 +1,11 @@
 using System.IO;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Atom.Infrastructure.Events;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Console;
@@ -30,6 +32,13 @@ public interface IMainController
     /// <returns>A task for awaiting the operation completion.</returns>
     Task LoadPathAsync(LoadPathCommandLineOptions options);
 
+    /// <summary>
+    ///   Loads a profile.
+    /// </summary>
+    /// <param name="profile">The profile.</param>
+    /// <returns>A task to be awaited.</returns>
+    Task LoadProfileAsync(Profile profile);
+
     void NotifyMainWindowIsLoaded();
     void NotifyProfilesAreLoaded();
 
@@ -47,8 +56,9 @@ internal sealed class MainController : IMainController
     private readonly IClipboardHelper _clipboardHelper;
     private readonly ICommandBus _commandBus;
     private readonly IComparisonService _comparisonService;
-    private readonly IDialogCoordinator _dialogCoordinator;
     private readonly ICurrentProfile _currentProfile;
+    private readonly IDialogCoordinator _dialogCoordinator;
+    private readonly IEventBus _eventBus;
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly ISettingsQueryService _settingsQuery;
     private readonly IProfileSettingsTemplateQueryService _templatesQuery;
@@ -64,8 +74,9 @@ internal sealed class MainController : IMainController
         IClipboardHelper clipboardHelper,
         ICommandBus commandBus,
         IComparisonService comparisonService,
-        IDialogCoordinator dialogCoordinator,
         ICurrentProfile currentProfile,
+        IDialogCoordinator dialogCoordinator,
+        IEventBus eventBus,
         ILogCodecContainer logCodecContainer,
         ISettingsQueryService settingsQuery,
         IProfileSettingsTemplateQueryService templatesQuery,
@@ -76,8 +87,9 @@ internal sealed class MainController : IMainController
         _clipboardHelper = clipboardHelper.NotNull();
         _commandBus = commandBus.NotNull();
         _comparisonService = comparisonService.NotNull();
-        _dialogCoordinator = dialogCoordinator.NotNull();
         _currentProfile = currentProfile.NotNull();
+        _dialogCoordinator = dialogCoordinator.NotNull();
+        _eventBus = eventBus.NotNull();
         _logCodecContainer = logCodecContainer.NotNull();
         _settingsQuery = settingsQuery.NotNull();
         _templatesQuery = templatesQuery.NotNull();
@@ -171,6 +183,32 @@ internal sealed class MainController : IMainController
             await _currentProfile.LoadProfileAsync(profile).ConfigureAwait(false);
             ShowLogsTab();
         })
+        .ContinueWith(_ => SetBusy(false), TaskContinuationOptions.None)
+        .ConfigureAwait(false);
+    }
+
+    public async Task LoadProfileAsync(Profile profile)
+    {
+        Guard.NotNull(profile);
+
+        SetBusy(true);
+
+        await Task.Delay(10); // TODO: Helps to let the UI to show a 'busy' overlay, find a better way around.
+        await Task.Run(async() =>
+        {
+            await _currentProfile.LoadProfileAsync(profile).ConfigureAwait(false);
+
+            if (_currentProfile.Profile is not null)
+            {
+                await _commandBus.SendAsync(new SettingsUpdateAutoLoadingProfileCommand(profile.Id));
+                ShowLogsTab();
+            }
+        })
+        .ContinueWith(faultedTask =>
+        {
+            _logger.LogError(faultedTask.Exception, faultedTask.Exception!.Message);
+            _eventBus.Publish(new ProfileLoadingErrorEvent(profile, "Couldn't load profile due to errors. Check log files for details."));
+        }, TaskContinuationOptions.OnlyOnFaulted)
         .ContinueWith(_ => SetBusy(false), TaskContinuationOptions.None)
         .ConfigureAwait(false);
     }

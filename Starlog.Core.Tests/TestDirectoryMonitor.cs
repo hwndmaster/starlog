@@ -13,7 +13,7 @@ internal sealed class TestDirectoryMonitor : IDirectoryMonitor
         _pulse.OnNext(newValue);
     }
 
-    public void StartMonitoring(string path)
+    public void StartMonitoring(string path, string searchPattern)
     {
         MonitoringStarted = true;
     }

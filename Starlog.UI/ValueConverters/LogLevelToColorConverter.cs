@@ -28,7 +28,7 @@ public sealed class LogLevelToColorConverter : IValueConverter
 
         var color = vm.Record.Level.Name.ToLowerInvariant() switch
         {
-            "debug" or "trace" or "statistics" => ColorForMinor,
+            "verbose" or "debug" or "trace" or "statistics" => ColorForMinor,
             "warn" or "warning" => ColorForWarning,
             "err" or "error" or "exception" => ColorForMajor,
             "fatal" => ColorForCritical,

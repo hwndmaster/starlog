@@ -67,10 +67,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         // Actions:
         ShareCommand = new ActionCommand(async _ =>
             await controller.ShowShareViewAsync(SelectedLogItems));
-        ReloadProfileCommand = new ActionCommand(_ =>
+        ReloadProfileCommand = new ActionCommand(async _ =>
             {
+                if (_currentProfile.Profile is null) return;
                 _suspendUpdate = true;
-                // TODO: Reload profile
+                controller.LoadProfileAsync(_currentProfile.Profile);
             });
 
         // Subscriptions:
@@ -119,6 +120,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                                 logItem.HandleFileRenamed(args.NewRecord);
                             }
                         }});
+                }),
+            _logContainer.FilesCountChanged
+                .Subscribe(filesCount =>
+                {
+                    IsFileColumnVisible = filesCount > 1;
                 }),
             Filtering.FilterChanged.Merge(Search.SearchChanged)
                 .Subscribe(_ => RefreshFilteredItems()),
@@ -309,6 +315,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public int StatsFilteredCount
     {
         get => GetOrDefault<int>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool IsFileColumnVisible
+    {
+        get => GetOrDefault(true);
         set => RaiseAndSetIfChanged(value);
     }
 

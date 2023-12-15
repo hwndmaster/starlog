@@ -109,6 +109,8 @@ public partial class App : Application
     {
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
+            .Enrich.WithThreadId()
+            .Enrich.WithComputed("SourceContextName", "Substring(SourceContext, LastIndexOf(SourceContext, '.') + 1)")
             .CreateLogger();
 
         // Framework:

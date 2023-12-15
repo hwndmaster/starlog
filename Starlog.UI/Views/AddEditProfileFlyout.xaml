@@ -68,6 +68,14 @@
                 Width="70" HorizontalAlignment="Left" />
         </DockPanel>
         <DockPanel>
+            <Label>Logs lookup pattern:</Label>
+            <TextBox Text="{Binding LogsLookupPattern}"/>
+        </DockPanel>
+        <DockPanel>
+            <Label>DateTime format:</Label>
+            <TextBox Text="{Binding DateTimeFormat}"/>
+        </DockPanel>
+        <DockPanel>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />

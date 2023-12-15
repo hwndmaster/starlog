@@ -48,6 +48,11 @@ public interface ILogContainer
     IObservable<FileRecord> FileRemoved { get; }
 
     /// <summary>
+    ///   An observable to handle events when files count has changed.
+    /// </summary>
+    IObservable<int> FilesCountChanged { get; }
+
+    /// <summary>
     ///   An observable to handle an event when a bunch of log records are added.
     /// </summary>
     IObservable<ImmutableArray<LogRecord>> LogsAdded { get; }
@@ -56,4 +61,9 @@ public interface ILogContainer
     ///   An observable to handle an event when a bunch of log records are removed.
     /// </summary>
     IObservable<ImmutableArray<LogRecord>> LogsRemoved { get; }
+
+    /// <summary>
+    ///   Gets the count of the currently loaded files.
+    /// </summary>
+    int FilesCount { get; }
 }

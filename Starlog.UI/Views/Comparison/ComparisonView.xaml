@@ -29,28 +29,6 @@
                 <Label> vs </Label>
                 <Label Content="{Binding Profile2Name}" ToolTip="{Binding Profile2Path}" />
             </StackPanel>
-
-            <TextBox Text="{Binding Search.Text}" Grid.Column="1"
-                     Name="SearchBox"
-                     Width="350"
-                     mah:TextBoxHelper.Watermark="Type message search text here and press ENTER (Ctrl+F)."
-                     mah:TextBoxHelper.ClearTextButton="True"
-                     mah:TextBoxHelper.IsClearTextButtonBehaviorEnabled="False"
-                     mah:TextBoxHelper.ButtonCommand="{Binding Search.UseRegexSwitchCommand, Mode=OneWay}">
-                <mah:TextBoxHelper.ButtonContent>
-                    <Image ToolTip="Use Regular Expression (Alt+R)">
-                        <i:Interaction.Behaviors>
-                            <atom:ImageConditionalSourceBehavior FlagValue="{Binding Search.UseRegex}"
-                                                                          WhenTrue="{DynamicResource Regex32}"
-                                                                          WhenFalse="{DynamicResource RegexBw32}" />
-                        </i:Interaction.Behaviors>
-                    </Image>
-                </mah:TextBoxHelper.ButtonContent>
-                <i:Interaction.Behaviors>
-                    <atom:FilterBoxBehavior />
-                    <behaviors:SearchBoxRegexBindingBehavior />
-                </i:Interaction.Behaviors>
-            </TextBox>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -82,7 +60,7 @@
                     ScrollViewer.CanContentScroll="True">
                 <i:Interaction.Behaviors>
                     <autogrid:AttachingBehavior />
-                    <atom:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
+                    <!-- <atom:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" /> -->
                     <behaviors:LogColorizeBehavior />
                     <behaviors:LogsSmartFiltersContextMenuBehavior />
                     <behaviors:LogsCopyToClipboardBehavior />
@@ -90,12 +68,12 @@
                 </i:Interaction.Behaviors>
             </DataGrid>
 
-            <Grid Grid.Row="1" Grid.Column="2">
+            <!-- <Grid Grid.Row="1" Grid.Column="2">
                 <RichTextBox atom:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
                              IsReadOnly="True"
                              MaxHeight="300"
                              BorderThickness="0,1,0,0" />
-            </Grid>
+            </Grid> -->
         </Grid>
     </Grid>
 </UserControl>

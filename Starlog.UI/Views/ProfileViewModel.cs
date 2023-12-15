@@ -89,23 +89,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
         // Actions:
         CommitProfileCommand = new ActionCommand(_ => CommitProfile());
-        LoadProfileCommand = new ActionCommand(async _ => {
-            _controller.SetBusy(true);
-            await Task.Delay(10); // TODO: Helps to let the UI to show a 'busy' overlay, find a better way around.
-            await Task.Run(async() =>
-            {
-                Guard.NotNull(_profile);
-                await _currentProfile.LoadProfileAsync(_profile).ConfigureAwait(false);
-
-                if (_currentProfile.Profile is not null)
-                {
-                    await _commandBus.SendAsync(new SettingsUpdateAutoLoadingProfileCommand(_profile.Id));
-                    _controller.ShowLogsTab();
-                }
-            })
-            .ContinueWith(_ => _controller.SetBusy(false), TaskContinuationOptions.None)
-            .ConfigureAwait(false);
-        });
+        LoadProfileCommand = new ActionCommand(async _ => await _controller.LoadProfileAsync(_profile!));
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profile is not null);
         ApplyTemplateCommand = new ActionCommand(arg =>
         {
@@ -115,6 +99,8 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
                 var dummyVm = _vmFactory.CreateLogCodec(settings.LogCodec.LogCodec, settings.LogCodec);
                 LogCodec.CopySettingsFrom(dummyVm);
                 FileArtifactLinesCount = settings.FileArtifactLinesCount;
+                LogsLookupPattern = settings.LogsLookupPattern;
+                DateTimeFormat = settings.DateTimeFormat;
             }
         });
 
@@ -138,6 +124,8 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         LogCodec = LogCodecs.First(x => x.ProfileLogCodec.LogCodec.Id == sourceProfile.LogCodec.ProfileLogCodec.LogCodec.Id);
         LogCodec.CopySettingsFrom(sourceProfile.LogCodec);
         FileArtifactLinesCount = sourceProfile.FileArtifactLinesCount;
+        LogsLookupPattern = sourceProfile.LogsLookupPattern;
+        DateTimeFormat = sourceProfile.DateTimeFormat;
     }
 
     public void Reconcile()
@@ -151,6 +139,8 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         Path = _profile.Path;
         LogCodec = LogCodecs.First(x => x.ProfileLogCodec.LogCodec.Id == _profile.Settings.LogCodec.LogCodec.Id);
         FileArtifactLinesCount = _profile.Settings.FileArtifactLinesCount;
+        LogsLookupPattern = _profile.Settings.LogsLookupPattern;
+        DateTimeFormat = _profile.Settings.DateTimeFormat;
     }
 
     private async Task<bool> CommitProfile()
@@ -173,7 +163,9 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
                 Settings = new ProfileSettings
                 {
                     LogCodec = LogCodec.ProfileLogCodec,
-                    FileArtifactLinesCount = FileArtifactLinesCount
+                    FileArtifactLinesCount = FileArtifactLinesCount,
+                    LogsLookupPattern = LogsLookupPattern,
+                    DateTimeFormat = DateTimeFormat
                 }
             });
             _profile = await _profileQuery.FindByIdAsync(profileId);
@@ -187,7 +179,9 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
                 Settings = new ProfileSettings
                 {
                     LogCodec = LogCodec.ProfileLogCodec,
-                    FileArtifactLinesCount = FileArtifactLinesCount
+                    FileArtifactLinesCount = FileArtifactLinesCount,
+                    LogsLookupPattern = LogsLookupPattern,
+                    DateTimeFormat = DateTimeFormat
                 }
             });
         }
@@ -210,6 +204,8 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             ? LogCodec
             : LogCodecs.First(x => x.ProfileLogCodec.LogCodec.Id == _profile.Settings.LogCodec.LogCodec.Id);
         FileArtifactLinesCount = _profile?.Settings.FileArtifactLinesCount ?? FileArtifactLinesCount;
+        LogsLookupPattern = _profile?.Settings.LogsLookupPattern ?? ProfileSettings.DefaultLogsLookupPattern;
+        DateTimeFormat = _profile?.Settings.DateTimeFormat ?? ProfileSettings.DefaultDateTimeFormat;
     }
 
     public DelayedObservableCollection<LogCodecViewModel> LogCodecs { get; }
@@ -241,6 +237,18 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     public int FileArtifactLinesCount
     {
         get => GetOrDefault(0);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public string LogsLookupPattern
+    {
+        get => GetOrDefault(ProfileSettings.DefaultLogsLookupPattern);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public string DateTimeFormat
+    {
+        get => GetOrDefault(string.Empty);
         set => RaiseAndSetIfChanged(value);
     }
 
