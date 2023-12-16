@@ -7,24 +7,11 @@
         xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
         xmlns:logcodecs="clr-namespace:Genius.Starlog.UI.Views.ProfileLogCodecs"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:views="clr-namespace:Genius.Starlog.UI.Views"
         mc:Ignorable="d"
         Header="{Binding PageTitle}"
         Position="Right"
         Width="600">
-    <mah:Flyout.Resources>
-        <DataTemplate DataType="{x:Type logcodecs:PlainTextLogCodecViewModel}" >
-            <logcodecs:PlainTextLogCodecView DataContext="{Binding .}" />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type logcodecs:XmlLogCodecViewModel}" >
-            <logcodecs:XmlLogCodecView DataContext="{Binding .}" />
-        </DataTemplate>
-
-        <Style x:Key="Category" TargetType="Label" BasedOn="{StaticResource FormPanelCaption}">
-            <Setter Property="FontSize" Value="16" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-    </mah:Flyout.Resources>
-
     <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
         <DockPanel>
             <Label>Profile name:</Label>
@@ -34,47 +21,7 @@
             <Label>Profile path:</Label>
             <TextBox Text="{Binding Path}" />
         </DockPanel>
-        <DockPanel>
-            <Label Style="{StaticResource Category}">Profile Settings</Label>
-            <mah:DropDownButton Content="Pick from template"
-                                DisplayMemberPath="Name"
-                                ItemsSource="{Binding Templates}"
-                                Visibility="{Binding AnyTemplateAvailable, Converter={atom:BooleanToVisibilityConverter}}"
-                                Width="200"
-                                HorizontalAlignment="Left">
-                <mah:DropDownButton.ItemContainerStyle>
-                    <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
-                        <Setter Property="Command" Value="{Binding Path=DataContext.ApplyTemplateCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type mah:DropDownButton}}}" />
-                        <Setter Property="CommandParameter" Value="{Binding Settings}" />
-                    </Style>
-                </mah:DropDownButton.ItemContainerStyle>
-            </mah:DropDownButton>
-        </DockPanel>
-        <DockPanel>
-            <Label>Log Codec:</Label>
-            <ComboBox ItemsSource="{Binding LogCodecs}"
-                      SelectedItem="{Binding LogCodec}"
-                      DisplayMemberPath="Name"
-                      Validation.ErrorTemplate="{x:Null}">
-            </ComboBox>
-        </DockPanel>
-        <ContentControl Content="{Binding LogCodec}"
-                        Validation.ErrorTemplate="{x:Null}" />
-        <DockPanel>
-            <Label>File artifact lines count:</Label>
-            <mah:NumericUpDown
-                Value="{Binding FileArtifactLinesCount}"
-                Minimum="0" Maximum="99"
-                Width="70" HorizontalAlignment="Left" />
-        </DockPanel>
-        <DockPanel>
-            <Label>Logs lookup pattern:</Label>
-            <TextBox Text="{Binding LogsLookupPattern}"/>
-        </DockPanel>
-        <DockPanel>
-            <Label>DateTime format:</Label>
-            <TextBox Text="{Binding DateTimeFormat}"/>
-        </DockPanel>
+        <views:ProfileSettingsView DataContext="{Binding ProfileSettings}" />
         <DockPanel>
             <Grid>
                 <Grid.ColumnDefinitions>

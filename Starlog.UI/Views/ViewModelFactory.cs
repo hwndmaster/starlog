@@ -19,6 +19,7 @@ public interface IViewModelFactory
     IProfileViewModel CreateProfile(Profile? profile);
     IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter);
     IProfileFilterSettingsViewModel CreateProfileFilterSettings(LogFilter logFilter, ProfileFilterBase? profileFilter);
+    ProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings);
 }
 
 [ExcludeFromCodeCoverage]
@@ -81,8 +82,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
     public IProfileViewModel CreateProfile(Profile? profile)
     {
-        return new ProfileViewModel(profile, _commandBus, _currentProfile, _eventBus, _mainController, _profileQuery,
-            _profileSettingsTemplateQuery, _logCodecContainer, this, _dispatcher, _ui);
+        return new ProfileViewModel(profile, _commandBus, _mainController, _profileQuery, this, _ui);
     }
 
     public IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter)
@@ -107,5 +107,18 @@ internal sealed class ViewModelFactory : IViewModelFactory
             TimeRangeProfileFilter timeRange => new TimeRangeProfileFilterSettingsViewModel(timeRange, _logContainer, isNewFilter),
             _ => throw new InvalidOperationException($"{nameof(profileFilter)} is of unexpected type {profileFilter.GetType().Name}")
         };
+    }
+
+    public ProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings)
+    {
+        var codecName = "Plain Text";
+        var logCodec = _logCodecContainer.GetLogCodecs().First(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
+        profileSettings ??= new ProfileSettings
+        {
+            LogCodec = _logCodecContainer.CreateProfileLogCodec(logCodec)
+        };
+
+        return new ProfileSettingsViewModel(profileSettings, _eventBus, _profileSettingsTemplateQuery,
+            _logCodecContainer, this, _dispatcher, _ui);
     }
 }

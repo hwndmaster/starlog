@@ -32,5 +32,22 @@
       "FileArtifactLinesCount": 3
     },
     "Id": "00000000-0000-0000-0000-000000000010"
+  },
+  {
+    "Name": "Starlog",
+    "Settings": {
+      "$type": "profile-settings",
+      "$v": 1,
+      "LogCodec": {
+        "$type": "plaintext-profile-log-codec",
+        "$v": 1,
+        "LineRegex": "(?\u003Cdatetime\u003E[\\d\\-]+\\s[\\d:\\.]+)\\s\\[(?\u003Clevel\u003E\\w+)\\]\\s\u003C(?\u003Cthread\u003E\\w+)\u003E\\s(?\u003Clogger\u003E\\w+)\\s-\\s(?\u003Cmessage\u003E.+)",
+        "LogCodec": "a38a40b6-c07f-49d5-a143-5c9f9f42149b"
+      },
+      "DateTimeFormat": "yyyy-MM-dd HH:mm:ss.fff",
+      "LogsLookupPattern": "*.log",
+      "FileArtifactLinesCount": 0
+    },
+    "Id": "8dc8c5d1-6b55-4902-a305-af024cbb59a6"
   }
 ]

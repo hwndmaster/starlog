@@ -19,7 +19,10 @@ public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
 
         if (fileArtifacts?.Artifacts.Length > 0)
         {
-            var paragraph = new Paragraph();
+            var paragraph = new Paragraph()
+            {
+                TextAlignment = TextAlignment.Left
+            };
             paragraph.Inlines.Add(new Italic(new Run("File artifacts:\r\n")));
             foreach (var fileArtifact in fileArtifacts.Artifacts)
             {
