@@ -11,6 +11,8 @@ namespace Genius.Starlog.Core.LogFlow;
 
 internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile, IDisposable
 {
+    internal const int UPDATE_LASTREADSIZE_WAIT_TIMEOUT_MS = 200;
+
     private readonly IDirectoryMonitor _directoryMonitor;
     private readonly IEventBus _eventBus;
     private readonly IFileService _fileService;
@@ -22,6 +24,7 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
     private readonly Subject<Profile> _profileChanged = new();
     private readonly Subject<Unit> _unknownChangesDetected = new();
     private long _lastReadSize = 0;
+    private bool _isFileBasedProfile = false;
 
     public CurrentProfileLogContainer(
         IEventBus eventBus,
@@ -50,13 +53,12 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         _directoryMonitor.Pulse.Subscribe(async size => await DirectoryMonitor_Pulse(size).ConfigureAwait(false));
     }
 
-    // TODO: Cover with unit tests
     private async Task DirectoryMonitor_Pulse(long profileDirectorySize)
     {
         if (_lastReadSize != profileDirectorySize)
         {
             // Wait a little longer to ensure `UpdateLastReadSize()` has finished its work
-            await Task.Delay(500).ConfigureAwait(false);
+            await Task.Delay(UPDATE_LASTREADSIZE_WAIT_TIMEOUT_MS).ConfigureAwait(false);
 
             if (_lastReadSize != profileDirectorySize && Profile is not null)
             {
@@ -76,19 +78,21 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         {
             Profile = profile.NotNull();
 
-            var isFile = !_fileService.IsDirectory(profile.Path);
+            _isFileBasedProfile = !_fileService.IsDirectory(profile.Path);
 
-            UpdateLastReadSize();
+            if (!_isFileBasedProfile)
+            {
+                UpdateLastReadSize();
+            }
 
             if (!_fileWatcher.StartListening(
-                path: isFile ? Path.GetDirectoryName(profile.Path).NotNull() : profile.Path,
-                filter: isFile ? Path.GetFileName(profile.Path) : profile.Settings.LogsLookupPattern))
+                path: _isFileBasedProfile ? Path.GetDirectoryName(profile.Path).NotNull() : profile.Path,
+                filter: _isFileBasedProfile ? Path.GetFileName(profile.Path) : profile.Settings.LogsLookupPattern))
             {
-                // TODO: Cover with unit tests
                 _eventBus.Publish(new ProfileLoadingErrorEvent(profile, $"Couldn't start file monitoring over the profile path: '{profile.Path}'."));
             }
 
-            if (!isFile)
+            if (!_isFileBasedProfile)
             {
                 _directoryMonitor.StartMonitoring(Profile.Path, Profile.Settings.LogsLookupPattern);
             }
@@ -128,6 +132,12 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         _logger.LogDebug("File {fullPath} was {changeType}", e.FullPath, e.ChangeType);
 
         UpdateLastReadSize();
+
+        if (_isFileBasedProfile && !e.FullPath.Equals(Profile.Path))
+        {
+            // TODO: Cover with unit tests
+            return;
+        }
 
         if (e.ChangeType == WatcherChangeTypes.Created)
         {
@@ -180,7 +190,12 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
             return;
         }
 
-        // TODO: Cover with unit tests
+        if (_isFileBasedProfile)
+        {
+            // Not relevant for file-based profiles
+            return;
+        }
+
         var lastReadSize = _fileService.GetDirectorySize(Profile.Path, Profile.Settings.LogsLookupPattern, recursive: true);
         Interlocked.Exchange(ref _lastReadSize, lastReadSize);
     }

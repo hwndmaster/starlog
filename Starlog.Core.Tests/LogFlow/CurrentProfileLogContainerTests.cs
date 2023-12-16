@@ -15,6 +15,8 @@ public sealed class CurrentProfileLogContainerTests
 {
     private record FileWithContentRecord(string FullPath, byte[] Content, LogReadingResult Result);
 
+    private const string LOGFILE_EXTENSION = ".log";
+
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly TestDirectoryMonitor _directoryMonitor = new();
     private readonly TestFileService _fileService = new();
@@ -38,6 +40,8 @@ public sealed class CurrentProfileLogContainerTests
             profileLoader, _scheduler, _logger);
 
         _sampleProfile = _fixture.Create<Profile>();
+        _sampleProfile.Settings.LogsLookupPattern = "*" + LOGFILE_EXTENSION;
+
         _logCodecProcessorMock = new Mock<ILogCodecProcessor>();
         _logCodecContainerMock.Setup(x => x.CreateLogCodecProcessor(_sampleProfile.Settings.LogCodec))
             .Returns(() => _logCodecProcessorMock.Object);
@@ -79,6 +83,26 @@ public sealed class CurrentProfileLogContainerTests
         Assert.Equal(_sampleProfile.Path, _fileWatcher.ListeningPath);
         Assert.Equal(0, logsRemovedHandled);
         Assert.Equal(0, fileRemovedHandled);
+        Assert.True(_directoryMonitor.MonitoringStarted); // DirectoryMonitor is being started for folders
+    }
+
+    [Fact]
+    public async Task LoadProfileAsync_WhenForFile_ThenProfileLoaded_AndDirectoryMonitorNotStarted()
+    {
+        // Arrange
+        var file = SampleFile(_sampleProfile, true);
+        _sampleProfile!.Path = file.FullPath;
+
+        // Act
+        await _sut.LoadProfileAsync(_sampleProfile);
+
+        // Verify
+        _eventBus.AssertNoEventOfType<ProfileLoadingErrorEvent>();
+        Assert.Equal(_sampleProfile, _sut.Profile);
+        Assert.Equal(1, _sut.FilesCount);
+        Assert.True(_fileWatcher.IsListening);
+        Assert.Equal(Path.GetDirectoryName(_sampleProfile.Path), _fileWatcher.ListeningPath);
+        Assert.False(_directoryMonitor.MonitoringStarted); // DirectoryMonitor is not started for files
     }
 
     [Fact]
@@ -309,6 +333,36 @@ public sealed class CurrentProfileLogContainerTests
             && x.Exception == exception);
     }
 
+    [Fact]
+    public async Task DirectoryMonitorPulse_WhenLastReadSizeDoesNotEqualToActual_ReportsUnknownChangesDetected()
+    {
+        // Arrange
+        AutoResetEvent autoResetEvent = new(false);
+        bool unknownChangesDetectedHandled = false;
+        _sut.UnknownChangesDetected.Subscribe(_ => {
+            unknownChangesDetectedHandled = true;
+            autoResetEvent.Set();
+        });
+
+        var files = SampleFiles(_sampleProfile);
+        await _sut.LoadProfileAsync(_sampleProfile);
+        var lastReadSize = _fileService.GetDirectorySize(_sampleProfile.Path, _sampleProfile.Settings.LogsLookupPattern, recursive: true);
+
+        // Act scenario when lastReadSize == actual size
+        _directoryMonitor.TriggerPulse(lastReadSize);
+        autoResetEvent.WaitOne(CurrentProfileLogContainer.UPDATE_LASTREADSIZE_WAIT_TIMEOUT_MS + 20);
+
+        // Verify scenario when lastReadSize == actual size
+        Assert.False(unknownChangesDetectedHandled);
+
+        // Act scenario when lastReadSize != actual size
+        _directoryMonitor.TriggerPulse(lastReadSize + 1);
+        autoResetEvent.WaitOne(CurrentProfileLogContainer.UPDATE_LASTREADSIZE_WAIT_TIMEOUT_MS + 20);
+
+        // Verify scenario when lastReadSize != actual size
+        Assert.True(unknownChangesDetectedHandled);
+    }
+
     private static void AssertLogRecords(IEnumerable<LogRecord> expected, IEnumerable<LogRecord> actual)
     {
         var expectedOrdered = expected.OrderBy(x => x.DateTime).ToArray();
@@ -333,7 +387,7 @@ public sealed class CurrentProfileLogContainerTests
 
     private FileWithContentRecord SampleFile(Profile profile, bool readFileArtifacts)
     {
-        var fileName = _fixture.Create<string>();
+        var fileName = _fixture.Create<string>() + LOGFILE_EXTENSION;
         var sampleContent = _fixture.CreateMany<byte>(_fixture.Create<int>()).ToArray();
         var fullPath = Path.Combine(profile.Path, fileName);
         _fileService.AddFile(fullPath, sampleContent);
