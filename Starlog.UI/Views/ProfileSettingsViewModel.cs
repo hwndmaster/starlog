@@ -10,8 +10,15 @@ using ReactiveUI;
 
 namespace Genius.Starlog.UI.Views;
 
+public interface IProfileSettingsViewModel
+{
+    ProfileSettings? CommitChanges();
+    void CopyFrom(IProfileSettingsViewModel source);
+    void ResetForm(ProfileSettings? profileSettings = null);
+}
+
 // TODO: Cover with unit tests
-public sealed class ProfileSettingsViewModel : ViewModelBase
+public sealed class ProfileSettingsViewModel : ViewModelBase, IProfileSettingsViewModel
 {
     private readonly IProfileSettingsTemplateQueryService _templatesQuery;
     private readonly IUiDispatcher _dispatcher;
@@ -93,13 +100,16 @@ public sealed class ProfileSettingsViewModel : ViewModelBase
         return _profileSettings;
     }
 
-    public void CopyFrom(ProfileSettingsViewModel source)
+    public void CopyFrom(IProfileSettingsViewModel source)
     {
-        LogCodec = LogCodecs.First(x => x.ProfileLogCodec.LogCodec.Id == source.LogCodec.ProfileLogCodec.LogCodec.Id);
-        LogCodec.CopySettingsFrom(source.LogCodec);
-        FileArtifactLinesCount = source.FileArtifactLinesCount;
-        LogsLookupPattern = source.LogsLookupPattern;
-        DateTimeFormat = source.DateTimeFormat;
+        if (source is not ProfileSettingsViewModel sourceClass)
+            return;
+
+        LogCodec = LogCodecs.First(x => x.ProfileLogCodec.LogCodec.Id == sourceClass.LogCodec.ProfileLogCodec.LogCodec.Id);
+        LogCodec.CopySettingsFrom(sourceClass.LogCodec);
+        FileArtifactLinesCount = sourceClass.FileArtifactLinesCount;
+        LogsLookupPattern = sourceClass.LogsLookupPattern;
+        DateTimeFormat = sourceClass.DateTimeFormat;
     }
 
     private async Task ReloadTemplatesAsync()

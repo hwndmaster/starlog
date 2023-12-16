@@ -139,9 +139,9 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
-    public ProfileSettingsViewModel ProfileSettings
+    public IProfileSettingsViewModel ProfileSettings
     {
-        get => GetOrDefault(default(ProfileSettingsViewModel));
+        get => GetOrDefault(default(IProfileSettingsViewModel));
         set => RaiseAndSetIfChanged(value);
     }
 

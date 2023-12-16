@@ -19,7 +19,7 @@ public interface IViewModelFactory
     IProfileViewModel CreateProfile(Profile? profile);
     IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter);
     IProfileFilterSettingsViewModel CreateProfileFilterSettings(LogFilter logFilter, ProfileFilterBase? profileFilter);
-    ProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings);
+    IProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings);
 }
 
 [ExcludeFromCodeCoverage]
@@ -109,7 +109,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
         };
     }
 
-    public ProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings)
+    public IProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings)
     {
         var codecName = "Plain Text";
         var logCodec = _logCodecContainer.GetLogCodecs().First(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));

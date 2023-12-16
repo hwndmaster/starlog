@@ -2,7 +2,6 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views;
 
-// TODO: Cover with unit tests
 public sealed class AnonymousProfileLoadSettingsViewModel : ViewModelBase
 {
     public AnonymousProfileLoadSettingsViewModel(IViewModelFactory vmFactory, IActionCommand closeCommand,
@@ -27,7 +26,7 @@ public sealed class AnonymousProfileLoadSettingsViewModel : ViewModelBase
         });
     }
 
-    public ProfileSettingsViewModel ProfileSettings { get; set; }
+    public IProfileSettingsViewModel ProfileSettings { get; set; }
     public bool Confirmed { get; set; }
     public IActionCommand CloseCommand { get; }
     public IActionCommand ConfirmCommand { get; }
