@@ -53,6 +53,25 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         _vmFactory = vmFactory.NotNull();
         AutoGridBuilder = autoGridBuilder.NotNull();
 
+        // Member initialization:
+        DropAreas = new List<DropAreaViewModel>
+        {
+            new DropAreaViewModel("Create a new profile", (dropObj) =>
+                {
+                    if (dropObj is string[] fileDrop)
+                    {
+                        _controller.ShowAddProfileForPath(fileDrop[0]);
+                    }
+                }),
+            new DropAreaViewModel("Open immediately", (dropObj) =>
+                {
+                    if (dropObj is string[] fileDrop)
+                    {
+                        _controller.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0]);
+                    }
+                })
+        };
+
         // Actions:
         CompareSelectedCommand = new ActionCommand(async _ => {
             var selectedProfiles = Profiles
@@ -165,6 +184,12 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     public string Filter
     {
         get => GetOrDefault<string>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public ICollection<DropAreaViewModel> DropAreas
+    {
+        get => GetOrDefault<ICollection<DropAreaViewModel>>();
         set => RaiseAndSetIfChanged(value);
     }
 
