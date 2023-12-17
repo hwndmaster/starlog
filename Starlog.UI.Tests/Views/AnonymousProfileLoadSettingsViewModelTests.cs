@@ -2,6 +2,7 @@ using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Views;
+using Starlog.UI.Tests.TestUtil;
 
 namespace Genius.Starlog.UI.Tests.Controllers;
 
@@ -17,7 +18,7 @@ public sealed class AnonymousProfileLoadSettingsViewModelTests
     {
         _profileSettings = new ProfileSettings
         {
-            LogCodec = _fixture.Create<ProfileLogCodecBase>()
+            LogCodec = new TestProfileLogCodec()
         };
 
         var profileSettingsVm = new Mock<IProfileSettingsViewModel>();
@@ -31,10 +32,8 @@ public sealed class AnonymousProfileLoadSettingsViewModelTests
     }
 
     [Fact]
-    public async Task CloseCommand_HappyFlowScenario()
+    public void CloseCommand_HappyFlowScenario()
     {
-        // Arrange
-
         // Act
         _sut.CloseCommand.Execute(null);
 
@@ -44,10 +43,8 @@ public sealed class AnonymousProfileLoadSettingsViewModelTests
     }
 
     [Fact]
-    public async Task ConfirmCommand_HappyFlowScenario()
+    public void ConfirmCommand_HappyFlowScenario()
     {
-        // Arrange
-
         // Act
         _sut.ConfirmCommand.Execute(null);
 

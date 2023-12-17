@@ -49,7 +49,7 @@ public sealed class MainControllerTests
     }
 
     [Fact]
-    public async Task LoadPathAsync_HappyFlowScenario()
+    public async Task LoadPathAsync_GivenLoadPathCommandLineOptions_HappyFlowScenario()
     {
         // Arrange
         var options = _fixture.Create<LoadPathCommandLineOptions>();
@@ -57,8 +57,8 @@ public sealed class MainControllerTests
         var profileCodec = _fixture.Create<ProfileLogCodecBase>();
         var allCodecs = _fixture.CreateMany<LogCodec>().Append(codec);
         var processor = Mock.Of<ILogCodecProcessor>(x => x.ReadFromCommandLineArguments(profileCodec, It.Is<string[]>(arg => arg.SequenceEqual(options.CodecSettings))) == true);
-        _logCodecContainerMock.Setup(x => x.GetLogCodecs())
-            .Returns(allCodecs)
+        _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns(allCodecs);
+        _currentProfileMock.Setup(x => x.LoadProfileAsync(It.IsAny<Profile>()))
             .Callback(() =>
             {
                 // Ensure the MainViewModel is set to busy
@@ -89,7 +89,7 @@ public sealed class MainControllerTests
     }
 
     [Fact]
-    public async Task LoadPathAsync_WhenCodecIsUnknown_Stops()
+    public async Task LoadPathAsync_GivenLoadPathCommandLineOptions_WhenCodecIsUnknown_Stops()
     {
         // Arrange
         var options = _fixture.Create<LoadPathCommandLineOptions>();
@@ -104,12 +104,11 @@ public sealed class MainControllerTests
         // Verify
         _commandBus.AssertNoCommandOfType<ProfileLoadAnonymousCommand>();
         _currentProfileMock.Verify(x => x.LoadProfileAsync(It.IsAny<Profile>()), Times.Never);
-        _mainViewModelMock.VerifySet(x => x.IsBusy = false);
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
     }
 
     [Fact]
-    public async Task LoadPathAsync_WhenArgumentsCouldNotBeRead_Stops()
+    public async Task LoadPathAsync_GivenLoadPathCommandLineOptions_WhenArgumentsCouldNotBeRead_Stops()
     {
         // Arrange
         var options = _fixture.Create<LoadPathCommandLineOptions>();
@@ -130,8 +129,41 @@ public sealed class MainControllerTests
         // Verify
         _commandBus.AssertNoCommandOfType<ProfileLoadAnonymousCommand>();
         _currentProfileMock.Verify(x => x.LoadProfileAsync(It.IsAny<Profile>()), Times.Never);
-        _mainViewModelMock.VerifySet(x => x.IsBusy = false);
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
+    }
+
+    [Fact]
+    public async Task LoadPathAsync_GivenProfileSettings_HappyFlowScenario()
+    {
+        // Arrange
+        var path = _fixture.Create<string>();
+        var profileSettings = _fixture.Create<ProfileSettings>();
+        _currentProfileMock.Setup(x => x.LoadProfileAsync(It.IsAny<Profile>()))
+            .Callback(() =>
+            {
+                // Ensure the MainViewModel is set to busy
+                _mainViewModelMock.VerifySet(x => x.IsBusy = true);
+            });
+        var tab = SetupDummyTabsAnd<ILogsViewModel>();
+
+        // Act
+        var loadPathTask = _sut.LoadPathAsync(path, profileSettings);
+        _sut.NotifyMainWindowIsLoaded();
+        _sut.NotifyProfilesAreLoaded();
+        await loadPathTask;
+
+        // Verify
+        var actualProfile = _commandBus.ReceivedResults.Single() as Profile;
+        Assert.NotNull(actualProfile);
+        _commandBus.AssertNoCommandsButOfType<ProfileLoadAnonymousCommand>();
+        _commandBus.AssertSingleCommand<ProfileLoadAnonymousCommand>(
+            x => Assert.Equal(path, x.Path),
+            x => Assert.Equal(profileSettings.LogCodec, x.Settings.LogCodec),
+            x => Assert.Equal(profileSettings.FileArtifactLinesCount, x.Settings.FileArtifactLinesCount));
+        _currentProfileMock.Verify(x => x.LoadProfileAsync(actualProfile), Times.Once);
+        _mainViewModelMock.VerifySet(x => x.SelectedTabIndex = MAINVIEWMODEL_TABS_COUNT - 1);
+        _mainViewModelMock.VerifySet(x => x.IsBusy = false);
+        Assert.DoesNotContain(_logger.Logs, x => x.LogLevel == LogLevel.Warning);
     }
 
     [Fact]
@@ -163,12 +195,19 @@ public sealed class MainControllerTests
     }
 
     [Fact]
-    public async Task AutoLoadProfileAsync_WhenLoadPathInvoked_Stops()
+    public async Task AutoLoadProfileAsync_WhenLoadPathPreviouslyInvoked_Stops()
     {
         // Arrange
+        var template = _fixture.Create<ProfileSettingsTemplate>();
+        var options = _fixture.Build<LoadPathCommandLineOptions>()
+            .With(x => x.Template, template.Name)
+            .Create();
+        _templatesQueryMock.Setup(x => x.GetAllAsync()).ReturnsAsync(new [] { template });
         _sut.NotifyMainWindowIsLoaded();
         _sut.NotifyProfilesAreLoaded();
-        await _sut.LoadPathAsync(_fixture.Create<LoadPathCommandLineOptions>());
+
+        // Pre-Act
+        await _sut.LoadPathAsync(options);
 
         // Act
         await _sut.AutoLoadProfileAsync();

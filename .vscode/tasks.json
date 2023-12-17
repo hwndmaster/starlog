@@ -26,45 +26,57 @@
     },
     {
       "label": "test coverage",
-      "command": "dotnet",
+      "command": "reportgenerator",
       "type": "process",
       "args": [
-        "test",
-        "--no-build",
-        "/p:CollectCoverage=true",
-        "/p:CoverletOutputFormat=lcov",
-        "/p:CoverletOutput=${workspaceFolder}/lcov.info",
-        //"/p:Exclude=\"[Genius.Atom.*]*\""
+        "-reports:TestResults\\**\\coverage.cobertura.xml",
+        "-reporttypes:lcov",
+        "-targetdir:TestCoverage",
+      ],
+      "dependsOn": [
+        "test coverage (collect)"
       ],
       "group": {
         "kind": "test",
         "isDefault": true
       },
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "test coverage (collect)",
+      "hide": true,
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "--no-restore",
+        "--no-build",
+        "--collect:\"Code Coverage;Format=Cobertura;CoverageFileName=coverage.xml\"",
+        "--results-directory:.\\TestResults",
+        "--blame-hang-timeout:30000"
+      ],
+      "dependsOn": [
+        "test coverage (cleanup)"
+      ],
       "presentation": {
         "reveal": "silent"
       },
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "test coverage newer",
-      "command": "dotnet",
-      "type": "process",
+      "label": "test coverage (cleanup)",
+      "hide": true,
+      "type": "shell",
+      "command": "Remove-Item",
       "args": [
-        "test",
-        "--no-build",
-        "--collect:\"Code Coverage;Format=Cobertura\"",
-        //"--filter",
-        //"Genius.Starlog"
-        "--settings:CodeCoverage.runsettings"
+        "TestResults",
+        "-recurse"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
       "presentation": {
         "reveal": "silent"
       },
-      "problemMatcher": "$msCompile"
     }
   ]
 }
