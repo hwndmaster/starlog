@@ -29,8 +29,8 @@
     <!-- WPF/UI related dependencies -->
     <PackageVersion Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
     <PackageVersion Include="MahApps.Metro" Version="2.4.10" />
-    <PackageVersion Include="ReactiveUI" Version="19.5.1" />
-    <PackageVersion Include="ReactiveUI.WPF" Version="19.5.1" />
+    <PackageVersion Include="ReactiveUI" Version="19.5.31" />
+    <PackageVersion Include="ReactiveUI.WPF" Version="19.5.31" />
     <PackageVersion Include="ReactiveUI.Events.WPF" Version="15.1.1" />
     <PackageVersion Include="WpfAnimatedGif" Version="2.0.2" />
 
@@ -46,8 +46,8 @@
 
     <!-- Automated Testing components -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageVersion Include="xunit" Version="2.6.2" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.4" />
+    <PackageVersion Include="xunit" Version="2.6.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.5" />
     <PackageVersion Include="Xunit.StaFact" Version="1.1.11" />
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoMoq" Version="4.18.1" />

@@ -71,7 +71,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             {
                 if (_currentProfile.Profile is null) return;
                 _suspendUpdate = true;
-                controller.LoadProfileAsync(_currentProfile.Profile);
+                await controller.LoadProfileAsync(_currentProfile.Profile);
             });
 
         // Subscriptions:
@@ -244,6 +244,9 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
         _uiDispatcher.BeginInvoke(() =>
         {
+            SearchText = Search.Text;
+            SearchUseRegex = Search.UseRegex;
+
             LogItemsView.View.Refresh();
 
             var filteredItems = LogItemsView.View.Cast<ILogItemViewModel>().ToList();
@@ -321,6 +324,24 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public bool IsFileColumnVisible
     {
         get => GetOrDefault(true);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    /// <summary>
+    ///   Used for binding into DataGrid's text highlighting.
+    /// </summary>
+    public string SearchText
+    {
+        get => GetOrDefault<string>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    /// <summary>
+    ///   Used for binding into DataGrid's text highlighting.
+    /// </summary>
+    public bool SearchUseRegex
+    {
+        get => GetOrDefault<bool>();
         set => RaiseAndSetIfChanged(value);
     }
 

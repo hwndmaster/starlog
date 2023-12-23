@@ -139,11 +139,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
-    public IProfileSettingsViewModel ProfileSettings
-    {
-        get => GetOrDefault(default(IProfileSettingsViewModel));
-        set => RaiseAndSetIfChanged(value);
-    }
+    public IProfileSettingsViewModel ProfileSettings { get; private set; }
 
     public bool IsSelected
     {

@@ -34,7 +34,7 @@ public sealed class LogThreadToColorConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("This converter cannot be used in two-way binding.");
     }
 
     private static Color[] DefineColors()

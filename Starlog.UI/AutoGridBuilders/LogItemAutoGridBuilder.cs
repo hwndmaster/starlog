@@ -32,7 +32,9 @@ public sealed class LogItemAutoGridBuilder : IAutoGridBuilder
                     .AddText(x => x.Message, x => x
                         .WithToolTipPath(nameof(LogItemViewModel.Message))
                         .WithIconSource(new IconSourceRecord(nameof(LogItemViewModel.ArtifactsIcon)))
-                        .WithAutoWidth(true))
+                        .WithAutoWidth(true)
+                        .WithTextHighlighting(nameof(LogsViewModel.SearchText), nameof(LogsViewModel.SearchUseRegex))
+                        )
             )
             .Build();
     }
