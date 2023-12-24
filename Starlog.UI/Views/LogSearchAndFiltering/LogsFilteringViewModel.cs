@@ -37,6 +37,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _quickFiltersCategory = new("Quick filters", "FolderDown32", expanded: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _userFiltersCategory = new("User filters", "FolderFavs32", expanded: true, canAddChildren: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _bookmarkedCategory = new LogFilterBookmarkedCategoryViewModel();
+    private readonly LogFilterCategoryViewModel<ILogFilterNodeViewModel> _messageParsingCategory = new("Message parsing", "MessageParsing32", expanded: true, canAddChildren: true);
     private readonly CompositeDisposable _subscriptions;
     private readonly ISubject<Unit> _filterChanged = new Subject<Unit>();
     private bool _suspendUpdate = false;
@@ -71,6 +72,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         FilterCategories.Add(_quickFiltersCategory);
         FilterCategories.Add(_userFiltersCategory);
         FilterCategories.Add(_bookmarkedCategory);
+        FilterCategories.Add(_messageParsingCategory);
 
         // Subscriptions:
         _subscriptions = new(
@@ -85,6 +87,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                         _filesCategory.CategoryItems.Clear();
                         _filesCategory.CategoryItemsView.View.Refresh();
                         _userFiltersCategory.CategoryItems.Clear();
+                        _messageParsingCategory.CategoryItems.Clear();
                     });
                 }),
             _currentProfile.ProfileChanged
@@ -99,6 +102,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                     {
                         AddFiles(_logContainer.GetFiles());
                         AddUserFilters(profile.Filters);
+                        AddMessageParsings(profile.MessageParsings);
                         _suspendUpdate = false;
                     });
                 }),
@@ -125,6 +129,10 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
             _userFiltersCategory.AddChildCommand.Executed
                 .Subscribe(_ => ShowFlyoutForAddingNewFilter(null)),
 
+            // TODO: Cover with unit tests
+            _messageParsingCategory.AddChildCommand.Executed
+                .Subscribe(_ => ShowFlyoutForAddingNewMessageParsing()),
+
             SelectedFilters.WhenCollectionChanged()
                 .Throttle(TimeSpan.FromMilliseconds(50))
                 .Subscribe(_ =>
@@ -140,13 +148,22 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
     public LogRecordFilterContext CreateContext()
     {
+        // TODO: Cover `messageParsings` with unit tests
+        var messageParsingVms = SelectedFilters.OfType<LogFilterMessageParsingViewModel>().ToList();
+        var messageParsings = messageParsingVms
+            .Union(_messageParsingCategory.CategoryItems.Where(x => x.IsPinned).Cast<LogFilterMessageParsingViewModel>())
+            .Select(x => x.MessageParsing)
+            .ToImmutableArray();
+
         if (SelectedFilters.Any(x => x == _bookmarkedCategory))
         {
             return new(HasAnythingSpecified: true,
-                new HashSet<string>(0), ImmutableArray<ProfileFilterBase>.Empty, ShowBookmarked: true, UseOrCombination: IsOr);
+                new HashSet<string>(0), ImmutableArray<ProfileFilterBase>.Empty, ShowBookmarked: true, UseOrCombination: IsOr,
+                messageParsings);
         }
 
         var filters = SelectedFilters
+            .Except(messageParsingVms)
             .Union(_filesCategory.CategoryItems.Where(x => x.IsPinned))
             .Union(_quickFiltersCategory.CategoryItems.Where(x => x.IsPinned))
             .Union(_userFiltersCategory.CategoryItems.Where(x => x.IsPinned))
@@ -160,7 +177,8 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
             .ToImmutableArray();
 
         return new(HasAnythingSpecified: filesSelected.Any() || filtersSelected.Any(),
-            filesSelected, filtersSelected, ShowBookmarked: false, UseOrCombination: IsOr);
+            filesSelected, filtersSelected, ShowBookmarked: false, UseOrCombination: IsOr,
+            messageParsings);
     }
 
     public void Dispose()
@@ -198,7 +216,28 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         }
     }
 
-    private static void SubscribeToPinningEvents(IEnumerable<LogFilterViewModel> items, Action handler)
+    private void ShowFlyoutForAddingNewMessageParsing()
+    {
+        IsAddEditMessageParsingVisible = !IsAddEditMessageParsingVisible;
+        if (IsAddEditMessageParsingVisible)
+        {
+            EditingMessageParsing = _vmFactory.CreateMessageParsing(null);
+            EditingMessageParsing.CommitCommand
+                .OnOneTimeExecutedBooleanAction()
+                .Subscribe(commandResult => {
+                    if (!commandResult || EditingMessageParsing.MessageParsing is null)
+                        return;
+                    var vm = AddMessageParsings(new [] { EditingMessageParsing.MessageParsing }).First();
+                    IsAddEditMessageParsingVisible = false;
+                    SelectedFilters.Clear();
+                    SelectedFilters.Add(vm);
+                })
+                .DisposeWith(_subscriptions!);
+        }
+    }
+
+    private static void SubscribeToPinningEvents<T>(IEnumerable<T> items, Action handler)
+        where T : IViewModel, IHasPinnedFlag, IHasCanPinFlag
     {
         foreach (var item in items)
         {
@@ -244,6 +283,42 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         return vms;
     }
 
+    // TODO: Cover with unit tests
+    private IEnumerable<ILogFilterNodeViewModel> AddMessageParsings(IEnumerable<MessageParsing> messageParsings)
+    {
+        var vms = messageParsings.Select(x =>
+        {
+            var vm = new LogFilterMessageParsingViewModel(x, isUserDefined: true);
+            vm.ModifyCommand.Executed.Subscribe(_ =>
+            {
+                EditingMessageParsing = _vmFactory.CreateMessageParsing(vm.MessageParsing);
+                EditingMessageParsing?.CommitCommand
+                    .OnOneTimeExecutedBooleanAction()
+                    .Subscribe(_ =>
+                    {
+                        IsAddEditMessageParsingVisible = false;
+                        vm.Reconcile();
+                        _filterChanged.OnNext(Unit.Default);
+                    })
+                    .DisposeWith(_subscriptions);
+                IsAddEditMessageParsingVisible = EditingMessageParsing is not null;
+            });
+            vm.DeleteCommand.Executed.Subscribe(async _ =>
+            {
+                if (_ui.AskForConfirmation($"You're about to delete a filter named '{vm.MessageParsing.Name}'. Proceed?", "Deletion confirmation"))
+                {
+                    await _commandBus.SendAsync(new MessageParsingDeleteCommand(_currentProfile.Profile.NotNull().Id, vm.MessageParsing.Id));
+                    _messageParsingCategory.RemoveItem(vm);
+                }
+            });
+            vm.WhenChanged(x => x.IsSelected).Subscribe(_ => IsAddEditMessageParsingVisible = false);
+            return vm;
+        }).ToList();
+        _messageParsingCategory.AddItems(vms);
+        SubscribeToPinningEvents(vms, () => _filterChanged.OnNext(Unit.Default));
+        return vms;
+    }
+
     private void AddFiles(IEnumerable<FileRecord> files)
     {
         _filesCategory.AddItems(
@@ -266,6 +341,18 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     public IProfileFilterViewModel? EditingProfileFilter
     {
         get => GetOrDefault<IProfileFilterViewModel?>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool IsAddEditMessageParsingVisible
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public IMessageParsingViewModel? EditingMessageParsing
+    {
+        get => GetOrDefault<IMessageParsingViewModel?>();
         set => RaiseAndSetIfChanged(value);
     }
 

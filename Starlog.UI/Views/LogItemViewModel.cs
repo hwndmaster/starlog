@@ -1,4 +1,5 @@
 using System.Windows.Documents;
+using Genius.Atom.UI.Forms.Controls.AutoGrid;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.UI.Helpers;
 
@@ -14,6 +15,7 @@ public interface ILogItemViewModel : IViewModel
     string Message { get; }
     bool IsBookmarked { get; set; }
     FlowDocument Artifacts { get; }
+    DynamicColumnEntriesViewModel? MessageParsingEntries { get; set; }
 }
 
 // TODO: Cover with unit tests
@@ -63,6 +65,8 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value, (_, __) => OnPropertyChanged(string.Empty));
     }
+
+    public DynamicColumnEntriesViewModel? MessageParsingEntries { get; set; }
 
     public FlowDocument Artifacts => _artifactsLazy.Value;
 }

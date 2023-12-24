@@ -8,25 +8,24 @@ namespace Genius.Starlog.UI.AutoGridBuilders;
 [ExcludeFromCodeCoverage]
 public sealed class ProfileAutoGridBuilder : IAutoGridBuilder
 {
-    private readonly IAutoGridContextBuilder<ProfileViewModel> _contextBuilder;
+    private readonly IAutoGridContextBuilder<ProfileViewModel, ProfilesViewModel> _contextBuilder;
 
-    public ProfileAutoGridBuilder(IAutoGridContextBuilder<ProfileViewModel> contextBuilder)
+    public ProfileAutoGridBuilder(IAutoGridContextBuilder<ProfileViewModel, ProfilesViewModel> contextBuilder)
     {
         _contextBuilder = contextBuilder.NotNull();
     }
 
-    public AutoGridBuildContext Build()
+    public IAutoGridContextBuilder Build()
     {
         return _contextBuilder
             .WithColumns(columns =>
                 columns
-                    .AddText(x => x.Name, x => x.Filterable())
+                    .AddText(x => x.Name, opts => opts.Filterable())
                     .AddText(x => x.Path)
-                    .AddCommand(x => x.LoadProfileCommand, x => x
+                    .AddCommand(x => x.LoadProfileCommand, opts => opts
                         .WithDisplayName(string.Empty)
                         .WithIcon("Play32")
                         .WithStyle(new StylingRecord(Padding: new Thickness(0))))
-            )
-            .Build();
+            );
     }
 }

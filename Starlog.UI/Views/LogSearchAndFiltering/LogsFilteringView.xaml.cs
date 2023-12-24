@@ -12,6 +12,9 @@ public partial class LogsFilteringView
         InitializeComponent();
 
         this.Loaded += (sender, args) =>
+        {
             WpfHelpers.AddFlyout<AddEditProfileFilterFlyout>(this, nameof(LogsFilteringViewModel.IsAddEditProfileFilterVisible), nameof(LogsFilteringViewModel.EditingProfileFilter));
+            WpfHelpers.AddFlyout<AddEditMessageParsingFlyout>(this, nameof(LogsFilteringViewModel.IsAddEditMessageParsingVisible), nameof(LogsFilteringViewModel.EditingMessageParsing));
+        };
     }
 }

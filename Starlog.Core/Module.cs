@@ -28,7 +28,7 @@ public static class Module
         services.AddSingleton<ISettingsQueryService>(sp => sp.GetRequiredService<SettingsRepository>());
         services.AddSingleton<ISettingsRepository>(sp => sp.GetRequiredService<SettingsRepository>());
 
-        // LogFlow and LogFiltering services
+        // LogFlow and LogFiltering components
         services.AddSingleton<CurrentProfileLogContainer>();
         services.AddSingleton<ICurrentProfile>(x => x.GetRequiredService<CurrentProfileLogContainer>());
         services.AddSingleton<ILogContainer>(x => x.GetRequiredService<CurrentProfileLogContainer>());
@@ -51,15 +51,13 @@ public static class Module
         services.AddTransient<ILogRecordMatcher, LogRecordMatcher>();
         services.AddTransient<IQuickFilterProvider, QuickFilterProvider>();
 
-        // Services
-        // TO BE DONE LATER
-        services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();
-
-        // Converters
+        // JSON Converters
         services.AddSingleton<IJsonConverter, LogCodecJsonConverter>();
         services.AddSingleton<IJsonConverter, LogFilterJsonConverter>();
 
         // Command Handlers
+        services.AddScoped<ICommandHandler<MessageParsingCreateOrUpdateCommand, MessageParsingCreateOrUpdateCommandResult>, MessageParsingCreateOrUpdateCommandHandler>();
+        services.AddScoped<ICommandHandler<MessageParsingDeleteCommand>, MessageParsingDeleteCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileCreateCommand, Guid>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileUpdateCommand>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileDeleteCommand>, ProfileDeleteCommandHandler>();
@@ -68,6 +66,10 @@ public static class Module
         services.AddScoped<ICommandHandler<ProfileFilterDeleteCommand>, ProfileFilterDeleteCommandHandler>();
         services.AddScoped<ICommandHandler<SettingsUpdateCommand>, SettingsUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<SettingsUpdateAutoLoadingProfileCommand>, SettingsUpdateAutoLoadingProfileCommandHandler>();
+
+        // Other components
+        services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();
+        services.AddTransient<IMessageParsingHandler, MessageParsingHandler>();
     }
 
     public static void Initialize(IServiceProvider serviceProvider)
@@ -121,5 +123,6 @@ public static class Module
 
         // Misc
         typeDiscriminators.AddMapping<ProfileSettings>("profile-settings");
+        typeDiscriminators.AddMapping<MessageParsing>("message-parsing");
     }
 }

@@ -25,7 +25,7 @@ public interface IProfilesViewModel : ITabViewModel, IDisposable
 }
 
 // TODO: Cover with unit tests
-internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
+public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 {
     private readonly IMainController _controller;
     private readonly IProfileQueryService _profileQuery;

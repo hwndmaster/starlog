@@ -29,11 +29,13 @@
             <BitmapImage x:Key="Message32" UriSource="pack://application:,,,/Assets/Message32.png" />
             <BitmapImage x:Key="MinusOneHour32" UriSource="pack://application:,,,/Assets/MinusOneHour32.png" />
             <BitmapImage x:Key="Note32" UriSource="pack://application:,,,/Assets/Note32.png" />
+            <BitmapImage x:Key="MessageParsing32" UriSource="pack://application:,,,/Assets/MessageParsing32.png" />
             <BitmapImage x:Key="PinOff32" UriSource="pack://application:,,,/Assets/PinOff32.png" />
             <BitmapImage x:Key="PinOn32" UriSource="pack://application:,,,/Assets/PinOn32.png" />
             <BitmapImage x:Key="Play32" UriSource="pack://application:,,,/Assets/Play32.png" />
             <BitmapImage x:Key="Regex32" UriSource="pack://application:,,,/Assets/Regex32.png" />
             <BitmapImage x:Key="RegexBw32" UriSource="pack://application:,,,/Assets/RegexBw32.png" />
+            <BitmapImage x:Key="Share32" UriSource="pack://application:,,,/Assets/Share32.png" />
             <BitmapImage x:Key="Thread32" UriSource="pack://application:,,,/Assets/Thread32.png" />
             <BitmapImage x:Key="TimeRange32" UriSource="pack://application:,,,/Assets/TimeRange32.png" />
         </ResourceDictionary>

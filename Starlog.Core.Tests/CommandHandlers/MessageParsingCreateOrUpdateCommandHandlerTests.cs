@@ -1,0 +1,74 @@
+using Genius.Starlog.Core.CommandHandlers;
+using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.Messages;
+using Genius.Starlog.Core.Models;
+
+namespace Genius.Starlog.Core.Tests.CommandHandlers;
+
+public sealed class MessageParsingCreateOrUpdateCommandHandlerTests
+{
+    private readonly ProfileHarness _harness = new();
+    private readonly MessageParsingCreateOrUpdateCommandHandler _sut;
+
+    public MessageParsingCreateOrUpdateCommandHandlerTests()
+    {
+        _sut = new(_harness.ProfileRepo, _harness.ProfileQuery, _harness.EventBus);
+    }
+
+    [Fact]
+    public async Task Process_WhenNewMessageParsingProvided_ThenAddedToProfile()
+    {
+        // Arrange
+        var profile = _harness.CreateProfile();
+        var messageParsingsCount = profile.MessageParsings.Count;
+        var command = _harness.Build<MessageParsingCreateOrUpdateCommand>()
+            .With(x => x.ProfileId, profile.Id)
+            .Create();
+
+        // Act
+        var result = await _sut.ProcessAsync(command);
+
+        // Verify
+        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile));
+        _harness.VerifyEventPublished<ProfilesAffectedEvent>();
+        Assert.Equal(messageParsingsCount + 1, profile.MessageParsings.Count);
+        Assert.Equal(command.MessageParsing, profile.MessageParsings[^1]);
+        Assert.Equal(command.MessageParsing.Id, result.MessageParsingAdded);
+        Assert.Null(result.MessageParsingUpdated);
+    }
+
+    [Fact]
+    public async Task Process_WhenExistingMessageParsingProvided_ThenUpdatedAndPersisted()
+    {
+        // Arrange
+        var profile = _harness.CreateProfile();
+        var messageParsingsCount = profile.MessageParsings.Count;
+        var updatingMessageParsingsId = _harness.Create<Guid>();
+        profile.MessageParsings[0] = new MessageParsing { Id = updatingMessageParsingsId };
+        var command = new MessageParsingCreateOrUpdateCommand
+        {
+            ProfileId = profile.Id,
+            MessageParsing = new MessageParsing { Id = updatingMessageParsingsId }
+        };
+
+        // Act
+        var result = await _sut.ProcessAsync(command);
+
+        // Verify
+        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile));
+        _harness.VerifyEventPublished<ProfilesAffectedEvent>();
+        Assert.Equal(messageParsingsCount, profile.MessageParsings.Count);
+        Assert.Equal(command.MessageParsing, profile.MessageParsings[0]);
+        Assert.Null(result.MessageParsingAdded);
+        Assert.Equal(command.MessageParsing.Id, result.MessageParsingUpdated);
+    }
+
+    private sealed class SampleProfileFilter : ProfileFilterBase
+    {
+        public SampleProfileFilter(Guid id)
+            : base(new LogFilter(Guid.NewGuid(), Guid.NewGuid().ToString()))
+        {
+            Id = id;
+        }
+    }
+}

@@ -1,0 +1,58 @@
+﻿<mah:Flyout x:Class="Genius.Starlog.UI.Views.AddEditMessageParsingFlyout"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Genius.Starlog.UI.Views"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        mc:Ignorable="d"
+        Header="{Binding PageTitle}"
+        Position="Right"
+        Width="600">
+    <mah:Flyout.Resources>
+    </mah:Flyout.Resources>
+
+    <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
+        <DockPanel>
+            <Label>Entity name:</Label>
+            <TextBox Text="{Binding Name}" />
+        </DockPanel>
+        <DockPanel>
+            <Label>Parsing mode:</Label>
+            <ComboBox ItemsSource="{Binding Methods}"
+                      SelectedItem="{Binding Method}"
+                      Validation.ErrorTemplate="{x:Null}">
+            </ComboBox>
+        </DockPanel>
+        <DockPanel>
+            <Label>Pattern:</Label>
+            <TextBox Text="{Binding Pattern}" />
+        </DockPanel>
+        <DockPanel>
+            <Label>Only in messages:</Label>
+            <TextBlock>// TODO: to list the current filters+quick filters, with multi select</TextBlock>
+        </DockPanel>
+        <DockPanel>
+            <Label>Sample output:</Label>
+            <TextBlock>// TODO: To be added soon</TextBlock>
+        </DockPanel>
+        <DockPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                        Style="{StaticResource Starlog.ButtonBar.Button}"
+                        Content="Save"
+                        Background="DarkGreen"
+                        Command="{Binding CommitCommand}" />
+                <Button Grid.Column="1"
+                        Style="{StaticResource Starlog.ButtonBar.Button}"
+                        Content="Reset"
+                        Command="{Binding ResetCommand}" />
+            </Grid>
+        </DockPanel>
+    </StackPanel>
+</mah:Flyout>

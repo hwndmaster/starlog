@@ -26,20 +26,23 @@
 
         <Grid Grid.Row="0" Style="{StaticResource Starlog.TabRootContent.Grid}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="55" /> <!-- Refresh button -->
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" /> <!-- Share button -->
+                <ColumnDefinition Width="Auto" /> <!-- Colorize by dropdown -->
+                <ColumnDefinition Width="Auto" /> <!-- Group by dropdown -->
+                <ColumnDefinition Width="Auto" /> <!-- AutoScroll -->
+                <ColumnDefinition Width="55" />   <!-- Refresh button -->
+                <ColumnDefinition Width="Auto" /> <!-- Search text -->
+                <ColumnDefinition Width="*" />    <!-- Time slider -->
+                <ColumnDefinition Width="Auto" /> <!-- Time slider limit button -->
+                <ColumnDefinition Width="Auto" /> <!-- Time slider limit button -->
+                <ColumnDefinition Width="Auto" /> <!-- Time slider reset button -->
             </Grid.ColumnDefinitions>
 
-            <Button Content="Share" Width="Auto" Padding="5,2" Grid.Column="0"
-                    Command="{Binding ShareCommand}" />
+            <Button ToolTip="Share the selected logs items"
+                    Width="Auto" Padding="5,2" Grid.Column="0"
+                    Command="{Binding ShareCommand}">
+                <Image Source="{StaticResource Share32}" Width="16" />
+            </Button>
 
             <ComboBox Margin="{StaticResource TopBarMargin}" Grid.Column="1"
                       SelectedValue="{Binding ColorizeBy}" SelectedValuePath="Tag">
@@ -74,8 +77,8 @@
 
             <TextBox Text="{Binding Search.Text}" Margin="{StaticResource TopBarMargin}" Grid.Column="5"
                      Name="SearchBox"
-                     Width="350"
-                     mah:TextBoxHelper.Watermark="Type message search text here and press ENTER (Ctrl+F)."
+                     Width="290"
+                     mah:TextBoxHelper.Watermark="Type search text here and press ENTER (Ctrl+F)."
                      mah:TextBoxHelper.ClearTextButton="True"
                      mah:TextBoxHelper.IsClearTextButtonBehaviorEnabled="False"
                      mah:TextBoxHelper.ButtonCommand="{Binding Search.UseRegexSwitchCommand, Mode=OneWay}">

@@ -16,6 +16,7 @@ namespace Genius.Starlog.UI.Views;
 public interface IViewModelFactory
 {
     LogCodecViewModel CreateLogCodec(LogCodec logCodec, ProfileLogCodecBase? profileLogCodec);
+    IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing);
     IProfileViewModel CreateProfile(Profile? profile);
     IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter);
     IProfileFilterSettingsViewModel CreateProfileFilterSettings(LogFilter logFilter, ProfileFilterBase? profileFilter);
@@ -78,6 +79,11 @@ internal sealed class ViewModelFactory : IViewModelFactory
             XmlProfileLogCodec xml => new XmlLogCodecViewModel(xml),
             _ => throw new InvalidOperationException($"{nameof(profileLogCodec)} is of unexpected type {profileLogCodec.GetType().Name}")
         };
+    }
+
+    public IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing)
+    {
+        return new MessageParsingViewModel(messageParsing, _commandBus, _currentProfile, _ui);
     }
 
     public IProfileViewModel CreateProfile(Profile? profile)

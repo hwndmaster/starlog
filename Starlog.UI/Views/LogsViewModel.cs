@@ -4,6 +4,8 @@ using System.Reactive.Linq;
 using System.Windows.Data;
 using System.Windows.Documents;
 using DynamicData;
+using Genius.Atom.UI.Forms.Controls;
+using Genius.Atom.UI.Forms.Controls.AutoGrid;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.LogFiltering;
@@ -32,6 +34,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private readonly ILogContainer _logContainer;
     private readonly ILogRecordMatcher _logRecordMatcher;
     private readonly ILogArtifactsFormatter _artifactsFormatter;
+    private readonly IMessageParsingHandler _messageParsingHandler;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly CompositeDisposable _subscriptions;
     private LogRecordMatcherContext? _filterContext;
@@ -46,16 +49,18 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         ILogsFilteringViewModel logsFilteringViewModel,
         ILogsSearchViewModel logsSearchViewModel,
         IMainController controller,
+        IMessageParsingHandler messageParsingHandler,
         IUiDispatcher uiDispatcher)
     {
         Guard.NotNull(controller);
 
         // Dependencies:
+        AutoGridBuilder = autoGridBuilder.NotNull();
+        _artifactsFormatter = artifactsFormatter.NotNull();
         _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
-        AutoGridBuilder = autoGridBuilder.NotNull();
         _logRecordMatcher = logRecordMatcher.NotNull();
-        _artifactsFormatter = artifactsFormatter.NotNull();
+        _messageParsingHandler = messageParsingHandler.NotNull();
         _uiDispatcher = uiDispatcher.NotNull();
         Filtering = logsFilteringViewModel.NotNull();
         Search = logsSearchViewModel.NotNull();
@@ -242,6 +247,35 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             Search.CreateContext()
         );
 
+        // TODO: Cover with unit tests
+        if (_filterContext.Filter.MessageParsings.Length > 0
+            || MessageParsingColumns is not null)
+        {
+            // TODO: Check if there were changes in `_filterContext.Filter.MessageParsings`
+            //       to prevent re-initialization in case of no changes.
+
+            var messageParsings = _filterContext.Filter.MessageParsings;
+            var extractedColumns = (from messageParsing in messageParsings
+                                    from extractedColumn in _messageParsingHandler.RetrieveColumns(messageParsing)
+                                    select (messageParsing, extractedColumn)).ToArray();
+
+            foreach (var logItem in LogItems)
+            {
+                logItem.MessageParsingEntries = new DynamicColumnEntriesViewModel(() =>
+                {
+                    List<string> parsedEntriesCombined = new();
+                    foreach (var messageParsing in messageParsings)
+                    {
+                        var parsedEntries = _messageParsingHandler.ParseMessage(messageParsing, logItem.Record);
+                        parsedEntriesCombined.AddRange(parsedEntries);
+                    }
+                    return parsedEntriesCombined;
+                });
+            }
+
+            MessageParsingColumns = new DynamicColumnsViewModel(extractedColumns.Select(x => x.extractedColumn).ToArray());
+        }
+
         _uiDispatcher.BeginInvoke(() =>
         {
             SearchText = Search.Text;
@@ -342,6 +376,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public bool SearchUseRegex
     {
         get => GetOrDefault<bool>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public DynamicColumnsViewModel? MessageParsingColumns
+    {
+        get => GetOrDefault<DynamicColumnsViewModel?>();
         set => RaiseAndSetIfChanged(value);
     }
 

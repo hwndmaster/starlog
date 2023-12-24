@@ -20,7 +20,7 @@ public sealed class LogRecordMatcherTests
         var recordTime = _fixture.Create<DateTimeOffset>().ToUniversalTime();
         var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
         var context = new LogRecordMatcherContext(
-            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), false),
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), false, _fixture.CreateMany<MessageParsing>().ToImmutableArray()),
             new LogRecordSearchContext(true, true, _fixture.Create<string>(), null,
                 recordTime - TimeSpan.FromMilliseconds(_fixture.Create<int>()),
                 recordTime + TimeSpan.FromMilliseconds(_fixture.Create<int>())));
@@ -46,7 +46,7 @@ public sealed class LogRecordMatcherTests
         var recordTime = _fixture.Create<DateTimeOffset>().ToUniversalTime();
         var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
         var context = new LogRecordMatcherContext(
-            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), false),
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), false, _fixture.CreateMany<MessageParsing>().ToImmutableArray()),
             new LogRecordSearchContext(true, true, string.Empty, new Regex("t[es]{2}t"),
                 recordTime - TimeSpan.FromMilliseconds(_fixture.Create<int>()),
                 recordTime + TimeSpan.FromMilliseconds(_fixture.Create<int>())));
@@ -154,7 +154,7 @@ public sealed class LogRecordMatcherTests
         var sut = new LogRecordMatcher(_logFilterContainerMock.Object);
         var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
         var context = new LogRecordMatcherContext(
-            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), UseOrCombination: true),
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), UseOrCombination: true, _fixture.CreateMany<MessageParsing>().ToImmutableArray()),
             LogRecordSearchContext.CreateEmpty());
         var logRecord = _fixture.Build<LogRecord>()
             .With(x => x.File, new FileRecord(Path.Combine(_fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
@@ -175,7 +175,7 @@ public sealed class LogRecordMatcherTests
         var sut = new LogRecordMatcher(_logFilterContainerMock.Object);
         var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
         var context = new LogRecordMatcherContext(
-            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), UseOrCombination: true),
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), UseOrCombination: true, _fixture.CreateMany<MessageParsing>().ToImmutableArray()),
             LogRecordSearchContext.CreateEmpty());
         var logRecord = _fixture.Build<LogRecord>()
             .With(x => x.File, new FileRecord(Path.Combine(_fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
@@ -196,7 +196,7 @@ public sealed class LogRecordMatcherTests
         var sut = new LogRecordMatcher(_logFilterContainerMock.Object);
         var filters = _fixture.CreateMany<ProfileFilterBase>().ToImmutableArray();
         var context = new LogRecordMatcherContext(
-            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), UseOrCombination: true),
+            new LogRecordFilterContext(true, _fixture.CreateMany<string>().ToHashSet(), filters, _fixture.Create<bool>(), UseOrCombination: true, _fixture.CreateMany<MessageParsing>().ToImmutableArray()),
             LogRecordSearchContext.CreateEmpty());
         var logRecord = _fixture.Build<LogRecord>()
             .With(x => x.File, new FileRecord(Path.Combine(_fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
