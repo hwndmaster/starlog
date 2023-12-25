@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Genius.Starlog.Core.Models;
 
 /// <summary>
@@ -5,9 +7,16 @@ namespace Genius.Starlog.Core.Models;
 /// </summary>
 public sealed class MessageProfileFilter : ProfileFilterBase
 {
+    [JsonConstructor]
     public MessageProfileFilter(LogFilter logFilter)
         : base(logFilter)
     {
+    }
+
+    public MessageProfileFilter(LogFilter logFilter, Guid predefinedId)
+        : base(logFilter)
+    {
+        Id = predefinedId;
     }
 
     /// <summary>

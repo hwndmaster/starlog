@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using Genius.Atom.Infrastructure.Events;
+using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
@@ -17,16 +18,29 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
 {
     private ConcurrentDictionary<Guid, string[]> _columnsCache = new();
     private ConcurrentDictionary<Guid, Regex> _regexCache = new();
+    private ConcurrentDictionary<Guid, (ProfileFilterBase?, IFilterProcessor?)> _filterCache = new();
 
-    public MessageParsingHandler(IEventBus eventBus)
+    private readonly ILogFilterContainer _logFilterContainer;
+    private readonly ICurrentProfile _currentProfile;
+    private readonly IQuickFilterProvider _quickFilterProvider;
+
+    public MessageParsingHandler(
+        ICurrentProfile currentProfile,
+        IEventBus eventBus,
+        ILogFilterContainer logFilterContainer,
+        IQuickFilterProvider quickFilterProvider)
     {
         Guard.NotNull(eventBus);
+        _currentProfile = currentProfile.NotNull();
+        _logFilterContainer = logFilterContainer.NotNull();
+        _quickFilterProvider = quickFilterProvider.NotNull();
 
         eventBus.WhenFired<ProfilesAffectedEvent>()
             .Subscribe(_ =>
             {
                 _columnsCache.Clear();
                 _regexCache.Clear();
+                _filterCache.Clear();
             });
     }
 
@@ -49,6 +63,31 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
 
     public IEnumerable<string> ParseMessage(MessageParsing item, LogRecord logRecord)
     {
+        if (item.Filters is not null && item.Filters.Length > 0
+            && _currentProfile.Profile is not null)
+        {
+            foreach (var filterId in item.Filters)
+            {
+                var (filter, processor) = _filterCache.GetOrAdd(filterId, _ =>
+                {
+                    var filter = _currentProfile.Profile!.Filters
+                        .Concat(_quickFilterProvider.GetQuickFilters())
+                        .FirstOrDefault(x => x.Id == filterId);
+                    var processor = filter is null ? null : _logFilterContainer.GetFilterProcessor(filter);
+                    return (filter, processor);
+                });
+
+                if (filter is not null && processor is not null
+                    && !processor.IsMatch(filter, logRecord))
+                {
+                    var count = RetrieveColumns(item).Length;
+                    for (var i = 0; i < count; i++)
+                        yield return string.Empty;
+                    yield break;
+                }
+            }
+        }
+
         switch (item.Method)
         {
             case MessageParsingMethod.RegEx:
@@ -64,6 +103,7 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
                     var count = RetrieveColumns(item).Length;
                     for (var i = 0; i < count; i++)
                         yield return string.Empty;
+                    break;
                 }
 
                 for (var i = 1; i < match.Groups.Count; i++)

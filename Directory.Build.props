@@ -13,6 +13,9 @@
 
     <RootNamespace>Genius.$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>$(RootNamespace)</AssemblyName>
+
+    <IsTestProject>False</IsTestProject>
+    <IsTestProject Condition="$(MSBuildProjectName.EndsWith('.Tests'))">True</IsTestProject>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.UI')) == false">
@@ -29,7 +32,7 @@
     <Using Include="System.Threading.Tasks" />
   </ItemGroup>
 
-  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) == false">
+  <ItemGroup Condition="$(IsTestProject) == false">
     <InternalsVisibleTo Include="$(RootNamespace).Tests" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
@@ -37,13 +40,15 @@
   <Import Project="./Atom.targets"/>
 
   <!-- Automated Testing components -->
-  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+  <ItemGroup Condition="$(IsTestProject) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
     <Using Include="AutoFixture" />
     <Using Include="AutoFixture.AutoMoq" />
     <Using Include="Moq" />
+  </ItemGroup>
+  <ItemGroup Condition="$(IsTestProject)">
     <Using Include="Xunit" />
   </ItemGroup>
-  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+  <ItemGroup Condition="$(IsTestProject)">
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
@@ -51,7 +56,7 @@
         <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
+  <ItemGroup Condition="$(IsTestProject) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.AutoMoq" />
     <PackageReference Include="Moq" />

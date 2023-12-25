@@ -247,6 +247,9 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             Search.CreateContext()
         );
 
+        // `MessageParsingColumns` needs to be updated in a UI thread to avoid WPF binding errors.
+        DynamicColumnsViewModel? messageParsingColumnsToSet = null;
+
         // TODO: Cover with unit tests
         if (_filterContext.Filter.MessageParsings.Length > 0
             || MessageParsingColumns is not null)
@@ -273,11 +276,16 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                 });
             }
 
-            MessageParsingColumns = new DynamicColumnsViewModel(extractedColumns.Select(x => x.extractedColumn).ToArray());
+            messageParsingColumnsToSet = new DynamicColumnsViewModel(extractedColumns.Select(x => x.extractedColumn).ToArray());
         }
 
         _uiDispatcher.BeginInvoke(() =>
         {
+            if (messageParsingColumnsToSet is not null)
+            {
+                MessageParsingColumns = messageParsingColumnsToSet;
+            }
+
             SearchText = Search.Text;
             SearchUseRegex = Search.UseRegex;
 

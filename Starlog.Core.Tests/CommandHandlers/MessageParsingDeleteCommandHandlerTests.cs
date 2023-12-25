@@ -1,6 +1,7 @@
 using Genius.Starlog.Core.CommandHandlers;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Messages;
+using Genius.Starlog.Core.TestingUtil;
 
 namespace Genius.Starlog.Core.Tests.CommandHandlers;
 

@@ -36,6 +36,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
     private readonly IProfileQueryService _profileQuery;
     private readonly IProfileSettingsTemplateQueryService _profileSettingsTemplateQuery;
     private readonly ISettingsQueryService _settingsQuery;
+    private readonly IQuickFilterProvider _quickFilterProvider;
     private readonly IUiDispatcher _dispatcher;
     private readonly IUserInteraction _ui;
 
@@ -50,6 +51,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
         IProfileQueryService profileQuery,
         IProfileSettingsTemplateQueryService profileSettingsTemplateQuery,
         ISettingsQueryService settingsQuery,
+        IQuickFilterProvider quickFilterProvider,
         IUiDispatcher dispatcher,
         IUserInteraction ui)
     {
@@ -64,6 +66,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _profileQuery = profileQuery.NotNull();
         _profileSettingsTemplateQuery = profileSettingsTemplateQuery.NotNull();
         _settingsQuery = settingsQuery.NotNull();
+        _quickFilterProvider = quickFilterProvider.NotNull();
         _ui = ui.NotNull();
     }
 
@@ -83,7 +86,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
     public IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing)
     {
-        return new MessageParsingViewModel(messageParsing, _commandBus, _currentProfile, _ui);
+        return new MessageParsingViewModel(messageParsing, _commandBus, _currentProfile, _quickFilterProvider, _ui);
     }
 
     public IProfileViewModel CreateProfile(Profile? profile)

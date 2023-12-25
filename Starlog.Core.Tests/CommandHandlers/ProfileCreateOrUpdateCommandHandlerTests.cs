@@ -2,6 +2,7 @@ using Genius.Starlog.Core.CommandHandlers;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.TestingUtil;
 
 namespace Genius.Starlog.Core.Tests.CommandHandlers;
 
@@ -19,7 +20,7 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
     public async Task ProcessProfileCreateCommand_HappyFlowScenario()
     {
         // Arrange
-        var command = _harness.Create<ProfileCreateCommand>();
+        var command = _harness.Fixture.Create<ProfileCreateCommand>();
 
         // Act
         var guid = await _sut.ProcessAsync(command);
@@ -39,9 +40,9 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         var profile = _harness.CreateProfile();
         var command = new ProfileUpdateCommand(profile.Id)
         {
-            Name = _harness.Create<string>(),
-            Path = _harness.Create<string>(),
-            Settings = _harness.Create<ProfileSettings>()
+            Name = _harness.Fixture.Create<string>(),
+            Path = _harness.Fixture.Create<string>(),
+            Settings = _harness.Fixture.Create<ProfileSettings>()
         };
 
         // Act
@@ -60,11 +61,11 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
     public async Task ProcessProfileUpdateCommand_WhenNoProfileFound_ThrowsException()
     {
         // Arrange
-        var command = new ProfileUpdateCommand(_harness.Create<Guid>())
+        var command = new ProfileUpdateCommand(_harness.Fixture.Create<Guid>())
         {
-            Name = _harness.Create<string>(),
-            Path = _harness.Create<string>(),
-            Settings = _harness.Create<ProfileSettings>()
+            Name = _harness.Fixture.Create<string>(),
+            Path = _harness.Fixture.Create<string>(),
+            Settings = _harness.Fixture.Create<ProfileSettings>()
         };
 
         // Act

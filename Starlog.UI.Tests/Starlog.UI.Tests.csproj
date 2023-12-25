@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Starlog.UI\Starlog.UI.csproj" />
+    <ProjectReference Include="..\Starlog.Core.TestingUtil\Starlog.Core.TestingUtil.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

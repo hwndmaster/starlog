@@ -2,6 +2,7 @@ using Genius.Starlog.Core.CommandHandlers;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.TestingUtil;
 
 namespace Genius.Starlog.Core.Tests.CommandHandlers;
 
@@ -21,7 +22,7 @@ public sealed class MessageParsingCreateOrUpdateCommandHandlerTests
         // Arrange
         var profile = _harness.CreateProfile();
         var messageParsingsCount = profile.MessageParsings.Count;
-        var command = _harness.Build<MessageParsingCreateOrUpdateCommand>()
+        var command = _harness.Fixture.Build<MessageParsingCreateOrUpdateCommand>()
             .With(x => x.ProfileId, profile.Id)
             .Create();
 
@@ -43,7 +44,7 @@ public sealed class MessageParsingCreateOrUpdateCommandHandlerTests
         // Arrange
         var profile = _harness.CreateProfile();
         var messageParsingsCount = profile.MessageParsings.Count;
-        var updatingMessageParsingsId = _harness.Create<Guid>();
+        var updatingMessageParsingsId = _harness.Fixture.Create<Guid>();
         profile.MessageParsings[0] = new MessageParsing { Id = updatingMessageParsingsId };
         var command = new MessageParsingCreateOrUpdateCommand
         {
@@ -61,14 +62,5 @@ public sealed class MessageParsingCreateOrUpdateCommandHandlerTests
         Assert.Equal(command.MessageParsing, profile.MessageParsings[0]);
         Assert.Null(result.MessageParsingAdded);
         Assert.Equal(command.MessageParsing.Id, result.MessageParsingUpdated);
-    }
-
-    private sealed class SampleProfileFilter : ProfileFilterBase
-    {
-        public SampleProfileFilter(Guid id)
-            : base(new LogFilter(Guid.NewGuid(), Guid.NewGuid().ToString()))
-        {
-            Id = id;
-        }
     }
 }

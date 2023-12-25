@@ -7,9 +7,16 @@ namespace Genius.Starlog.Core.Models;
 /// </summary>
 public sealed class TimeAgoProfileFilter : ProfileFilterBase
 {
+    [JsonConstructor]
     public TimeAgoProfileFilter(LogFilter logFilter)
         : base(logFilter)
     {
+    }
+
+    public TimeAgoProfileFilter(LogFilter logFilter, Guid predefinedId)
+        : base(logFilter)
+    {
+        Id = predefinedId;
     }
 
     /// <summary>

@@ -1,7 +1,10 @@
+using System.Collections.ObjectModel;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Atom.Infrastructure.Entities;
 using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views;
@@ -24,8 +27,11 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         MessageParsing? messageParsing,
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
+        IQuickFilterProvider quickFilterProvider,
         IUserInteraction ui)
     {
+        Guard.NotNull(quickFilterProvider);
+
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
@@ -39,6 +45,10 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Name)));
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Pattern)));
         AddValidationRule(new IsRegexValidationRule(nameof(Pattern)), shouldValidatePropertyName: nameof(IsRegex));
+        Filters = quickFilterProvider.GetQuickFilters()
+            .Concat(_currentProfile.Profile.Filters)
+            .Select(x => new ReferenceDto(x.Id, x.Name)).ToList();
+        SelectedFilters = new ObservableCollection<ReferenceDto>();
 
         InitializeProperties(() =>
         {
@@ -70,6 +80,19 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         Name = _messageParsing.Name;
         Method = _messageParsing.Method.ToString();
         Pattern = _messageParsing.Pattern;
+
+        SelectedFilters.Clear();
+        if (_messageParsing.Filters is not null)
+        {
+            foreach (var filter in _messageParsing.Filters)
+            {
+                var foundFilter = Filters.FirstOrDefault(x => x.Id == filter);
+                if (foundFilter != default)
+                {
+                    SelectedFilters.Add(foundFilter);
+                }
+            }
+        }
     }
 
     private async Task<bool> Commit()
@@ -88,6 +111,7 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         messageParsing.Name = Name;
         messageParsing.Method = Enum.Parse<MessageParsingMethod>(Method);
         messageParsing.Pattern = Pattern;
+        messageParsing.Filters = SelectedFilters.Select(x => x.Id).ToArray();
 
         var commandResult = await _commandBus.SendAsync(new MessageParsingCreateOrUpdateCommand
         {
@@ -128,6 +152,9 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         get => GetOrDefault<string>();
         set => RaiseAndSetIfChanged(value);
     }
+
+    public ICollection<ReferenceDto> Filters { get; }
+    public ObservableCollection<ReferenceDto> SelectedFilters { get; }
 
     public bool IsRegex
     {

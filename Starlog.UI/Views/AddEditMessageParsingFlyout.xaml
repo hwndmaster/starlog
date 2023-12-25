@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
         xmlns:local="clr-namespace:Genius.Starlog.UI.Views"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
@@ -30,8 +31,15 @@
             <TextBox Text="{Binding Pattern}" />
         </DockPanel>
         <DockPanel>
-            <Label>Only in messages:</Label>
-            <TextBlock>// TODO: to list the current filters+quick filters, with multi select</TextBlock>
+            <Label>Only in logs with:</Label>
+            <ListBox SelectionMode="Multiple"
+                     ItemsSource="{Binding Filters}"
+                     DisplayMemberPath="Name"
+                     MaxHeight="400">
+                <i:Interaction.Behaviors>
+                    <atom:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedFilters}" />
+                </i:Interaction.Behaviors>
+            </ListBox>
         </DockPanel>
         <DockPanel>
             <Label>Sample output:</Label>
