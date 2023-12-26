@@ -40,6 +40,7 @@ public static class Module
         services.AddSingleton<ILogCodecContainer>(sp => sp.GetRequiredService<LogCodecContainer>());
         services.AddSingleton<IQueryService<LogCodec>>(sp => sp.GetRequiredService<LogCodecContainer>());
 
+        services.AddTransient<IFilterProcessor, FilesFilterProcessor>();
         services.AddTransient<IFilterProcessor, MessageFilterProcessor>();
         services.AddTransient<IFilterProcessor, LoggersFilterProcessor>();
         services.AddTransient<IFilterProcessor, LogLevelsFilterProcessor>();
@@ -82,6 +83,8 @@ public static class Module
     private static void RegisterLogFilters(IServiceProvider serviceProvider)
     {
         var logFilterContainer = serviceProvider.GetRequiredService<ILogFilterContainer>();
+        logFilterContainer.RegisterLogFilter<FilesProfileFilter, FilesFilterProcessor>(
+            new LogFilter(new Guid("836b05dc-8f94-40b2-9606-67452f86ace0"), "File filter"));
         logFilterContainer.RegisterLogFilter<MessageProfileFilter, MessageFilterProcessor>(
             new LogFilter(new Guid("c78616c5-fe0d-4f9b-b46b-38a4b26727e6"), "Message filter"));
         logFilterContainer.RegisterLogFilter<LoggersProfileFilter, LoggersFilterProcessor>(
@@ -110,6 +113,7 @@ public static class Module
         var typeDiscriminators = serviceProvider.GetRequiredService<ITypeDiscriminators>();
 
         // Filters
+        typeDiscriminators.AddMapping<FilesProfileFilter>("files-profile-filter");
         typeDiscriminators.AddMapping<MessageProfileFilter>("msg-profile-filter");
         typeDiscriminators.AddMapping<LoggersProfileFilter>("loggers-profile-filter");
         typeDiscriminators.AddMapping<LogLevelsProfileFilter>("loglevels-profile-filter");

@@ -11,6 +11,9 @@
         Position="Right"
         Width="600">
     <mah:Flyout.Resources>
+        <DataTemplate DataType="{x:Type local:FilesProfileFilterSettingsViewModel}">
+            <local:FilesProfileFilterView DataContext="{Binding .}" />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type local:MessageProfileFilterSettingsViewModel}">
             <local:MessageProfileFilterView DataContext="{Binding .}" />
         </DataTemplate>

@@ -92,6 +92,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                         LogItems.Clear();
                         SelectedLogItems.Clear();
                         SelectedLogItem = null;
+                        Search.DropAllSearches();
                     });
                 }),
             _currentProfile.ProfileChanged

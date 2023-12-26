@@ -15,6 +15,7 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
 
         Icon = profileFilter switch
         {
+            FilesProfileFilter _ => "LogFile32",
             MessageProfileFilter _ => "Message32",
             LoggersProfileFilter _ => "Logger32",
             LogLevelsProfileFilter _ => "LogLevel32",

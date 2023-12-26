@@ -114,6 +114,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
         return profileFilter switch
         {
+            FilesProfileFilter files => new FilesProfileFilterSettingsViewModel(files, _logContainer),
             MessageProfileFilter message => new MessageProfileFilterSettingsViewModel(message, _logContainer),
             LoggersProfileFilter loggers => new LoggersProfileFilterSettingsViewModel(loggers, _logContainer),
             LogLevelsProfileFilter logLevels => new LogLevelsProfileFilterSettingsViewModel(logLevels, _logContainer),
