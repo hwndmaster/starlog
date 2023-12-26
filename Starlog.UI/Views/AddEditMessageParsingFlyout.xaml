@@ -5,15 +5,13 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
+        xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
         xmlns:local="clr-namespace:Genius.Starlog.UI.Views"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
         Header="{Binding PageTitle}"
         Position="Right"
         Width="600">
-    <mah:Flyout.Resources>
-    </mah:Flyout.Resources>
-
     <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
         <DockPanel>
             <Label>Entity name:</Label>
@@ -23,12 +21,11 @@
             <Label>Parsing mode:</Label>
             <ComboBox ItemsSource="{Binding Methods}"
                       SelectedItem="{Binding Method}"
-                      Validation.ErrorTemplate="{x:Null}">
-            </ComboBox>
+                      Validation.ErrorTemplate="{x:Null}" />
         </DockPanel>
         <DockPanel>
             <Label>Pattern:</Label>
-            <TextBox Text="{Binding Pattern}" />
+            <TextBox Text="{Binding Pattern, UpdateSourceTrigger=PropertyChanged}" />
         </DockPanel>
         <DockPanel>
             <Label>Only in logs with:</Label>
@@ -42,8 +39,18 @@
             </ListBox>
         </DockPanel>
         <DockPanel>
-            <Label>Sample output:</Label>
-            <TextBlock>// TODO: To be added soon</TextBlock>
+            <Label>
+                <TextBlock>Sample output:<LineBreak/>Only first 5 are shown</TextBlock>
+            </Label>
+            <StackPanel Orientation="Vertical">
+                <TextBlock Foreground="Red" Text="{Binding TestingError}" Visibility="{Binding TestingError, Converter={atom:NotNullToVisibilityConverter}}" />
+                <DataGrid autogrid:Properties.AutoGridBuilder="{Binding TestAutoGridBuilder}"
+                        autogrid:Properties.ItemsSource="{Binding TestEntries}">
+                    <i:Interaction.Behaviors>
+                        <autogrid:AttachingBehavior />
+                    </i:Interaction.Behaviors>
+                </DataGrid>
+            </StackPanel>
         </DockPanel>
         <DockPanel>
             <Grid>

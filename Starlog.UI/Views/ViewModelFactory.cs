@@ -7,9 +7,11 @@ using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
+using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Views.ProfileFilters;
 using Genius.Starlog.UI.Views.ProfileLogCodecs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Genius.Starlog.UI.Views;
 
@@ -33,6 +35,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
     private readonly ILogFilterContainer _logFilterContainer;
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly IMainController _mainController;
+    private readonly IMessageParsingHandler _messageParsingHandler;
     private readonly IProfileQueryService _profileQuery;
     private readonly IProfileSettingsTemplateQueryService _profileSettingsTemplateQuery;
     private readonly ISettingsQueryService _settingsQuery;
@@ -48,6 +51,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
         ILogFilterContainer logFilterContainer,
         ILogCodecContainer logCodecContainer,
         IMainController mainController,
+        IMessageParsingHandler messageParsingHandler,
         IProfileQueryService profileQuery,
         IProfileSettingsTemplateQueryService profileSettingsTemplateQuery,
         ISettingsQueryService settingsQuery,
@@ -63,6 +67,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _logFilterContainer = logFilterContainer.NotNull();
         _logCodecContainer = logCodecContainer.NotNull();
         _mainController = mainController.NotNull();
+        _messageParsingHandler = messageParsingHandler.NotNull();
         _profileQuery = profileQuery.NotNull();
         _profileSettingsTemplateQuery = profileSettingsTemplateQuery.NotNull();
         _settingsQuery = settingsQuery.NotNull();
@@ -86,7 +91,8 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
     public IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing)
     {
-        return new MessageParsingViewModel(messageParsing, _commandBus, _currentProfile, _quickFilterProvider, _ui);
+        return new MessageParsingViewModel(messageParsing, _commandBus, _currentProfile, _messageParsingHandler,
+            _logContainer, _quickFilterProvider, _ui, App.ServiceProvider.GetRequiredService<MessageParsingTestBuilder>());
     }
 
     public IProfileViewModel CreateProfile(Profile? profile)

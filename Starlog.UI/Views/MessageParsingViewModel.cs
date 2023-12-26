@@ -1,11 +1,15 @@
 using System.Collections.ObjectModel;
 using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.Infrastructure.Entities;
+using Genius.Atom.UI.Forms.Controls.AutoGrid;
+using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFiltering;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.UI.AutoGridBuilders;
 
 namespace Genius.Starlog.UI.Views;
 
@@ -15,11 +19,24 @@ public interface IMessageParsingViewModel
     IActionCommand CommitCommand { get; }
 }
 
+public sealed class MessageParsingTestViewModel : ViewModelBase
+{
+    public MessageParsingTestViewModel(LogRecord logRecord)
+    {
+        LogRecord = logRecord.NotNull();
+    }
+
+    public LogRecord LogRecord { get; }
+    public DynamicColumnEntriesViewModel? Entries { get; set; }
+}
+
 // TODO: Cover with unit tests
 public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingViewModel
 {
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
+    private readonly ILogContainer _logContainer;
+    private readonly IMessageParsingHandler _messageParsingHandler;
     private readonly IUserInteraction _ui;
     private MessageParsing? _messageParsing;
 
@@ -27,15 +44,21 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         MessageParsing? messageParsing,
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
+        IMessageParsingHandler messageParsingHandler,
+        ILogContainer logContainer,
         IQuickFilterProvider quickFilterProvider,
-        IUserInteraction ui)
+        IUserInteraction ui,
+        MessageParsingTestBuilder testAutoGridBuilder)
     {
         Guard.NotNull(quickFilterProvider);
 
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
+        _messageParsingHandler = messageParsingHandler.NotNull();
+        _logContainer = logContainer.NotNull();
         _ui = ui.NotNull();
+        TestAutoGridBuilder = testAutoGridBuilder.NotNull();
 
         // Members initialization:
         _messageParsing = messageParsing;
@@ -55,6 +78,7 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
             if (_messageParsing is not null)
             {
                 Reconcile();
+                ShowTestEntries();
             }
         });
 
@@ -64,6 +88,8 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
             {
                 IsRegex = Method == MessageParsingMethod.RegEx.ToString();
             });
+        this.WhenAnyChanged(x => x.Pattern, x => x.Method).Subscribe(_ => ShowTestEntries());
+        SelectedFilters.WhenCollectionChanged().Subscribe(_ => ShowTestEntries());
 
         // Actions:
         CommitCommand = new ActionCommand(_ => Commit());
@@ -125,8 +151,53 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         return true;
     }
 
-    public MessageParsing? MessageParsing => _messageParsing;
+    private void ShowTestEntries()
+    {
+        if (PropertyHasErrors(nameof(Pattern)))
+            return;
 
+        var model = new MessageParsing {
+            Pattern = Pattern,
+            Method = Enum.Parse<MessageParsingMethod>(Method),
+            Filters = SelectedFilters.Select(x => x.Id).ToArray()
+        };
+        var logs = _logContainer.GetLogs();
+
+        var foundColumns = _messageParsingHandler.RetrieveColumns(model);
+        if (foundColumns.Length == 0)
+        {
+            TestingError = "No columns have been determined by the pattern.";
+            return;
+        }
+
+        TestEntries.Clear();
+        foreach (var log in logs)
+        {
+            var parsed = _messageParsingHandler.ParseMessage(model, log, testingMode: true).ToArray();
+            if (parsed.Length > 0)
+            {
+                TestEntries.Add(new MessageParsingTestViewModel(log)
+                {
+                    Entries = new DynamicColumnEntriesViewModel(() => parsed)
+                });
+            }
+
+            if (TestEntries.Count == 5)
+                break;
+        }
+
+        if (TestEntries.Count == 0)
+        {
+            TestingError = "No records have been found by the pattern.";
+            return;
+        }
+
+        TestColumns = new DynamicColumnsViewModel(foundColumns);
+        TestingError = null;
+    }
+
+    public IAutoGridBuilder TestAutoGridBuilder { get; }
+    public MessageParsing? MessageParsing => _messageParsing;
     public string PageTitle => _messageParsing is null ? "Add message parsing" : "Edit message parsing";
 
     public string Name
@@ -156,9 +227,24 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
     public ICollection<ReferenceDto> Filters { get; }
     public ObservableCollection<ReferenceDto> SelectedFilters { get; }
 
+    public DynamicColumnsViewModel? TestColumns
+    {
+        get => GetOrDefault<DynamicColumnsViewModel?>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public DelayedObservableCollection<MessageParsingTestViewModel> TestEntries { get; }
+        = new TypedObservableCollection<MessageParsingTestViewModel, MessageParsingTestViewModel>();
+
     public bool IsRegex
     {
         get => GetOrDefault<bool>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public string? TestingError
+    {
+        get => GetOrDefault<string>();
         set => RaiseAndSetIfChanged(value);
     }
 

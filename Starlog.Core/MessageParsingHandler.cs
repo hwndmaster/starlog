@@ -11,7 +11,7 @@ namespace Genius.Starlog.Core;
 public interface IMessageParsingHandler
 {
     string[] RetrieveColumns(MessageParsing item);
-    IEnumerable<string> ParseMessage(MessageParsing item, LogRecord logRecord);
+    IEnumerable<string> ParseMessage(MessageParsing item, LogRecord logRecord, bool testingMode = false);
 }
 
 internal sealed partial class MessageParsingHandler : IMessageParsingHandler
@@ -61,7 +61,7 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
         }
     }
 
-    public IEnumerable<string> ParseMessage(MessageParsing item, LogRecord logRecord)
+    public IEnumerable<string> ParseMessage(MessageParsing item, LogRecord logRecord, bool testingMode = false)
     {
         if (item.Filters is not null && item.Filters.Length > 0
             && _currentProfile.Profile is not null)
@@ -80,9 +80,12 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
                 if (filter is not null && processor is not null
                     && !processor.IsMatch(filter, logRecord))
                 {
-                    var count = RetrieveColumns(item).Length;
-                    for (var i = 0; i < count; i++)
-                        yield return string.Empty;
+                    if (!testingMode)
+                    {
+                        var count = RetrieveColumns(item).Length;
+                        for (var i = 0; i < count; i++)
+                            yield return string.Empty;
+                    }
                     yield break;
                 }
             }
@@ -100,9 +103,12 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
                 }
                 if (!match.Success)
                 {
-                    var count = RetrieveColumns(item).Length;
-                    for (var i = 0; i < count; i++)
-                        yield return string.Empty;
+                    if (!testingMode)
+                    {
+                        var count = RetrieveColumns(item).Length;
+                        for (var i = 0; i < count; i++)
+                            yield return string.Empty;
+                    }
                     break;
                 }
 

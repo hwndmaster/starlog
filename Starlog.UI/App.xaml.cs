@@ -85,6 +85,7 @@ public partial class App : Application
 
         // AutoGrid builders
         services.AddTransient<ComparisonAutoGridBuilder>();
+        services.AddTransient<MessageParsingTestBuilder>();
         services.AddTransient<LogItemAutoGridBuilder>();
         services.AddTransient<PlainTextLineRegexTemplatesAutoGridBuilder>();
         services.AddTransient<ProfileAutoGridBuilder>();
