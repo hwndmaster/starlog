@@ -68,7 +68,7 @@ public partial class App : Application
         Atom.Data.Module.Configure(services);
         Atom.Infrastructure.Module.Configure(services);
         Atom.UI.Forms.Module.Configure(services, this);
-        Starlog.Core.Module.Configure(services);
+        Starlog.Core.Module.Configure(services, configuration);
 
         // Views, View models, View model factories, Controllers
         services.AddSingleton<MainWindow>();

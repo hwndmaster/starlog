@@ -13,13 +13,15 @@ using Genius.Starlog.Core.Repositories;
 using Genius.Atom.Data.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Genius.Atom.Infrastructure.Entities;
+using Microsoft.Extensions.Configuration;
+using Genius.Starlog.Core.Configuration;
 
 namespace Genius.Starlog.Core;
 
 [ExcludeFromCodeCoverage]
 public static class Module
 {
-    public static void Configure(IServiceCollection services)
+    public static void Configure(IServiceCollection services, IConfiguration config)
     {
         // Repositories and Query services
         services.RegisterRepository<Profile, ProfileRepository, IProfileQueryService, IProfileRepository>();
@@ -71,6 +73,9 @@ public static class Module
         // Other components
         services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();
         services.AddTransient<IMessageParsingHandler, MessageParsingHandler>();
+
+        // Configurations
+        services.Configure<LogLevelMappingConfiguration>(config.GetSection("LogLevelMapping"));
     }
 
     public static void Initialize(IServiceProvider serviceProvider)

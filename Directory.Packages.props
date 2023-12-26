@@ -17,6 +17,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(FrameworkPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(FrameworkPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="$(FrameworkPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(FrameworkPackageVersion)" />
     <PackageVersion Include="System.Threading.Tasks.Dataflow" Version="$(FrameworkPackageVersion)" />
 
     <!-- Atom Framework -->

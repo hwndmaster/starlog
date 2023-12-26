@@ -7,13 +7,13 @@ using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.Core.Tests.LogReading;
 
-public sealed class PlainTextProfileLogCodecProcessorTests
+public sealed class PlainTextLogCodecProcessorTests
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly Mock<ISettingsQueryService> _settingsQueryMock = new();
     private readonly PlainTextLogCodecProcessor _sut;
 
-    public PlainTextProfileLogCodecProcessorTests()
+    public PlainTextLogCodecProcessorTests()
     {
         _sut = new(_settingsQueryMock.Object);
     }

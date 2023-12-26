@@ -1,4 +1,6 @@
+using Genius.Starlog.Core.Configuration;
 using Genius.Starlog.Core.Models;
+using Microsoft.Extensions.Options;
 
 namespace Genius.Starlog.Core.LogFiltering;
 
@@ -10,22 +12,24 @@ public interface IQuickFilterProvider
 public sealed class QuickFilterProvider : IQuickFilterProvider
 {
     private readonly ILogFilterContainer _logFilterContainer;
+    private readonly LogLevelMappingConfiguration _logLevelMappingConfig;
 
-    public QuickFilterProvider(ILogFilterContainer logFilterContainer)
+    public QuickFilterProvider(ILogFilterContainer logFilterContainer, IOptions<LogLevelMappingConfiguration> logLevelMappingConfig)
     {
         _logFilterContainer = logFilterContainer.NotNull();
+        _logLevelMappingConfig = logLevelMappingConfig.NotNull().Value;
     }
 
     public IEnumerable<ProfileFilterBase> GetQuickFilters()
     {
         var filter1 = _logFilterContainer.CreateProfileFilter<LogLevelsProfileFilter>("Warnings",
             new Guid(0, 0, 0, new byte[] { 0, 0, 0, 0, 0, 0, 1, 0 }));
-        filter1.LogLevels = new [] { "WARN", "WARNING" };
+        filter1.LogLevels = _logLevelMappingConfig.TreatAsWarning;
         yield return filter1;
 
         var filter2 = _logFilterContainer.CreateProfileFilter<LogLevelsProfileFilter>("Errors",
             new Guid(0, 0, 0, new byte[] { 0, 0, 0, 0, 0, 0, 2, 0 }));
-        filter2.LogLevels = new [] { "ERR", "ERROR", "EXCEPTION", "FATAL" };
+        filter2.LogLevels = _logLevelMappingConfig.TreatAsError.Concat(_logLevelMappingConfig.TreatAsCritical).ToArray();
         yield return filter2;
 
         var filter3 = _logFilterContainer.CreateProfileFilter<MessageProfileFilter>("Contains 'Exception'",

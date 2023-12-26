@@ -1,7 +1,9 @@
 using Genius.Atom.Infrastructure.TestingUtil;
+using Genius.Starlog.Core.Configuration;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Microsoft.Extensions.Options;
 
 namespace Genius.Starlog.Core.Tests.LogFiltering;
 
@@ -19,7 +21,15 @@ public sealed class QuickFilterProviderTests
         _logFilterContainer.RegisterLogFilter<MessageProfileFilter, TestFilterProcessor>(_fixture.Create<LogFilter>());
         _logFilterContainer.RegisterLogFilter<ThreadsProfileFilter, TestFilterProcessor>(_fixture.Create<LogFilter>());
 
-        _sut = new QuickFilterProvider(_logFilterContainer);
+        var logLevelMappingConfig = Mock.Of<IOptions<LogLevelMappingConfiguration>>(x => x.Value == new LogLevelMappingConfiguration
+        {
+            TreatAsMinor = _fixture.CreateMany<string>().ToArray(),
+            TreatAsWarning = _fixture.CreateMany<string>().ToArray(),
+            TreatAsError = _fixture.CreateMany<string>().ToArray(),
+            TreatAsCritical = _fixture.CreateMany<string>().ToArray(),
+        });
+
+        _sut = new QuickFilterProvider(_logFilterContainer, logLevelMappingConfig);
     }
 
     [Fact]
