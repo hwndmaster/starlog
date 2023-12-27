@@ -3,7 +3,7 @@
     <AtomLocation>..\atom\</AtomLocation>
   </PropertyGroup>
 
-  <Target Name="AtomDataReference" BeforeTargets="CollectPackageReferences"
+  <Target Name="AtomDataReference" BeforeTargets="PrepareProjectReferences;CollectPackageReferences"
     Condition="'$(ReferenceAtomData)' == 'true'">
     <PropertyGroup>
       <Name>Atom.Data</Name>
@@ -22,7 +22,7 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="AtomInfrastructureReference" BeforeTargets="CollectPackageReferences"
+  <Target Name="AtomInfrastructureReference" BeforeTargets="PrepareProjectReferences;CollectPackageReferences"
     Condition="'$(ReferenceAtomInfrastructure)' == 'true'">
     <PropertyGroup>
       <Name>Atom.Infrastructure</Name>
@@ -46,7 +46,7 @@
 
   </Target>
 
-  <Target Name="AtomUiFormsReference" BeforeTargets="CollectPackageReferences"
+  <Target Name="AtomUiFormsReference" BeforeTargets="PrepareProjectReferences;CollectPackageReferences"
     Condition="'$(ReferenceAtomUiForms)' == 'true'">
     <PropertyGroup>
       <Name>Atom.UI.Forms</Name>
