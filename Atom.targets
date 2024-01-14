@@ -61,10 +61,10 @@
       <PackageReference Include="Genius.$(Name)" Condition="'$(ProjectExists)' != 'true'" />
 
       <!-- 3rd-party dependencies from Atom.UI.Forms -->
-      <Reference Include="DotNetProjects.WpfToolkit.Input" Condition="'$(ProjectExists)' == 'true'">
-        <HintPath>$(Path).Demo\bin\Debug\net8.0-windows\DotNetProjects.Input.Toolkit.dll</HintPath>
-      </Reference>
+      <_AtomUiFormsThirdPartyDependencies Include="$(Path)\bin\Debug\net8.0-windows\*.dll" />
     </ItemGroup>
+
+    <Copy SourceFiles="@(_AtomUiFormsThirdPartyDependencies)" DestinationFolder="$(TargetDir)\" />
 
     <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
       <Reference Include="Genius.$(Name).TestingUtil" Condition="'$(ProjectExists)' == 'true'">

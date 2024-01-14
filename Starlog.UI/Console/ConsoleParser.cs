@@ -12,12 +12,14 @@ public interface IConsoleParser
 // TODO: Cover with unit tests
 internal sealed class ConsoleParser : IConsoleParser, IDisposable
 {
+    private readonly IConsoleController _consoleController;
     private readonly IMainController _mainController;
     private readonly IUserInteraction _ui;
     private HelpWriter? _helpWriter;
 
-    public ConsoleParser(IMainController mainController, IUserInteraction ui)
+    public ConsoleParser(IConsoleController consoleController, IMainController mainController, IUserInteraction ui)
     {
+        _consoleController = consoleController.NotNull();
         _mainController = mainController.NotNull();
         _ui = ui.NotNull();
     }
@@ -46,7 +48,7 @@ internal sealed class ConsoleParser : IConsoleParser, IDisposable
                 async (LoadPathCommandLineOptions opts) =>
                     {
                         if (string.IsNullOrEmpty(opts.Path)) return;
-                        await _mainController.LoadPathAsync(opts);
+                        await _consoleController.LoadPathAsync(opts);
                     }, errors => Task.CompletedTask);
     }
 

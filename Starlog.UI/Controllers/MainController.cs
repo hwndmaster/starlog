@@ -5,15 +5,11 @@ using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.Infrastructure.Io;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
-using Genius.Starlog.Core.LogFlow;
-using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
-using Genius.Starlog.UI.Console;
 using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
-using Genius.Starlog.UI.Views.Comparison;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -27,13 +23,6 @@ public interface IMainController
     /// </summary>
     /// <returns>A task for awaiting the operation completion.</returns>
     Task AutoLoadProfileAsync();
-
-    /// <summary>
-    ///   Loads a file or folder by the specified path with an anonymous not-persisted profile.
-    /// </summary>
-    /// <param name="options">The options of an anonymous profile.</param>
-    /// <returns>A task for awaiting the operation completion.</returns>
-    Task LoadPathAsync(LoadPathCommandLineOptions options);
 
     /// <summary>
     ///   Loads a file or folder by the specified path with an anonymous not-persisted profile.
@@ -54,7 +43,6 @@ public interface IMainController
     void NotifyProfilesAreLoaded();
 
     void OpenProfileContainingFolder(Profile profile);
-    Task OpenProfilesForComparisonAsync(Profile profile1, Profile profile2);
     void SetBusy(bool isBusy);
     void ShowAddProfileForPath(string path);
     void ShowLogsTab();
@@ -68,14 +56,11 @@ internal sealed class MainController : IMainController
 {
     private readonly IClipboardHelper _clipboardHelper;
     private readonly ICommandBus _commandBus;
-    private readonly IComparisonService _comparisonService;
     private readonly ICurrentProfile _currentProfile;
     private readonly IDialogCoordinator _dialogCoordinator;
     private readonly IEventBus _eventBus;
     private readonly IFileService _fileService;
-    private readonly ILogCodecContainer _logCodecContainer;
     private readonly ISettingsQueryService _settingsQuery;
-    private readonly IProfileSettingsTemplateQueryService _templatesQuery;
     private readonly IUserInteraction _ui;
     private readonly Lazy<IMainViewModel> _mainViewModel;
     private readonly ILogger<MainController> _logger;
@@ -87,28 +72,22 @@ internal sealed class MainController : IMainController
     public MainController(
         IClipboardHelper clipboardHelper,
         ICommandBus commandBus,
-        IComparisonService comparisonService,
         ICurrentProfile currentProfile,
         IDialogCoordinator dialogCoordinator,
         IEventBus eventBus,
         IFileService fileService,
-        ILogCodecContainer logCodecContainer,
         ISettingsQueryService settingsQuery,
-        IProfileSettingsTemplateQueryService templatesQuery,
         IUserInteraction ui,
         Lazy<IMainViewModel> mainViewModel,
         ILogger<MainController> logger)
     {
         _clipboardHelper = clipboardHelper.NotNull();
         _commandBus = commandBus.NotNull();
-        _comparisonService = comparisonService.NotNull();
         _currentProfile = currentProfile.NotNull();
         _dialogCoordinator = dialogCoordinator.NotNull();
         _eventBus = eventBus.NotNull();
         _fileService = fileService.NotNull();
-        _logCodecContainer = logCodecContainer.NotNull();
         _settingsQuery = settingsQuery.NotNull();
-        _templatesQuery = templatesQuery.NotNull();
         _ui = ui.NotNull();
         _mainViewModel = mainViewModel.NotNull();
         _logger = logger.NotNull();
@@ -130,64 +109,6 @@ internal sealed class MainController : IMainController
             var profile = tab.Profiles.FirstOrDefault(x => x.Id == settings.AutoLoadProfile);
             profile?.LoadProfileCommand.Execute(null);
         }
-    }
-
-    public async Task LoadPathAsync(LoadPathCommandLineOptions options)
-    {
-        ProfileSettings? settings = null;
-        if (!string.IsNullOrEmpty(options.Template))
-        {
-            // TODO: Cover this condition with unit tests
-            ProfileSettingsTemplate? template = null;
-            if (Guid.TryParse(options.Template, out var templateId))
-            {
-                template = await _templatesQuery.FindByIdAsync(templateId);
-            }
-            if (template is null)
-            {
-                template = (await _templatesQuery.GetAllAsync()).FirstOrDefault(x => x.Name.Equals(options.Template, StringComparison.OrdinalIgnoreCase));
-            }
-            if (template is not null)
-            {
-                settings = template.Settings;
-            }
-        }
-
-        if (settings is null)
-        {
-            var codecName = options.Codec ?? "Plain Text";
-            var logCodec = _logCodecContainer.GetLogCodecs().FirstOrDefault(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
-            if (logCodec is null)
-            {
-                _logger.LogWarning("Couldn't load a profile with unknown codec '{codec}'.", codecName);
-                return;
-            }
-            var profileLogCodec = _logCodecContainer.CreateProfileLogCodec(logCodec);
-            if (profileLogCodec is null)
-            {
-                // TODO: Cover this condition with unit tests
-                _logger.LogWarning("Couldn't create profile codec settings for codec '{codec}'.", codecName);
-                return;
-            }
-            if (options.CodecSettings is not null)
-            {
-                var processor = _logCodecContainer.CreateLogCodecProcessor(profileLogCodec);
-                if (!processor.ReadFromCommandLineArguments(profileLogCodec, options.CodecSettings.ToArray()))
-                {
-                    // Couldn't read arguments, terminating...
-                    _logger.LogWarning("Couldn't load a profile from '{path}' with codec '{codec}' and the following settings: {settings}", options.Path, codecName, string.Join(',', options.CodecSettings));
-                    return;
-                }
-            }
-
-            settings = new ProfileSettings
-            {
-                LogCodec = profileLogCodec,
-                FileArtifactLinesCount = options.FileArtifactLinesCount ?? 0
-            };
-        }
-
-        await LoadPathAsync(options.Path, settings).ConfigureAwait(false);
     }
 
     public async Task LoadPathAsync(string path, ProfileSettings profileSettings)
@@ -254,33 +175,6 @@ internal sealed class MainController : IMainController
         if (path is null)
             return;
         System.Diagnostics.Process.Start("explorer.exe", path);
-    }
-
-    // TODO: To cover with unit tests
-    public async Task OpenProfilesForComparisonAsync(Profile profile1, Profile profile2)
-    {
-        var compareTab = _mainViewModel.Value.Tabs.OfType<IComparisonViewModel>().First();
-        _mainViewModel.Value.IsComparisonAvailable = true;
-        _mainViewModel.Value.SelectedTabIndex = _mainViewModel.Value.Tabs.IndexOf(compareTab);
-
-        SetBusy(true);
-
-        try
-        {
-            var context = await _comparisonService.LoadProfilesAsync(profile1, profile2).ConfigureAwait(false);
-            if (context is not null)
-            {
-                compareTab.PopulateProfiles(context);
-            }
-            else
-            {
-                _ui.ShowWarning("Couldn't load one of the selected profiles. Try opening each profile individually to see more details when any if them is failing.");
-            }
-        }
-        finally
-        {
-            SetBusy(false);
-        }
     }
 
     public void SetBusy(bool isBusy)

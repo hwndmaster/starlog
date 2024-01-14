@@ -27,6 +27,7 @@ public interface IProfilesViewModel : ITabViewModel, IDisposable
 // TODO: Cover with unit tests
 public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 {
+    private readonly IComparisonController _comparisonController;
     private readonly IMainController _controller;
     private readonly IProfileQueryService _profileQuery;
     private readonly IViewModelFactory _vmFactory;
@@ -34,6 +35,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 
     public ProfilesViewModel(
         ICommandBus commandBus,
+        IComparisonController comparisonController,
         ICurrentProfile currentProfile,
         IEventBus eventBus,
         IMainController controller,
@@ -48,6 +50,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         Guard.NotNull(ui);
 
         // Dependencies:
+        _comparisonController = comparisonController.NotNull();
         _controller = controller.NotNull();
         _profileQuery = profileQuery.NotNull();
         _vmFactory = vmFactory.NotNull();
@@ -83,7 +86,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                 return;
             }
 
-            await _controller.OpenProfilesForComparisonAsync(selectedProfiles[0].Profile!, selectedProfiles[1].Profile!);
+            await _comparisonController.OpenProfilesForComparisonAsync(selectedProfiles[0].Profile!, selectedProfiles[1].Profile!);
         });
 
         OpenAddProfileFlyoutCommand = new ActionCommand(_ => {

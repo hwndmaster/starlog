@@ -31,7 +31,7 @@
         "--template",
         "00000000-0000-0000-0000-000000000010"*/
       ],
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/build/net8.0-windows",
       "console": "internalConsole",
       "stopAtEntry": false,
       "requireExactSource": false
