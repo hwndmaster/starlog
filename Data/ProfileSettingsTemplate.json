@@ -6,8 +6,8 @@
       "$v": 1,
       "LogCodec": {
         "$type": "plaintext-profile-log-codec",
-        "$v": 1,
-        "LineRegex": "(?\u003Cdatetime\u003E[\\d\\-]+\\s[\\d:\\.]+\\s[-+][\\d:]+)\\s\\[(?\u003Clevel\u003E\\w+)\\]\\s(?\u003Cmessage\u003E.+)",
+        "$v": 2,
+        "LinePatternId": "04a8fc59-1208-416c-8dee-1393251857b7",
         "LogCodec": "a38a40b6-c07f-49d5-a143-5c9f9f42149b"
       },
       "DateTimeFormat": "yyyy-MM-dd HH:mm:ss.fff zzz",
@@ -23,8 +23,8 @@
       "$v": 1,
       "LogCodec": {
         "$type": "plaintext-profile-log-codec",
-        "$v": 1,
-        "LineRegex": "(?\u003Clevel\u003E\\w\u002B)\\s(?\u003Cdatetime\u003E[\\d\\-:\\.]\u002B\\s[\\d\\-:\\.]\u002B)\\s\\[(?\u003Cthread\u003E\\w\u002B)\\]\\s(?\u003Clogger\u003E[^\\s]\u002B)\\s-\\s(?\u003Cmessage\u003E.\u002B)",
+        "$v": 2,
+        "LinePatternId": "bfd6380c-22a1-4808-b1f4-5e3146c1e5c1",
         "LogCodec": "a38a40b6-c07f-49d5-a143-5c9f9f42149b"
       },
       "DateTimeFormat": "yyyy-MM-dd HH:mm:ss.fff",
@@ -40,8 +40,8 @@
       "$v": 1,
       "LogCodec": {
         "$type": "plaintext-profile-log-codec",
-        "$v": 1,
-        "LineRegex": "(?\u003Cdatetime\u003E[\\d\\-]+\\s[\\d:\\.]+)\\s\\[(?\u003Clevel\u003E\\w+)\\]\\s\u003C(?\u003Cthread\u003E\\w+)\u003E\\s(?\u003Clogger\u003E\\w+)\\s-\\s(?\u003Cmessage\u003E.+)",
+        "$v": 2,
+        "LinePatternId": "2ee1a513-c85a-4921-b402-b58f5309effb",
         "LogCodec": "a38a40b6-c07f-49d5-a143-5c9f9f42149b"
       },
       "DateTimeFormat": "yyyy-MM-dd HH:mm:ss.fff",

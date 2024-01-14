@@ -64,6 +64,13 @@ internal sealed class SettingsRepository : ISettingsRepository
                 Name = "DATETIME TIMEZONE [LEVEL] Message",
                 Type = PatternType.RegularExpression,
                 Pattern = @"(?<datetime>[\d\-]+\s[\d:\.]+\s[-+][\d:]+)\s\[(?<level>\w+)\]\s(?<message>.+)"
+            },
+            new PatternValue
+            {
+                Id = new Guid("2ee1a513-c85a-4921-b402-b58f5309effb"),
+                Name = "DATETIME [LEVEL] <THREAD> Logger - Message",
+                Type = PatternType.RegularExpression,
+                Pattern = @"(?<datetime>[\d\-]+\s[\d:\.]+)\s\[(?<level>\w+)\]\s<(?<thread>\w+)>\s(?<logger>\w+)\s-\s(?<message>.+)"
             }
         }
     };
