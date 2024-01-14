@@ -17,6 +17,7 @@ public interface IProfileViewModel : ISelectable
     string Path { get; set; }
     IActionCommand CommitProfileCommand { get; }
     IActionCommand LoadProfileCommand { get; }
+    IActionCommand OpenContainingFolderCommand { get; }
 }
 
 // TODO: Cover with unit tests
@@ -61,6 +62,8 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         // Actions:
         CommitProfileCommand = new ActionCommand(_ => CommitProfile());
         LoadProfileCommand = new ActionCommand(async _ => await _controller.LoadProfileAsync(_profile!));
+        OpenContainingFolderCommand = new ActionCommand(_ => _controller.OpenProfileContainingFolder(_profile!),
+            _ => _profile is not null);
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profile is not null);
     }
 
@@ -148,8 +151,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     }
 
     public IActionCommand CommitProfileCommand { get; }
-
     public IActionCommand LoadProfileCommand { get; }
-
+    public IActionCommand OpenContainingFolderCommand { get; }
     public IActionCommand ResetCommand { get; }
 }

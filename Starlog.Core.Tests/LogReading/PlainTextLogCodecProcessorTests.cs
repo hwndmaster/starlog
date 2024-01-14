@@ -145,12 +145,12 @@ public sealed class PlainTextLogCodecProcessorTests
     }
 
     [Fact]
-    public async Task ReadAsync_WithInvalidLineRegex_ReturnsNoResult()
+    public async Task ReadAsync_WithInvalidLinePattern_ReturnsNoResult()
     {
         // Arrange
         var profile = CreateSampleProfile();
         using var stream = new MemoryStream(Encoding.Default.GetBytes(_fixture.Create<string>()));
-        ((PlainTextProfileLogCodec)profile.Settings.LogCodec).LineRegex = string.Empty;
+        ((PlainTextProfileLogCodec)profile.Settings.LogCodec).LinePatternId = Guid.NewGuid();
 
         // Act & Verify
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -176,13 +176,14 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var lineRegexName = _fixture.Create<string>();
-        var lineRegexValue = _fixture.Create<string>();
+        var pattern = new PatternValue {
+            Name = lineRegexName,
+            Type = PatternType.RegularExpression,
+            Pattern = _fixture.Create<string>()
+        };
         _settingsQueryMock.Setup(x => x.Get()).Returns(new Settings
         {
-            PlainTextLogCodecLineRegexes = new List<SettingStringValue>
-            {
-                new SettingStringValue(lineRegexName, lineRegexValue)
-            }
+            PlainTextLogCodecLinePatterns = new List<PatternValue> { pattern }
         });
         var profileLogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>());
         string[] codecSettings = new [] { lineRegexName };
@@ -192,7 +193,7 @@ public sealed class PlainTextLogCodecProcessorTests
 
         // Verify
         Assert.True(result);
-        Assert.Equal(lineRegexValue, profileLogCodec.LineRegex);
+        Assert.Equal(pattern.Id, profileLogCodec.LinePatternId);
     }
 
     [Fact]
@@ -217,9 +218,13 @@ public sealed class PlainTextLogCodecProcessorTests
         var anotherLineRegexName = _fixture.Create<string>();
         _settingsQueryMock.Setup(x => x.Get()).Returns(new Settings
         {
-            PlainTextLogCodecLineRegexes = new List<SettingStringValue>
+            PlainTextLogCodecLinePatterns = new List<PatternValue>
             {
-                new SettingStringValue(lineRegexName, _fixture.Create<string>())
+                new PatternValue {
+                    Name = lineRegexName,
+                    Type = PatternType.RegularExpression,
+                    Pattern = _fixture.Create<string>()
+                }
             }
         });
         var profileLogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>());
@@ -245,6 +250,17 @@ public sealed class PlainTextLogCodecProcessorTests
 
     private Profile CreateSampleProfile()
     {
+        var pattern = new PatternValue {
+            Name = _fixture.Create<string>(),
+            Type = PatternType.RegularExpression,
+            Pattern = @"(?<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3})\s(?<level>\w+)\s(?<thread>\d+)\s(?<logger>\w+)\s(?<message>.*)"
+        };
+
+        _settingsQueryMock.Setup(x => x.Get()).Returns(new Settings
+        {
+            PlainTextLogCodecLinePatterns = new List<PatternValue> { pattern }
+        });
+
         return new Profile
         {
             Name = _fixture.Create<string>(),
@@ -254,7 +270,7 @@ public sealed class PlainTextLogCodecProcessorTests
                 FileArtifactLinesCount = 2,
                 LogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>())
                 {
-                    LineRegex = @"(?<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3})\s(?<level>\w+)\s(?<thread>\d+)\s(?<logger>\w+)\s(?<message>.*)"
+                    LinePatternId = pattern.Id
                 }
             }
         };

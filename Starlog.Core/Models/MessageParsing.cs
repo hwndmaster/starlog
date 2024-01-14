@@ -2,12 +2,6 @@ using Genius.Atom.Infrastructure.Entities;
 
 namespace Genius.Starlog.Core.Models;
 
-public enum MessageParsingMethod
-{
-    RegEx,
-    // TODO: PatternMatching
-}
-
 public sealed class MessageParsing : EntityBase
 {
     public MessageParsing()
@@ -18,22 +12,22 @@ public sealed class MessageParsing : EntityBase
     /// <summary>
     ///   The name of the entity.
     /// </summary>
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     /// <summary>
     ///   The parsing method.
     /// </summary>
-    public MessageParsingMethod Method { get; set; }
+    public required PatternType Method { get; set; }
 
     /// <summary>
     ///   The search pattern.
     /// </summary>
-    public string Pattern { get; set; }
+    public required string Pattern { get; set; }
 
     /// <summary>
     ///   An array of pointers to the filters in the current profile.
     ///   This will be used to perform message parsing only of log entries,
     ///   which are satisfied with the selected filters.
     /// </summary>
-    public Guid[] Filters { get; set; }
+    public Guid[] Filters { get; set; } = Array.Empty<Guid>();
 }

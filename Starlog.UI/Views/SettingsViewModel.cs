@@ -7,7 +7,6 @@ using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
-using Genius.Starlog.UI.Views.Generic;
 using ReactiveUI;
 
 namespace Genius.Starlog.UI.Views;
@@ -27,20 +26,20 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         ISettingsQueryService settingsQuery,
         IEventBus eventBus,
         IUserInteraction ui,
-        PlainTextLineRegexTemplatesAutoGridBuilder gridBuilder)
+        PlainTextLinePatternsAutoGridBuilder plainTextLinePatternsGridBuilder)
     {
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _ui = ui.NotNull();
-        PlainTextLogCodecLineRegexTemplatesBuilder = gridBuilder.NotNull();
+        PlainTextLogCodecLinePatternsBuilder = plainTextLinePatternsGridBuilder.NotNull();
 
         // Members initialization:
         _model = settingsQuery.NotNull().Get();
         Reconcile();
 
         // Actions:
-        AddPlainTextLogCodecLineRegexTemplateCommand = new ActionCommand(_ =>
-            AddPlainTextLogCodecLineRegexTemplate(new SettingStringValue("Unnamed", ".*")));
+        AddPlainTextLogCodecLinePatternCommand = new ActionCommand(_ =>
+            AddPlainTextLogCodecLinePattern(new PatternValue{ Name = "Unnamed", Type = PatternType.RegularExpression, Pattern = ".*" }));
 
         // Subscriptions:
         eventBus.WhenFired<SettingsUpdatedEvent>()
@@ -57,10 +56,10 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
     {
         AutoLoadPreviouslyOpenedProfile = _model.AutoLoadPreviouslyOpenedProfile;
 
-        PlainTextLogCodecLineRegexTemplates.Clear();
-        foreach (var regex in _model.PlainTextLogCodecLineRegexes)
+        PlainTextLogCodecLinePatterns.Clear();
+        foreach (var pattern in _model.PlainTextLogCodecLinePatterns)
         {
-            AddPlainTextLogCodecLineRegexTemplate(regex);
+            AddPlainTextLogCodecLinePattern(pattern);
         }
     }
 
@@ -69,28 +68,28 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         await _commandBus.SendAsync(new SettingsUpdateCommand(_model));
     }
 
-    private void AddPlainTextLogCodecLineRegexTemplate(SettingStringValue stringValue)
+    private void AddPlainTextLogCodecLinePattern(PatternValue patternValue)
     {
-        var vm = new RegexValueViewModel(stringValue);
+        var vm = new PatternValueViewModel(patternValue);
         vm.DeleteCommand.Executed.Subscribe(async _ =>
         {
             if (!_ui.AskForConfirmation($"Confirm removing '{vm.Name}'", "Deletion confirmation"))
                 return;
-            PlainTextLogCodecLineRegexTemplates.Remove(vm);
+            PlainTextLogCodecLinePatterns.Remove(vm);
             await RebindAndSendAsync();
         });
         vm.WhenAnyChanged().Subscribe(async _ =>
         {
-            if (PlainTextLogCodecLineRegexTemplates.Any(x => x.HasErrors))
+            if (PlainTextLogCodecLinePatterns.Any(x => x.HasErrors))
                 return;
 
             await RebindAndSendAsync();
         });
-        PlainTextLogCodecLineRegexTemplates.Add(vm);
+        PlainTextLogCodecLinePatterns.Add(vm);
 
         async Task RebindAndSendAsync()
         {
-            _model.PlainTextLogCodecLineRegexes = PlainTextLogCodecLineRegexTemplates.Select(x => new SettingStringValue(x.Name, x.Regex)).ToList();
+            _model.PlainTextLogCodecLinePatterns = PlainTextLogCodecLinePatterns.Select(x => new PatternValue { Name = x.Name, Type = x.Type, Pattern = x.Pattern }).ToList();
             await SendUpdate();
         }
     }
@@ -101,7 +100,7 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         set => RaiseAndSetIfChanged(value, (_, @new) => _model.AutoLoadPreviouslyOpenedProfile = @new);
     }
 
-    public PlainTextLineRegexTemplatesAutoGridBuilder PlainTextLogCodecLineRegexTemplatesBuilder { get; }
-    public ObservableCollection<RegexValueViewModel> PlainTextLogCodecLineRegexTemplates { get; } = new();
-    public IActionCommand AddPlainTextLogCodecLineRegexTemplateCommand { get; }
+    public PlainTextLinePatternsAutoGridBuilder PlainTextLogCodecLinePatternsBuilder { get; }
+    public ObservableCollection<PatternValueViewModel> PlainTextLogCodecLinePatterns { get; } = new();
+    public IActionCommand AddPlainTextLogCodecLinePatternCommand { get; }
 }

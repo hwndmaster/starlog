@@ -34,7 +34,7 @@ public sealed class ComparisonServiceStepDefinitions
                 FileArtifactLinesCount = 2,
                 LogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>())
                 {
-                    LineRegex = @"(?<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3})\s(?<level>\w+)\s(?<thread>\d+)\s(?<logger>\w+)\s(?<message>.*)"
+                    LinePatternId = Guid.NewGuid()
                 }
             }
         };

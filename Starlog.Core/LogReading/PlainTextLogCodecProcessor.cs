@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
 using Genius.Starlog.Core.LogFlow;
+using Genius.Starlog.Core.LogReading.PlainTextLogCodecParsers;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 
@@ -26,11 +26,19 @@ public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
         }
 
         var logCodecSettings = (PlainTextProfileLogCodec)profile.Settings.LogCodec;
-        if (string.IsNullOrEmpty(logCodecSettings.LineRegex))
+        var patternValue = _settingsQuery.Get().PlainTextLogCodecLinePatterns.FirstOrDefault(x => x.Id == logCodecSettings.LinePatternId);
+        if (patternValue is null)
         {
-            throw new InvalidOperationException("Cannot open profile with empty LineRegex setting.");
+            throw new InvalidOperationException("Profile Pattern couldn't not be found: " + logCodecSettings.LinePatternId);
         }
-        Regex regex = new(logCodecSettings.LineRegex);
+
+        // TODO: Cover switch with unit tests
+        IPlainTextLogCodecLineParser lineParser = patternValue.Type switch
+        {
+            PatternType.RegularExpression => new PlainTextLogCodecLineRegexParser(patternValue.Pattern),
+            PatternType.MaskPattern => new PlainTextLogCodecLineMaskPatternParser(patternValue.Pattern),
+            _ => throw new NotSupportedException($"Pattern type '{patternValue.Type}' is not supported.")
+        };
 
         Dictionary<int, LoggerRecord> loggers = new();
         Dictionary<int, LogLevelRecord> logLevels = new();
@@ -48,8 +56,8 @@ public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
                 break;
             }
 
-            var match = regex.Match(line);
-            if (!match.Success)
+            var match = lineParser.Parse(line);
+            if (match is null)
             {
                 if (lastRecord is null)
                 {
@@ -64,14 +72,14 @@ public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
                 FlushRecentRecord();
             }
 
-            var level = match.Groups["level"].Value;
-            var dateTime = DateTimeOffset.ParseExact(match.Groups["datetime"].Value,
+            var level = match.Value.Level;
+            var dateTime = DateTimeOffset.ParseExact(match.Value.DateTime,
                 profile.Settings.DateTimeFormat,
                 Thread.CurrentThread.CurrentCulture,
                 System.Globalization.DateTimeStyles.AssumeUniversal);
-            var thread = match.Groups["thread"].Value;
-            var logger = match.Groups["logger"].Value;
-            var message = match.Groups["message"].Value;
+            var thread = match.Value.Thread;
+            var logger = match.Value.Logger;
+            var message = match.Value.Message;
 
             var loggerHash = logger.GetHashCode();
             if (!loggers.TryGetValue(loggerHash, out var loggerRecord))
@@ -143,11 +151,11 @@ public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
         var logCodecSettings = (PlainTextProfileLogCodec)profileLogCodec;
 
         var settings = _settingsQuery.Get();
-        var template = settings.PlainTextLogCodecLineRegexes.FirstOrDefault(x => x.Name.Equals(codecSettings[0], StringComparison.OrdinalIgnoreCase));
-        if (template is null)
+        var pattern = settings.PlainTextLogCodecLinePatterns.FirstOrDefault(x => x.Name.Equals(codecSettings[0], StringComparison.OrdinalIgnoreCase));
+        if (pattern is null)
             return false;
 
-        logCodecSettings.LineRegex = template.Value;
+        logCodecSettings.LinePatternId = pattern.Id;
         return true;
     }
 }

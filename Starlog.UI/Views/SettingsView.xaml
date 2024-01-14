@@ -11,29 +11,77 @@
             <Setter Property="FontSize" Value="16" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
-        <Style x:Key="SettingPanel" TargetType="DockPanel">
+        <Style x:Key="Settings.DockPanel" TargetType="DockPanel">
+            <Setter Property="Margin" Value="15,0,0,0" />
+        </Style>
+        <Style x:Key="Settings.StackPanel" TargetType="StackPanel">
             <Setter Property="Margin" Value="15,0,0,0" />
         </Style>
     </UserControl.Resources>
     <Grid>
         <StackPanel Orientation="Vertical">
             <Label Style="{StaticResource Category}" Content="General settings" />
-            <DockPanel Style="{StaticResource SettingPanel}">
+            <DockPanel Style="{StaticResource Settings.DockPanel}">
                 <Label>Auto load previously opened profile:</Label>
                 <CheckBox IsChecked="{Binding AutoLoadPreviouslyOpenedProfile}" />
             </DockPanel>
             <Label Style="{StaticResource Category}" Content="Log codec settings" />
-            <DockPanel Style="{StaticResource SettingPanel}">
-                <Label>Plain text line regex templates:</Label>
-                <Button Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                        Command="{Binding AddPlainTextLogCodecLineRegexTemplateCommand}"
-                        Padding="0"
-                        VerticalAlignment="Top"
-                        Height="26">
-                    <Image Source="{StaticResource Plus16}" Width="16" />
+            <StackPanel Style="{StaticResource Settings.StackPanel}" Orientation="Horizontal">
+                <Label>Plain text line patterns:</Label>
+                <Image Source="{StaticResource Info48}" Width="24"
+                       ToolTipService.InitialShowDelay="0"
+                       ToolTipService.Placement="Right">
+                    <Image.Style>
+                        <Style TargetType="{x:Type Image}">
+                            <Setter Property="ToolTip">
+                                <Setter.Value>
+                                    <ToolTip>
+                                        <ToolTip.Content>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock FontWeight="Bold" FontSize="16">Note</TextBlock>
+                                                <Separator/>
+                                                <TextBlock>
+                                                    <Run>Patterns of "Regular Expression" and "Mask Pattern" types must contain the following groups:</Run>
+                                                    <LineBreak />
+                                                    <Run FontFamily="Consolas">&#160;&#160;&#160;- datetime</Run><LineBreak />
+                                                    <Run FontFamily="Consolas">&#160;&#160;&#160;- message</Run><LineBreak />
+                                                    <LineBreak />
+                                                    <Run>Optional groups are:</Run><LineBreak />
+                                                    <Run FontFamily="Consolas">&#160;&#160;&#160;- level</Run><LineBreak />
+                                                    <Run FontFamily="Consolas">&#160;&#160;&#160;- thread</Run><LineBreak />
+                                                    <Run FontFamily="Consolas">&#160;&#160;&#160;- logger</Run><LineBreak />
+                                                    <LineBreak />
+                                                    <Run>Regular Expression example:</Run><LineBreak />
+                                                    <Run FontFamily="Consolas">&#160;&#160;&#160;(?&lt;datetime&gt;[\d\-]+\s[\d:\.]+)\s\[(?&lt;level&gt;\w+)\]\s(?&lt;message&gt;.+)</Run><LineBreak />
+                                                    <LineBreak />
+                                                    <Run>Mask Pattern example:</Run><LineBreak />
+                                                    <Run FontFamily="Consolas">&#160;&#160;&#160;%{datetime} [%{level}] %{message}</Run><LineBreak />
+                                                    <LineBreak />
+                                                    <Run>Both examples will match lines like:</Run><LineBreak />
+                                                    <Run FontFamily="Consolas">&#160;&#160;&#160;2020-01-15 11:22:33.444 [INFO] Sample log message</Run><LineBreak />
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </ToolTip.Content>
+                                    </ToolTip>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Image.Style>
+                </Image>
+                <Button Command="{Binding AddPlainTextLogCodecLinePatternCommand}"
+                        Height="26"
+                        Padding="5,1,5,1"
+                        Margin="10,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource Plus16}" Width="16" />
+                        <TextBlock Text="Add new" Margin="5,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
                 </Button>
-                <DataGrid autogrid:Properties.AutoGridBuilder="{Binding PlainTextLogCodecLineRegexTemplatesBuilder}"
-                          autogrid:Properties.ItemsSource="{Binding PlainTextLogCodecLineRegexTemplates}">
+            </StackPanel>
+            <DockPanel Style="{StaticResource Settings.DockPanel}">
+                <DataGrid autogrid:Properties.AutoGridBuilder="{Binding PlainTextLogCodecLinePatternsBuilder}"
+                          autogrid:Properties.ItemsSource="{Binding PlainTextLogCodecLinePatterns}"
+                          Margin="5,3,0,0">
                     <i:Interaction.Behaviors>
                         <autogrid:AttachingBehavior />
                     </i:Interaction.Behaviors>

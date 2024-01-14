@@ -44,7 +44,7 @@
             </Grid.ColumnDefinitions>
 
             <DockPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2">
-                <logfilteringviews:LogsFilteringView DataContext="{Binding Filtering}" />
+                <!--<logfilteringviews:LogsFilteringView DataContext="{Binding Filtering}" />-->
             </DockPanel>
 
             <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" />

@@ -98,7 +98,7 @@ public sealed class MessageParsingHandlerTests
         var result = _sut.ParseMessage(messageParsing, logRecord).ToArray();
 
         // Verify
-        Assert.True(_filterHarness.MatchingCheckedFor.Any(x => x == (profile.Filters[2], logRecord)));
+        Assert.Contains(_filterHarness.MatchingCheckedFor, x => x == (profile.Filters[2], logRecord));
         Assert.Equal(new [] { "Foo", "Bar" }, result);
     }
 
@@ -118,7 +118,7 @@ public sealed class MessageParsingHandlerTests
         var result = _sut.ParseMessage(messageParsing, logRecord).ToArray();
 
         // Verify
-        Assert.True(_filterHarness.MatchingCheckedFor.Any(x => x == (quickFilters[1], logRecord)));
+        Assert.Contains(_filterHarness.MatchingCheckedFor, x => x == (quickFilters[1], logRecord));
         Assert.Equal(new [] { "Foo", "Bar" }, result);
     }
 
@@ -158,7 +158,8 @@ public sealed class MessageParsingHandlerTests
     {
         return new MessageParsing
         {
-            Method = MessageParsingMethod.RegEx,
+            Name = _fixture.Create<string>(),
+            Method = PatternType.RegularExpression,
             Pattern = @"(?<Lorem>\w+)-(?<Ipsum>\w+)"
         };
     }

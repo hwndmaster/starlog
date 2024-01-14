@@ -31,6 +31,11 @@ public sealed class ProfileContextMenuBehavior : Behavior<DataGrid>
         });
         contextMenu.Items.Add(new MenuItem
         {
+            Header = "Open containing folder",
+            Command = new ActionCommand(_ => OpenContainingFolder())
+        });
+        contextMenu.Items.Add(new MenuItem
+        {
             Header = "Delete",
             InputGestureText = "Del",
             Command = new ActionCommand(_ => DeleteSelected())
@@ -105,5 +110,14 @@ public sealed class ProfileContextMenuBehavior : Behavior<DataGrid>
             return;
 
         vm.OpenEditProfileFlyoutCommand.Execute(null);
+    }
+
+    private void OpenContainingFolder()
+    {
+        if (AssociatedObject.DataContext is not IProfilesViewModel vm)
+            return;
+
+        var profile = vm.Profiles.FirstOrDefault(x => x.IsSelected);
+        profile?.OpenContainingFolderCommand.Execute(null);
     }
 }

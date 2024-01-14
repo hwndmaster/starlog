@@ -45,11 +45,15 @@ public sealed class MessageParsingCreateOrUpdateCommandHandlerTests
         var profile = _harness.CreateProfile();
         var messageParsingsCount = profile.MessageParsings.Count;
         var updatingMessageParsingsId = _harness.Fixture.Create<Guid>();
-        profile.MessageParsings[0] = new MessageParsing { Id = updatingMessageParsingsId };
+        profile.MessageParsings[0] = _harness.Fixture.Build<MessageParsing>()
+            .With(x => x.Id, updatingMessageParsingsId)
+            .Create();
         var command = new MessageParsingCreateOrUpdateCommand
         {
             ProfileId = profile.Id,
-            MessageParsing = new MessageParsing { Id = updatingMessageParsingsId }
+            MessageParsing = _harness.Fixture.Build<MessageParsing>()
+                .With(x => x.Id, updatingMessageParsingsId)
+                .Create()
         };
 
         // Act

@@ -62,9 +62,9 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
 
         // Members initialization:
         _messageParsing = messageParsing;
-        Methods = Enum.GetNames<MessageParsingMethod>();
+        Methods = Enum.GetNames<PatternType>();
         Method = Methods[0];
-        IsRegex = Method == MessageParsingMethod.RegEx.ToString();
+        IsRegex = Method == PatternType.RegularExpression.ToString();
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Name)));
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Pattern)));
         AddValidationRule(new IsRegexValidationRule(nameof(Pattern)), shouldValidatePropertyName: nameof(IsRegex));
@@ -86,7 +86,7 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         this.WhenChanged(x => x.Method)
             .Subscribe(_ =>
             {
-                IsRegex = Method == MessageParsingMethod.RegEx.ToString();
+                IsRegex = Method == PatternType.RegularExpression.ToString();
             });
         this.WhenAnyChanged(x => x.Pattern, x => x.Method).Subscribe(_ => ShowTestEntries());
         SelectedFilters.WhenCollectionChanged().Subscribe(_ => ShowTestEntries());
@@ -133,9 +133,9 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
             return false;
         }
 
-        var messageParsing = _messageParsing ?? new MessageParsing();
+        var messageParsing = _messageParsing ?? new MessageParsing { Name = default!, Method = default, Pattern = default! };
         messageParsing.Name = Name;
-        messageParsing.Method = Enum.Parse<MessageParsingMethod>(Method);
+        messageParsing.Method = Enum.Parse<PatternType>(Method);
         messageParsing.Pattern = Pattern;
         messageParsing.Filters = SelectedFilters.Select(x => x.Id).ToArray();
 
@@ -156,14 +156,15 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         if (PropertyHasErrors(nameof(Pattern)))
             return;
 
-        var model = new MessageParsing {
+        var dummyModel = new MessageParsing {
+            Name = string.Empty,
             Pattern = Pattern,
-            Method = Enum.Parse<MessageParsingMethod>(Method),
+            Method = Enum.Parse<PatternType>(Method),
             Filters = SelectedFilters.Select(x => x.Id).ToArray()
         };
         var logs = _logContainer.GetLogs();
 
-        var foundColumns = _messageParsingHandler.RetrieveColumns(model);
+        var foundColumns = _messageParsingHandler.RetrieveColumns(dummyModel);
         if (foundColumns.Length == 0)
         {
             TestingError = "No columns have been determined by the pattern.";
@@ -173,7 +174,7 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         TestEntries.Clear();
         foreach (var log in logs)
         {
-            var parsed = _messageParsingHandler.ParseMessage(model, log, testingMode: true).ToArray();
+            var parsed = _messageParsingHandler.ParseMessage(dummyModel, log, testingMode: true).ToArray();
             if (parsed.Length > 0)
             {
                 TestEntries.Add(new MessageParsingTestViewModel(log)
@@ -239,7 +240,7 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
     public bool IsRegex
     {
         get => GetOrDefault<bool>();
-        set => RaiseAndSetIfChanged(value);
+        private set => RaiseAndSetIfChanged(value);
     }
 
     public string? TestingError

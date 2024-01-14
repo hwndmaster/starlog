@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Genius.Atom.Infrastructure.Entities;
 using Microsoft.Extensions.Configuration;
 using Genius.Starlog.Core.Configuration;
+using Genius.Starlog.Core.Models.VersionUpgraders;
 
 namespace Genius.Starlog.Core;
 
@@ -73,6 +74,7 @@ public static class Module
         // Other components
         services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();
         services.AddTransient<IMessageParsingHandler, MessageParsingHandler>();
+        services.AddSingleton<PlainTextProfileLogCodecVer1To2Upgrader>();
 
         // Configurations
         services.Configure<LogLevelMappingConfiguration>(config.GetSection("LogLevelMapping"));
@@ -127,11 +129,13 @@ public static class Module
         typeDiscriminators.AddMapping<TimeRangeProfileFilter>("timerange-profile-filter");
 
         // Codecs
-        typeDiscriminators.AddMapping<PlainTextProfileLogCodec>("plaintext-profile-log-codec");
+        typeDiscriminators.AddMapping<PlainTextProfileLogCodecLegacy>("plaintext-profile-log-codec");
+        typeDiscriminators.AddMapping<PlainTextProfileLogCodec, PlainTextProfileLogCodecLegacy, PlainTextProfileLogCodecVer1To2Upgrader>("plaintext-profile-log-codec", 2);
         typeDiscriminators.AddMapping<XmlProfileLogCodec>("xml-profile-log-codec");
 
         // Misc
         typeDiscriminators.AddMapping<ProfileSettings>("profile-settings");
         typeDiscriminators.AddMapping<MessageParsing>("message-parsing");
+        typeDiscriminators.AddMapping<PatternValue>("pattern-value");
     }
 }

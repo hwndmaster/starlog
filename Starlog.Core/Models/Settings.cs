@@ -18,15 +18,7 @@ public sealed class Settings
     public Guid? AutoLoadProfile { get; set; } = null;
 
     /// <summary>
-    ///   A list of regular expression templates which can be used in profiles with log codec type "Plain Text".
+    ///   A list of pattern templates which can be used in profiles with log codec type "Plain Text".
     /// </summary>
-    /// <remarks>
-    ///   Each regular expression should contain the following groups, known by the system:
-    ///   - level
-    ///   - datetime
-    ///   - thread
-    ///   - logger
-    ///   - message
-    /// </remarks>
-    public ICollection<SettingStringValue> PlainTextLogCodecLineRegexes { get; set; } = Array.Empty<SettingStringValue>();
+    public ICollection<PatternValue> PlainTextLogCodecLinePatterns { get; set; } = Array.Empty<PatternValue>();
 }

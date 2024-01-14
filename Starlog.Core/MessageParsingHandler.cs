@@ -46,19 +46,17 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
 
     public string[] RetrieveColumns(MessageParsing item)
     {
-        switch (item.Method)
-        {
-            case MessageParsingMethod.RegEx:
+            return _columnsCache.GetOrAdd(item.Id, (_) =>
             {
-                return _columnsCache.GetOrAdd(item.Id, (_) =>
+                var regex = item.Method switch
                 {
-                    var regex = EntriesRegex();
-                    return regex.Matches(item.Pattern).Select(x => x.Groups["Entry"].Value).ToArray();
-                });
-            }
-            default:
-                throw new NotSupportedException($"Method {item.Method} is not currently supported.");
-        }
+                    PatternType.RegularExpression => EntriesRegex(),
+                    PatternType.MaskPattern => EntriesMaskPattern(),
+                    _ => throw new NotSupportedException($"Method {item.Method} is not currently supported."),
+                };
+
+                return regex.Matches(item.Pattern).Select(x => x.Groups["Entry"].Value).ToArray();
+            });
     }
 
     public IEnumerable<string> ParseMessage(MessageParsing item, LogRecord logRecord, bool testingMode = false)
@@ -93,7 +91,7 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
 
         switch (item.Method)
         {
-            case MessageParsingMethod.RegEx:
+            case PatternType.RegularExpression:
             {
                 var regex = GetRegex(item);
                 var match = regex.Match(logRecord.Message);
@@ -117,6 +115,12 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
 
                 break;
             }
+            case PatternType.MaskPattern:
+            {
+                // TODO: Implement MaskPattern
+                // TODO: Cover it with unit tests
+                break;
+            }
             default:
                 throw new NotSupportedException($"Method {item.Method} is not currently supported.");
         }
@@ -130,4 +134,7 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler
 
     [GeneratedRegex(@"\(\?<(?<Entry>\w+)>")]
     private static partial Regex EntriesRegex();
+
+    [GeneratedRegex(@"%{(?<Entry>\w+)}")]
+    private static partial Regex EntriesMaskPattern();
 }

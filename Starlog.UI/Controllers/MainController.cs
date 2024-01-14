@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.Infrastructure.Events;
+using Genius.Atom.Infrastructure.Io;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFlow;
@@ -51,6 +53,7 @@ public interface IMainController
     void NotifyMainWindowIsLoaded();
     void NotifyProfilesAreLoaded();
 
+    void OpenProfileContainingFolder(Profile profile);
     Task OpenProfilesForComparisonAsync(Profile profile1, Profile profile2);
     void SetBusy(bool isBusy);
     void ShowAddProfileForPath(string path);
@@ -69,6 +72,7 @@ internal sealed class MainController : IMainController
     private readonly ICurrentProfile _currentProfile;
     private readonly IDialogCoordinator _dialogCoordinator;
     private readonly IEventBus _eventBus;
+    private readonly IFileService _fileService;
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly ISettingsQueryService _settingsQuery;
     private readonly IProfileSettingsTemplateQueryService _templatesQuery;
@@ -87,6 +91,7 @@ internal sealed class MainController : IMainController
         ICurrentProfile currentProfile,
         IDialogCoordinator dialogCoordinator,
         IEventBus eventBus,
+        IFileService fileService,
         ILogCodecContainer logCodecContainer,
         ISettingsQueryService settingsQuery,
         IProfileSettingsTemplateQueryService templatesQuery,
@@ -100,6 +105,7 @@ internal sealed class MainController : IMainController
         _currentProfile = currentProfile.NotNull();
         _dialogCoordinator = dialogCoordinator.NotNull();
         _eventBus = eventBus.NotNull();
+        _fileService = fileService.NotNull();
         _logCodecContainer = logCodecContainer.NotNull();
         _settingsQuery = settingsQuery.NotNull();
         _templatesQuery = templatesQuery.NotNull();
@@ -237,6 +243,17 @@ internal sealed class MainController : IMainController
     public void NotifyProfilesAreLoaded()
     {
         _profilesAreLoaded.TrySetResult();
+    }
+
+    [ExcludeFromCodeCoverage]
+    public void OpenProfileContainingFolder(Profile profile)
+    {
+        var path = _fileService.IsDirectory(profile.Path)
+            ? profile.Path
+            : Path.GetDirectoryName(profile.Path);
+        if (path is null)
+            return;
+        System.Diagnostics.Process.Start("explorer.exe", path);
     }
 
     // TODO: To cover with unit tests

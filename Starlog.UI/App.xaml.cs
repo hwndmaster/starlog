@@ -28,6 +28,12 @@ public partial class App : Application
     // Feature Toggles
     public static readonly bool ComparisonFeatureEnabled = false;
 
+    [Obsolete("Shouldn't be used from anywhere, except from unit tests of non-injectable classes.")]
+    internal static void OverrideServiceProvider(IServiceProvider serviceProvider)
+    {
+        ServiceProvider = serviceProvider;
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -87,7 +93,7 @@ public partial class App : Application
         services.AddTransient<ComparisonAutoGridBuilder>();
         services.AddTransient<MessageParsingTestBuilder>();
         services.AddTransient<LogItemAutoGridBuilder>();
-        services.AddTransient<PlainTextLineRegexTemplatesAutoGridBuilder>();
+        services.AddTransient<PlainTextLinePatternsAutoGridBuilder>();
         services.AddTransient<ProfileAutoGridBuilder>();
 
         // Services and Helpers:

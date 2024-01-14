@@ -9,7 +9,7 @@
 
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <LangVersion>11.0</LangVersion>
+    <LangVersion>12.0</LangVersion>
 
     <RootNamespace>Genius.$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>$(RootNamespace)</AssemblyName>

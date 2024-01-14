@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Atom.Infrastructure.TestingUtil.Commands;
 using Genius.Atom.Infrastructure.TestingUtil.Events;
+using Genius.Atom.Infrastructure.TestingUtil.Io;
 using Genius.Atom.UI.Forms;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
@@ -43,6 +44,7 @@ public sealed class MainControllerTests
         _sut = new(_clipboardHelperMock.Object, _commandBus,
             _comparisonServiceMock.Object, _currentProfileMock.Object,
             _dialogCoordinatorMock.Object, _eventBus,
+            new TestFileService(),
             _logCodecContainerMock.Object,
             _settingsQueryMock.Object, _templatesQueryMock.Object, _uiMock.Object,
             new Lazy<IMainViewModel>(() => _mainViewModelMock.Object), _logger);
