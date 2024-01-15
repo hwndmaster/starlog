@@ -2,6 +2,7 @@ using System.Text;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.LogReading.PlainTextLogCodecParsers;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 
@@ -15,7 +16,7 @@ public sealed class PlainTextLogCodecProcessorTests
 
     public PlainTextLogCodecProcessorTests()
     {
-        _sut = new(_settingsQueryMock.Object);
+        _sut = new(_settingsQueryMock.Object, new TestLogger<PlainTextLogCodecLineMaskPatternParser>());
     }
 
     [Fact]

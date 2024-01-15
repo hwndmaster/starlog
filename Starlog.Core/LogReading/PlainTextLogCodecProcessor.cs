@@ -3,16 +3,19 @@ using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading.PlainTextLogCodecParsers;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.LogReading;
 
-public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
+internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
 {
     private readonly ISettingsQueryService _settingsQuery;
+    private readonly ILogger<PlainTextLogCodecLineMaskPatternParser> _plainTextLogCodecLineMaskPatternParserLogger;
 
-    public PlainTextLogCodecProcessor(ISettingsQueryService settingsQuery)
+    public PlainTextLogCodecProcessor(ISettingsQueryService settingsQuery, ILogger<PlainTextLogCodecLineMaskPatternParser> plainTextLogCodecLineMaskPatternParserLogger)
     {
         _settingsQuery = settingsQuery.NotNull();
+        _plainTextLogCodecLineMaskPatternParserLogger = plainTextLogCodecLineMaskPatternParserLogger.NotNull();
     }
 
     public async Task<LogReadingResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings)
@@ -36,7 +39,7 @@ public sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
         IPlainTextLogCodecLineParser lineParser = patternValue.Type switch
         {
             PatternType.RegularExpression => new PlainTextLogCodecLineRegexParser(patternValue.Pattern),
-            PatternType.MaskPattern => new PlainTextLogCodecLineMaskPatternParser(patternValue.Pattern),
+            PatternType.MaskPattern => new PlainTextLogCodecLineMaskPatternParser(profile.Settings.DateTimeFormat, patternValue.Pattern, _plainTextLogCodecLineMaskPatternParserLogger),
             _ => throw new NotSupportedException($"Pattern type '{patternValue.Type}' is not supported.")
         };
 
