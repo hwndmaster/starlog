@@ -41,6 +41,7 @@ public sealed class PlainTextLogCodecViewModel : LogCodecViewModel
             return;
 
         LinePattern = LinePatterns.FirstOrDefault(x => x.Id == settings.LinePattern.Id) ?? LinePatterns[0];
+        _plainTextLogCodec.LinePatternId = LinePattern.Id;
     }
 
     public ObservableCollection<PatternValueViewModel> LinePatterns { get; } = new();

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using Genius.Atom.Infrastructure.Events;
+using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
@@ -47,6 +48,8 @@ public sealed class ProfileSettingsViewModel : ViewModelBase, IProfileSettingsVi
         {
             LogCodecs.Add(vmFactory.CreateLogCodec(logCodec, profileSettings.LogCodec));
         }
+        AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(LogsLookupPattern)));
+        AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(DateTimeFormat)));
 
         InitializeProperties(() =>
         {

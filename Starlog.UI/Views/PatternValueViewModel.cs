@@ -6,7 +6,7 @@ namespace Genius.Starlog.UI.Views;
 // TODO: Cover with unit tests
 public sealed class PatternValueViewModel : ViewModelBase
 {
-    private readonly PatternValue _patternValue;
+    private PatternValue _patternValue;
 
     public PatternValueViewModel(PatternValue patternValue)
     {
@@ -27,6 +27,12 @@ public sealed class PatternValueViewModel : ViewModelBase
             {
                 IsRegex = Type == PatternType.RegularExpression;
             });
+    }
+
+    public PatternValue Commit()
+    {
+        _patternValue = new PatternValue { Id = Id, Name = Name, Type = Type, Pattern = Pattern };
+        return _patternValue;
     }
 
     public Guid Id => _patternValue.Id;

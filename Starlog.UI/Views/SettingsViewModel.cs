@@ -89,7 +89,7 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
 
         async Task RebindAndSendAsync()
         {
-            _model.PlainTextLogCodecLinePatterns = PlainTextLogCodecLinePatterns.Select(x => new PatternValue { Name = x.Name, Type = x.Type, Pattern = x.Pattern }).ToList();
+            _model.PlainTextLogCodecLinePatterns = PlainTextLogCodecLinePatterns.Select(x => x.Commit()).ToList();
             await SendUpdate();
         }
     }
