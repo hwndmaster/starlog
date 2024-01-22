@@ -1,9 +1,14 @@
 using System.Globalization;
+using System.Reactive;
 using System.Windows;
 using System.Windows.Media;
+using Genius.Starlog.Core;
+using Genius.Starlog.Core.Configuration;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.UI.ValueConverters;
 using Genius.Starlog.UI.Views;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Genius.Starlog.UI.Tests.ValueConverters;
 
@@ -11,6 +16,11 @@ public sealed class LogLevelToColorConverterTests
 {
     private static readonly Color _standardColor = Colors.LightGoldenrodYellow;
     private readonly IFixture _fixture = new Fixture();
+
+    public LogLevelToColorConverterTests()
+    {
+        SetupServices();
+    }
 
     [StaFact]
     public void Convert_WhenLogLevelSeverityIsMinor_ThenCorrectColorReturned()
@@ -69,5 +79,25 @@ public sealed class LogLevelToColorConverterTests
         element.Resources.Add("MahApps.Colors.ThemeForeground", _standardColor);
 
         return new(element);
+    }
+
+    private void SetupServices()
+    {
+        var optionsMock = new Mock<IOptions<LogLevelMappingConfiguration>>();
+        optionsMock.SetupGet(x => x.Value).Returns(new LogLevelMappingConfiguration
+        {
+            TreatAsMinor = ["debug", "trace", "statistics"],
+            TreatAsWarning = ["warn", "warning"],
+            TreatAsError = ["err", "error", "exception"],
+            TreatAsCritical = ["fatal"],
+        });
+
+        var services = new ServiceCollection();
+        services.AddSingleton(optionsMock.Object);
+        services.AddSingleton(Mock.Of<ICurrentProfile>(x => x.ProfileClosed == Mock.Of<IObservable<Unit>>()));
+
+#pragma warning disable CS0618 // Type or member is obsolete
+        App.OverrideServiceProvider(services.BuildServiceProvider());
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 }

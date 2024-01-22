@@ -8,16 +8,11 @@
     <Grid>
         <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
             <DockPanel>
-                <Label>Line regex:</Label>
+                <Label>Line pattern:</Label>
                 <ComboBox
-                    ItemsSource="{Binding LineRegexes}"
-                    Text="{Binding LineRegex}"
-                    IsEditable="True">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
+                    ItemsSource="{Binding LinePatterns}"
+                    SelectedItem="{Binding LinePattern}"
+                    DisplayMemberPath="Name">
                 </ComboBox>
             </DockPanel>
         </StackPanel>

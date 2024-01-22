@@ -5,11 +5,6 @@ using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.UI.Views.ProfileLogCodecs;
 
-public sealed record PlainTextLogCodecLineRegex(string Name, string Regex)
-{
-    public override string ToString() => Regex;
-}
-
 // TODO: Cover with unit tests
 public sealed class PlainTextLogCodecViewModel : LogCodecViewModel
 {
@@ -18,16 +13,26 @@ public sealed class PlainTextLogCodecViewModel : LogCodecViewModel
     public PlainTextLogCodecViewModel(PlainTextProfileLogCodec logCodec, ISettingsQueryService settingsQuery)
         : base(logCodec)
     {
+        // Dependencies:
         _plainTextLogCodec = logCodec.NotNull();
 
-        AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(LineRegex)));
-        AddValidationRule(new IsRegexValidationRule(nameof(LineRegex)));
+        // Members initialization:
+        AddValidationRule(new NotNullValidationRule(nameof(LinePattern)));
 
-        var templates = settingsQuery.NotNull().Get().PlainTextLogCodecLineRegexes;
-        foreach (var template in templates)
+        var patterns = settingsQuery.NotNull().Get().PlainTextLogCodecLinePatterns;
+        foreach (var pattern in patterns)
         {
-            LineRegexes.Add(new PlainTextLogCodecLineRegex(template.Name, template.Value));
+            LinePatterns.Add(new PatternValueViewModel(pattern));
         }
+        LinePattern = LinePatterns.FirstOrDefault(x => x.Id == _plainTextLogCodec.LinePatternId)
+            ?? LinePatterns[0];
+
+        // Subscriptions:
+        this.WhenChanged(x => x.LinePattern)
+            .Subscribe(x => {
+                if (!PropertyHasErrors(nameof(LinePattern)))
+                    _plainTextLogCodec.LinePatternId = LinePattern.Id;
+            });
     }
 
     internal override void CopySettingsFrom(LogCodecViewModel logCodec)
@@ -35,19 +40,15 @@ public sealed class PlainTextLogCodecViewModel : LogCodecViewModel
         if (logCodec is not PlainTextLogCodecViewModel settings)
             return;
 
-        LineRegex = settings.LineRegex;
+        LinePattern = LinePatterns.FirstOrDefault(x => x.Id == settings.LinePattern.Id) ?? LinePatterns[0];
+        _plainTextLogCodec.LinePatternId = LinePattern.Id;
     }
 
-    public ObservableCollection<PlainTextLogCodecLineRegex> LineRegexes { get; } = new();
+    public ObservableCollection<PatternValueViewModel> LinePatterns { get; } = new();
 
-    public string LineRegex
+    public PatternValueViewModel LinePattern
     {
-        get => GetOrDefault(_plainTextLogCodec.LineRegex);
-        set => RaiseAndSetIfChanged(value, (_, v) => {
-                if (!PropertyHasErrors(nameof(LineRegex)))
-                {
-                    _plainTextLogCodec.LineRegex = v;
-                }
-            });
+        get => GetOrDefault<PatternValueViewModel>();
+        set => RaiseAndSetIfChanged(value);
     }
 }

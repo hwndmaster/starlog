@@ -10,7 +10,9 @@ public partial class ProfilesView
     {
         InitializeComponent();
 
-        this.Loaded += (sender, args) =>
+        this.WhenLoadedOneTime().Subscribe(_ =>
+        {
             WpfHelpers.AddFlyout<AddEditProfileFlyout>(this, nameof(ProfilesViewModel.IsAddEditProfileVisible), nameof(ProfilesViewModel.EditingProfile));
+        });
     }
 }

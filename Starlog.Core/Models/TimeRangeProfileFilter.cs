@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Genius.Starlog.Core.Models;
 
 /// <summary>
@@ -5,9 +7,16 @@ namespace Genius.Starlog.Core.Models;
 /// </summary>
 public sealed class TimeRangeProfileFilter : ProfileFilterBase
 {
+    [JsonConstructor]
     public TimeRangeProfileFilter(LogFilter logFilter)
         : base(logFilter)
     {
+    }
+
+    public TimeRangeProfileFilter(LogFilter logFilter, Guid predefinedId)
+        : base(logFilter)
+    {
+        Id = predefinedId;
     }
 
     public void SetTimeFromToExtended(DateTimeOffset @from, DateTimeOffset @to)

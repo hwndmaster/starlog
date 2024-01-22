@@ -4,7 +4,9 @@ global using System.Linq;
 global using System.Windows;
 global using Genius.Atom.Infrastructure;
 global using Genius.Atom.UI.Forms;
-
+using System.IO;
+using System.Reflection;
+using Genius.Starlog.Core;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Console;
 using Genius.Starlog.UI.Controllers;
@@ -23,11 +25,33 @@ public partial class App : Application
     public static IServiceProvider ServiceProvider { get; private set; }
 #pragma warning restore CS8618
 
+    // Feature Toggles
+    public static readonly bool ComparisonFeatureEnabled = false;
+
+    [Obsolete("Shouldn't be used from anywhere, except from unit tests of non-injectable classes.")]
+    internal static void OverrideServiceProvider(IServiceProvider serviceProvider)
+    {
+        ServiceProvider = serviceProvider;
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
+#if DEBUG
+        // This is necessary to manually resolve Atom.UI.Forms's dependencies,
+        // when referenced directly to dll, avoiding NuGet.
+        AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
+            var proposedPath = Path.GetDirectoryName(args.RequestingAssembly!.Location) + "\\" + args.Name.Split(',')[0] + ".dll";
+            if (!File.Exists(proposedPath))
+                return null;
+            var assembly = Assembly.LoadFile(proposedPath);
+            return assembly;
+        };
+#endif
+
         var serviceCollection = new ServiceCollection();
+
         ConfigureServices(serviceCollection);
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
@@ -47,25 +71,28 @@ public partial class App : Application
         Task.Run(() => mainController.AutoLoadProfileAsync());
     }
 
+    protected override void OnExit(ExitEventArgs e)
+    {
+        var currentProfile = ServiceProvider.GetRequiredService<ICurrentProfile>();
+        (currentProfile as IDisposable)?.Dispose();
+
+        base.OnExit(e);
+    }
+
     private void ConfigureServices(IServiceCollection services)
     {
         Atom.Data.Module.Configure(services);
         Atom.Infrastructure.Module.Configure(services);
-        Atom.UI.Forms.Module.Configure(services, this);
-        Starlog.Core.Module.Configure(services);
+        var configuration = Atom.UI.Forms.Module.Configure(services, this);
+        Starlog.Core.Module.Configure(services, configuration);
 
-        // Framework:
-        services.AddLogging(x =>
-        {
-#if DEBUG
-            x.SetMinimumLevel(LogLevel.Trace);
-            x.AddDebug();
-#endif
-        });
-
-        // Views, View models, View model factories, Controllers
-        services.AddSingleton<MainWindow>();
+        // Controllers
+        services.AddSingleton<IComparisonController, ComparisonController>();
+        services.AddSingleton<IConsoleController, ConsoleController>();
         services.AddSingleton<IMainController, MainController>();
+
+        // Views, View models, View model factories
+        services.AddSingleton<MainWindow>();
         services.AddSingleton<IViewModelFactory, ViewModelFactory>();
         services.AddSingleton<IMainViewModel, MainViewModel>();
         services.AddSingleton<IProfilesViewModel, ProfilesViewModel>();
@@ -78,8 +105,9 @@ public partial class App : Application
 
         // AutoGrid builders
         services.AddTransient<ComparisonAutoGridBuilder>();
+        services.AddTransient<MessageParsingTestBuilder>();
         services.AddTransient<LogItemAutoGridBuilder>();
-        services.AddTransient<PlainTextLineRegexTemplatesAutoGridBuilder>();
+        services.AddTransient<PlainTextLinePatternsAutoGridBuilder>();
         services.AddTransient<ProfileAutoGridBuilder>();
 
         // Services and Helpers:
@@ -90,6 +118,13 @@ public partial class App : Application
 
     private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
+        try
+        {
+            var logger = ServiceProvider.GetService<ILogger<App>>();
+            logger?.LogCritical(e.Exception, e.Exception.Message);
+        }
+        catch (Exception) {}
+
 #if !DEBUG
         MessageBox.Show("An unhandled exception just occurred: " + e.Exception.Message, "Unhandled Exception", MessageBoxButton.OK, MessageBoxImage.Warning);
         e.Handled = true;

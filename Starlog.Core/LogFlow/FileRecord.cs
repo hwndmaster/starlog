@@ -8,12 +8,14 @@ namespace Genius.Starlog.Core.LogFlow;
 public sealed class FileRecord
 {
     public FileRecord(string fullPath, long lastReadOffset)
+        : this(fullPath.NotNull(), Path.GetFileName(fullPath).NotNull(), lastReadOffset)
     {
-        FullPath = fullPath.NotNull();
+    }
 
-        var fileName = Path.GetFileName(fullPath);
-        FileName = fileName.NotNull();
-
+    private FileRecord(string fullPath, string fileName, long lastReadOffset)
+    {
+        FullPath = fullPath;
+        FileName = fileName;
         LastReadOffset = lastReadOffset;
     }
 

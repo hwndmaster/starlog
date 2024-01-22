@@ -25,8 +25,9 @@ public interface IProfilesViewModel : ITabViewModel, IDisposable
 }
 
 // TODO: Cover with unit tests
-internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
+public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 {
+    private readonly IComparisonController _comparisonController;
     private readonly IMainController _controller;
     private readonly IProfileQueryService _profileQuery;
     private readonly IViewModelFactory _vmFactory;
@@ -34,6 +35,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 
     public ProfilesViewModel(
         ICommandBus commandBus,
+        IComparisonController comparisonController,
         ICurrentProfile currentProfile,
         IEventBus eventBus,
         IMainController controller,
@@ -48,10 +50,30 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         Guard.NotNull(ui);
 
         // Dependencies:
+        _comparisonController = comparisonController.NotNull();
         _controller = controller.NotNull();
         _profileQuery = profileQuery.NotNull();
         _vmFactory = vmFactory.NotNull();
         AutoGridBuilder = autoGridBuilder.NotNull();
+
+        // Member initialization:
+        DropAreas = new List<DropAreaViewModel>
+        {
+            new DropAreaViewModel("Create a new profile", (dropObj) =>
+                {
+                    if (dropObj is string[] fileDrop)
+                    {
+                        _controller.ShowAddProfileForPath(fileDrop[0]);
+                    }
+                }),
+            new DropAreaViewModel("Open immediately", (dropObj) =>
+                {
+                    if (dropObj is string[] fileDrop)
+                    {
+                        _controller.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0]);
+                    }
+                })
+        };
 
         // Actions:
         CompareSelectedCommand = new ActionCommand(async _ => {
@@ -64,7 +86,7 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                 return;
             }
 
-            await _controller.OpenProfilesForComparisonAsync(selectedProfiles[0].Profile!, selectedProfiles[1].Profile!);
+            await _comparisonController.OpenProfilesForComparisonAsync(selectedProfiles[0].Profile!, selectedProfiles[1].Profile!);
         });
 
         OpenAddProfileFlyoutCommand = new ActionCommand(_ => {
@@ -167,6 +189,14 @@ internal sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         get => GetOrDefault<string>();
         set => RaiseAndSetIfChanged(value);
     }
+
+    public ICollection<DropAreaViewModel> DropAreas
+    {
+        get => GetOrDefault<ICollection<DropAreaViewModel>>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool ComparisonFeatureEnabled => App.ComparisonFeatureEnabled;
 
     public ICommand CompareSelectedCommand { get; }
     public ICommand DeleteProfileCommand { get; }

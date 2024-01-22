@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Starlog.Core.Tests", "Starl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Starlog.UI.Tests", "Starlog.UI.Tests\Starlog.UI.Tests.csproj", "{370E382B-895A-4E59-88DF-7845E82F5CF9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Starlog.Core.TestingUtil", "Starlog.Core.TestingUtil\Starlog.Core.TestingUtil.csproj", "{2C6C96C9-27A2-45DB-B9FE-9F1E29B649B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{370E382B-895A-4E59-88DF-7845E82F5CF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{370E382B-895A-4E59-88DF-7845E82F5CF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{370E382B-895A-4E59-88DF-7845E82F5CF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C6C96C9-27A2-45DB-B9FE-9F1E29B649B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C6C96C9-27A2-45DB-B9FE-9F1E29B649B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C6C96C9-27A2-45DB-B9FE-9F1E29B649B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C6C96C9-27A2-45DB-B9FE-9F1E29B649B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

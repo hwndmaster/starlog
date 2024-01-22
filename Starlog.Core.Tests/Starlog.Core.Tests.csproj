@@ -2,27 +2,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Starlog.Core\Starlog.Core.csproj" />
+    <ProjectReference Include="..\Starlog.Core.TestingUtil\Starlog.Core.TestingUtil.csproj" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <ReferenceAtomData>true</ReferenceAtomData>
+    <ReferenceAtomInfrastructure>true</ReferenceAtomInfrastructure>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="SpecFlow.xUnit" />
-  </ItemGroup>
-
-  <ItemGroup Condition="$(PERSONAL_ENV) == true">
-    <Reference Include="Genius.Atom.Data">
-      <HintPath>..\..\atom\Atom.Data\bin\Debug\net7.0\Genius.Atom.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="Genius.Atom.Infrastructure">
-      <HintPath>..\..\atom\Atom.Infrastructure\bin\Debug\net7.0\Genius.Atom.Infrastructure.dll</HintPath>
-    </Reference>
-    <Reference Include="Genius.Atom.Infrastructure.TestingUtil">
-      <HintPath>..\..\atom\Atom.Infrastructure.TestingUtil\bin\Debug\net7.0\Genius.Atom.Infrastructure.TestingUtil.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup Condition="$(PERSONAL_ENV) != true">
-    <PackageReference Include="Genius.Atom.Data" />
-    <PackageReference Include="Genius.Atom.Infrastructure" />
-    <PackageReference Include="Genius.Atom.Infrastructure.TestingUtil" />
   </ItemGroup>
 
 </Project>

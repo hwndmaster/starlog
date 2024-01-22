@@ -7,18 +7,22 @@ using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
+using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Views.ProfileFilters;
 using Genius.Starlog.UI.Views.ProfileLogCodecs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Genius.Starlog.UI.Views;
 
 public interface IViewModelFactory
 {
     LogCodecViewModel CreateLogCodec(LogCodec logCodec, ProfileLogCodecBase? profileLogCodec);
+    IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing);
     IProfileViewModel CreateProfile(Profile? profile);
     IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter);
     IProfileFilterSettingsViewModel CreateProfileFilterSettings(LogFilter logFilter, ProfileFilterBase? profileFilter);
+    IProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings);
 }
 
 [ExcludeFromCodeCoverage]
@@ -31,9 +35,11 @@ internal sealed class ViewModelFactory : IViewModelFactory
     private readonly ILogFilterContainer _logFilterContainer;
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly IMainController _mainController;
+    private readonly IMessageParsingHandler _messageParsingHandler;
     private readonly IProfileQueryService _profileQuery;
     private readonly IProfileSettingsTemplateQueryService _profileSettingsTemplateQuery;
     private readonly ISettingsQueryService _settingsQuery;
+    private readonly IQuickFilterProvider _quickFilterProvider;
     private readonly IUiDispatcher _dispatcher;
     private readonly IUserInteraction _ui;
 
@@ -45,9 +51,11 @@ internal sealed class ViewModelFactory : IViewModelFactory
         ILogFilterContainer logFilterContainer,
         ILogCodecContainer logCodecContainer,
         IMainController mainController,
+        IMessageParsingHandler messageParsingHandler,
         IProfileQueryService profileQuery,
         IProfileSettingsTemplateQueryService profileSettingsTemplateQuery,
         ISettingsQueryService settingsQuery,
+        IQuickFilterProvider quickFilterProvider,
         IUiDispatcher dispatcher,
         IUserInteraction ui)
     {
@@ -59,9 +67,11 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _logFilterContainer = logFilterContainer.NotNull();
         _logCodecContainer = logCodecContainer.NotNull();
         _mainController = mainController.NotNull();
+        _messageParsingHandler = messageParsingHandler.NotNull();
         _profileQuery = profileQuery.NotNull();
         _profileSettingsTemplateQuery = profileSettingsTemplateQuery.NotNull();
         _settingsQuery = settingsQuery.NotNull();
+        _quickFilterProvider = quickFilterProvider.NotNull();
         _ui = ui.NotNull();
     }
 
@@ -79,10 +89,15 @@ internal sealed class ViewModelFactory : IViewModelFactory
         };
     }
 
+    public IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing)
+    {
+        return new MessageParsingViewModel(messageParsing, _commandBus, _currentProfile, _messageParsingHandler,
+            _logContainer, _quickFilterProvider, _ui, App.ServiceProvider.GetRequiredService<MessageParsingTestBuilder>());
+    }
+
     public IProfileViewModel CreateProfile(Profile? profile)
     {
-        return new ProfileViewModel(profile, _commandBus, _currentProfile, _eventBus, _mainController, _profileQuery,
-            _profileSettingsTemplateQuery, _logCodecContainer, this, _dispatcher, _ui);
+        return new ProfileViewModel(profile, _commandBus, _mainController, _profileQuery, this, _ui);
     }
 
     public IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter)
@@ -99,6 +114,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
         return profileFilter switch
         {
+            FilesProfileFilter files => new FilesProfileFilterSettingsViewModel(files, _logContainer),
             MessageProfileFilter message => new MessageProfileFilterSettingsViewModel(message, _logContainer),
             LoggersProfileFilter loggers => new LoggersProfileFilterSettingsViewModel(loggers, _logContainer),
             LogLevelsProfileFilter logLevels => new LogLevelsProfileFilterSettingsViewModel(logLevels, _logContainer),
@@ -107,5 +123,18 @@ internal sealed class ViewModelFactory : IViewModelFactory
             TimeRangeProfileFilter timeRange => new TimeRangeProfileFilterSettingsViewModel(timeRange, _logContainer, isNewFilter),
             _ => throw new InvalidOperationException($"{nameof(profileFilter)} is of unexpected type {profileFilter.GetType().Name}")
         };
+    }
+
+    public IProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings)
+    {
+        var codecName = "Plain Text";
+        var logCodec = _logCodecContainer.GetLogCodecs().First(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
+        profileSettings ??= new ProfileSettings
+        {
+            LogCodec = _logCodecContainer.CreateProfileLogCodec(logCodec)
+        };
+
+        return new ProfileSettingsViewModel(profileSettings, _eventBus, _profileSettingsTemplateQuery,
+            _logCodecContainer, this, _dispatcher, _ui);
     }
 }

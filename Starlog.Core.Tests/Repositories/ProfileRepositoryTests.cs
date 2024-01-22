@@ -106,6 +106,6 @@ public sealed class ProfileRepositoryTests
         _persisterMock.Setup(x => x.LoadCollection<Profile>(It.IsAny<string>()))
             .Returns(profiles);
         return new ProfileRepository(_eventBus, _persisterMock.Object,
-            new TestLogger<ProfileRepository>());
+            new TestLogger<ProfileRepository>(), Mock.Of<ISettingsRepository>());
     }
 }

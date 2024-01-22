@@ -3,30 +3,32 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <FrameworkPackageVersion>8.0.0</FrameworkPackageVersion>
+    <AtomPackageVersion>0.0.39</AtomPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Microsoft common dependencies -->
     <PackageVersion Include="System.Reactive" Version="6.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0"/>
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(FrameworkPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(FrameworkPackageVersion)"/>
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(FrameworkPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(FrameworkPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(FrameworkPackageVersion)" />
+    <PackageVersion Include="System.Threading.Tasks.Dataflow" Version="$(FrameworkPackageVersion)" />
 
     <!-- Atom Framework -->
-    <PackageVersion Include="Genius.Atom.Data" Version="0.0.38" />
-    <PackageVersion Include="Genius.Atom.Infrastructure" Version="0.0.38" />
-    <PackageVersion Include="Genius.Atom.Infrastructure.TestingUtil" Version="0.0.38" />
-    <PackageVersion Include="Genius.Atom.UI.Forms" Version="0.0.38" />
-    <PackageVersion Include="Genius.Atom.UI.Forms.TestingUtil" Version="0.0.38" />
+    <PackageVersion Include="Genius.Atom.Data" Version="$(AtomPackageVersion)" />
+    <PackageVersion Include="Genius.Atom.Infrastructure" Version="$(AtomPackageVersion)" />
+    <PackageVersion Include="Genius.Atom.Infrastructure.TestingUtil" Version="$(AtomPackageVersion)" />
+    <PackageVersion Include="Genius.Atom.UI.Forms" Version="$(AtomPackageVersion)" />
+    <PackageVersion Include="Genius.Atom.UI.Forms.TestingUtil" Version="$(AtomPackageVersion)" />
 
     <!-- WPF/UI related dependencies -->
     <PackageVersion Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
     <PackageVersion Include="MahApps.Metro" Version="2.4.10" />
-    <PackageVersion Include="ReactiveUI" Version="19.5.1" />
-    <PackageVersion Include="ReactiveUI.WPF" Version="19.5.1" />
+    <PackageVersion Include="ReactiveUI" Version="19.5.31" />
+    <PackageVersion Include="ReactiveUI.WPF" Version="19.5.31" />
     <PackageVersion Include="ReactiveUI.Events.WPF" Version="15.1.1" />
     <PackageVersion Include="WpfAnimatedGif" Version="2.0.2" />
 
@@ -34,14 +36,12 @@
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
 
     <!-- Automated Testing components -->
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.7.2" />
-    <PackageVersion Include="xunit" Version="2.5.1" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageVersion Include="xunit" Version="2.6.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.5" />
     <PackageVersion Include="Xunit.StaFact" Version="1.1.11" />
-    <PackageVersion Include="AutoFixture" Version="4.18.0" />
-    <PackageVersion Include="AutoFixture.AutoMoq" Version="4.18.0" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.0" />
-    <PackageVersion Include="coverlet.msbuild" Version="6.0.0" />
+    <PackageVersion Include="AutoFixture" Version="4.18.1" />
+    <PackageVersion Include="AutoFixture.AutoMoq" Version="4.18.1" />
     <PackageVersion Include="Moq" Version="4.18.2" />
     <PackageVersion Include="SpecFlow.xUnit" Version="3.9.74" />
   </ItemGroup>

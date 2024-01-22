@@ -1,17 +1,53 @@
 ﻿[
   {
+    "Name": "Serilog default",
+    "Settings": {
+      "$type": "profile-settings",
+      "$v": 1,
+      "LogCodec": {
+        "$type": "plaintext-profile-log-codec",
+        "$v": 2,
+        "LinePatternId": "04a8fc59-1208-416c-8dee-1393251857b7",
+        "LogCodec": "a38a40b6-c07f-49d5-a143-5c9f9f42149b"
+      },
+      "DateTimeFormat": "yyyy-MM-dd HH:mm:ss.fff zzz",
+      "LogsLookupPattern": "*.log",
+      "FileArtifactLinesCount": 0
+    },
+    "Id": "de31cdb8-8548-4fc4-b0c1-80846a2e9c75"
+  },
+  {
     "Name": "Starfix",
     "Settings": {
       "$type": "profile-settings",
       "$v": 1,
       "LogCodec": {
         "$type": "plaintext-profile-log-codec",
-        "$v": 1,
-        "LineRegex": "(?\u003Clevel\u003E\\w\u002B)\\s(?\u003Cdatetime\u003E[\\d\\-:\\.]\u002B\\s[\\d\\-:\\.]\u002B)\\s\\[(?\u003Cthread\u003E\\w\u002B)\\]\\s(?\u003Clogger\u003E[^\\s]\u002B)\\s-\\s(?\u003Cmessage\u003E.\u002B)",
+        "$v": 2,
+        "LinePatternId": "bfd6380c-22a1-4808-b1f4-5e3146c1e5c1",
         "LogCodec": "a38a40b6-c07f-49d5-a143-5c9f9f42149b"
       },
+      "DateTimeFormat": "yyyy-MM-dd HH:mm:ss.fff",
+      "LogsLookupPattern": "*.txt",
       "FileArtifactLinesCount": 3
     },
     "Id": "00000000-0000-0000-0000-000000000010"
+  },
+  {
+    "Name": "Starlog",
+    "Settings": {
+      "$type": "profile-settings",
+      "$v": 1,
+      "LogCodec": {
+        "$type": "plaintext-profile-log-codec",
+        "$v": 2,
+        "LinePatternId": "2ee1a513-c85a-4921-b402-b58f5309effb",
+        "LogCodec": "a38a40b6-c07f-49d5-a143-5c9f9f42149b"
+      },
+      "DateTimeFormat": "yyyy-MM-dd HH:mm:ss.fff",
+      "LogsLookupPattern": "*.log",
+      "FileArtifactLinesCount": 0
+    },
+    "Id": "8dc8c5d1-6b55-4902-a305-af024cbb59a6"
   }
 ]

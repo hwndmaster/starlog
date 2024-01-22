@@ -48,7 +48,7 @@ internal sealed class ProfileLoader : IProfileLoader
         }
         else
         {
-            files = _fileService.EnumerateFiles(profile.Path, "*.*", new EnumerationOptions());
+            files = _fileService.EnumerateFiles(profile.Path, profile.Settings.LogsLookupPattern, new EnumerationOptions());
         }
         var tasks = files.Select(async file => await LoadFileAsync(profile, file, logContainer));
         await Task.WhenAll(tasks);

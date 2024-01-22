@@ -2,6 +2,8 @@ using Genius.Starlog.Core.CommandHandlers;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.TestingUtil;
+using Starlog.Core.TestingUtil;
 
 namespace Genius.Starlog.Core.Tests.CommandHandlers;
 
@@ -21,7 +23,7 @@ public sealed class ProfileFilterCreateOrUpdateCommandHandlerTests
         // Arrange
         var profile = _harness.CreateProfile();
         var profileFiltersCount = profile.Filters.Count;
-        var command = _harness.Build<ProfileFilterCreateOrUpdateCommand>()
+        var command = _harness.Fixture.Build<ProfileFilterCreateOrUpdateCommand>()
             .With(x => x.ProfileId, profile.Id)
             .Create();
 
@@ -44,12 +46,12 @@ public sealed class ProfileFilterCreateOrUpdateCommandHandlerTests
         // Arrange
         var profile = _harness.CreateProfile();
         var profileFiltersCount = profile.Filters.Count;
-        var updatingProfileFilterId = _harness.Create<Guid>();
-        profile.Filters[0] = new SampleProfileFilter(updatingProfileFilterId);
+        var updatingProfileFilterId = _harness.Fixture.Create<Guid>();
+        profile.Filters[0] = new TestProfileFilter(updatingProfileFilterId);
         var command = new ProfileFilterCreateOrUpdateCommand
         {
             ProfileId = profile.Id,
-            ProfileFilter = new SampleProfileFilter(updatingProfileFilterId)
+            ProfileFilter = new TestProfileFilter(updatingProfileFilterId)
         };
 
         // Act
@@ -63,14 +65,5 @@ public sealed class ProfileFilterCreateOrUpdateCommandHandlerTests
         Assert.Empty(result.ProfileFiltersAdded);
         Assert.Single(result.ProfileFiltersUpdated);
         Assert.Equal(command.ProfileFilter.Id, result.ProfileFiltersUpdated[0]);
-    }
-
-    private sealed class SampleProfileFilter : ProfileFilterBase
-    {
-        public SampleProfileFilter(Guid id)
-            : base(new LogFilter(Guid.NewGuid(), Guid.NewGuid().ToString()))
-        {
-            Id = id;
-        }
     }
 }

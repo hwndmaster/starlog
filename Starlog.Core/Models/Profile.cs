@@ -30,4 +30,9 @@ public sealed class Profile : EntityBase
     ///   The user-defined filters.
     /// </summary>
     public IList<ProfileFilterBase> Filters { get; set; } = new List<ProfileFilterBase>();
+
+    /// <summary>
+    ///   The user-defined message parsings.
+    /// </summary>
+    public IList<MessageParsing> MessageParsings { get; set; } = new List<MessageParsing>();
 }

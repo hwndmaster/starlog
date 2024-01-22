@@ -8,6 +8,7 @@
         xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
         xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:win="clr-namespace:System.Windows;assembly=PresentationCore"
         mc:Ignorable="d">
     <UserControl.Resources>
         <Thickness x:Key="TopBarMargin">10 0 0 0</Thickness>
@@ -29,7 +30,8 @@
             </Button>
             <Button Margin="{StaticResource TopBarMargin}"
                     Command="{Binding CompareSelectedCommand}"
-                    ToolTip="Compare two selected profiles">
+                    ToolTip="Compare two selected profiles"
+                    Visibility="{Binding ComparisonFeatureEnabled, Converter={atom:BooleanToVisibilityConverter}}">
                 <Image Source="{StaticResource Copy16}" Width="16" />
             </Button>
             <Button Margin="{StaticResource TopBarMargin}"
@@ -56,7 +58,7 @@
             </DataGrid.InputBindings>
             <i:Interaction.Behaviors>
                 <autogrid:AttachingBehavior />
-                <behaviors:ProfileDragDropBehavior />
+                <atom:AreaDragDropBehavior DropAreas="{Binding DropAreas}" DataFormat="{x:Static win:DataFormats.FileDrop}" />
                 <behaviors:ProfileContextMenuBehavior />
             </i:Interaction.Behaviors>
         </DataGrid>

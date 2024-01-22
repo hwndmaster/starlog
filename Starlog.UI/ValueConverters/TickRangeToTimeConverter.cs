@@ -33,6 +33,6 @@ public sealed class TickRangeToTimeConverter : IMultiValueConverter
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("This converter cannot be used in two-way binding.");
     }
 }

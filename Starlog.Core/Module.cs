@@ -13,13 +13,16 @@ using Genius.Starlog.Core.Repositories;
 using Genius.Atom.Data.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Genius.Atom.Infrastructure.Entities;
+using Microsoft.Extensions.Configuration;
+using Genius.Starlog.Core.Configuration;
+using Genius.Starlog.Core.Models.VersionUpgraders;
 
 namespace Genius.Starlog.Core;
 
 [ExcludeFromCodeCoverage]
 public static class Module
 {
-    public static void Configure(IServiceCollection services)
+    public static void Configure(IServiceCollection services, IConfiguration config)
     {
         // Repositories and Query services
         services.RegisterRepository<Profile, ProfileRepository, IProfileQueryService, IProfileRepository>();
@@ -28,7 +31,7 @@ public static class Module
         services.AddSingleton<ISettingsQueryService>(sp => sp.GetRequiredService<SettingsRepository>());
         services.AddSingleton<ISettingsRepository>(sp => sp.GetRequiredService<SettingsRepository>());
 
-        // LogFlow and LogFiltering services
+        // LogFlow and LogFiltering components
         services.AddSingleton<CurrentProfileLogContainer>();
         services.AddSingleton<ICurrentProfile>(x => x.GetRequiredService<CurrentProfileLogContainer>());
         services.AddSingleton<ILogContainer>(x => x.GetRequiredService<CurrentProfileLogContainer>());
@@ -40,6 +43,7 @@ public static class Module
         services.AddSingleton<ILogCodecContainer>(sp => sp.GetRequiredService<LogCodecContainer>());
         services.AddSingleton<IQueryService<LogCodec>>(sp => sp.GetRequiredService<LogCodecContainer>());
 
+        services.AddTransient<IFilterProcessor, FilesFilterProcessor>();
         services.AddTransient<IFilterProcessor, MessageFilterProcessor>();
         services.AddTransient<IFilterProcessor, LoggersFilterProcessor>();
         services.AddTransient<IFilterProcessor, LogLevelsFilterProcessor>();
@@ -51,14 +55,13 @@ public static class Module
         services.AddTransient<ILogRecordMatcher, LogRecordMatcher>();
         services.AddTransient<IQuickFilterProvider, QuickFilterProvider>();
 
-        // Services
-        // TO BE DONE LATER
-
-        // Converters
+        // JSON Converters
         services.AddSingleton<IJsonConverter, LogCodecJsonConverter>();
         services.AddSingleton<IJsonConverter, LogFilterJsonConverter>();
 
         // Command Handlers
+        services.AddScoped<ICommandHandler<MessageParsingCreateOrUpdateCommand, MessageParsingCreateOrUpdateCommandResult>, MessageParsingCreateOrUpdateCommandHandler>();
+        services.AddScoped<ICommandHandler<MessageParsingDeleteCommand>, MessageParsingDeleteCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileCreateCommand, Guid>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileUpdateCommand>, ProfileCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileDeleteCommand>, ProfileDeleteCommandHandler>();
@@ -67,6 +70,14 @@ public static class Module
         services.AddScoped<ICommandHandler<ProfileFilterDeleteCommand>, ProfileFilterDeleteCommandHandler>();
         services.AddScoped<ICommandHandler<SettingsUpdateCommand>, SettingsUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<SettingsUpdateAutoLoadingProfileCommand>, SettingsUpdateAutoLoadingProfileCommandHandler>();
+
+        // Other components
+        services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();
+        services.AddTransient<IMessageParsingHandler, MessageParsingHandler>();
+        services.AddSingleton<PlainTextProfileLogCodecVer1To2Upgrader>();
+
+        // Configurations
+        services.Configure<LogLevelMappingConfiguration>(config.GetSection("LogLevelMapping"));
     }
 
     public static void Initialize(IServiceProvider serviceProvider)
@@ -79,6 +90,8 @@ public static class Module
     private static void RegisterLogFilters(IServiceProvider serviceProvider)
     {
         var logFilterContainer = serviceProvider.GetRequiredService<ILogFilterContainer>();
+        logFilterContainer.RegisterLogFilter<FilesProfileFilter, FilesFilterProcessor>(
+            new LogFilter(new Guid("836b05dc-8f94-40b2-9606-67452f86ace0"), "File filter"));
         logFilterContainer.RegisterLogFilter<MessageProfileFilter, MessageFilterProcessor>(
             new LogFilter(new Guid("c78616c5-fe0d-4f9b-b46b-38a4b26727e6"), "Message filter"));
         logFilterContainer.RegisterLogFilter<LoggersProfileFilter, LoggersFilterProcessor>(
@@ -107,6 +120,7 @@ public static class Module
         var typeDiscriminators = serviceProvider.GetRequiredService<ITypeDiscriminators>();
 
         // Filters
+        typeDiscriminators.AddMapping<FilesProfileFilter>("files-profile-filter");
         typeDiscriminators.AddMapping<MessageProfileFilter>("msg-profile-filter");
         typeDiscriminators.AddMapping<LoggersProfileFilter>("loggers-profile-filter");
         typeDiscriminators.AddMapping<LogLevelsProfileFilter>("loglevels-profile-filter");
@@ -115,10 +129,13 @@ public static class Module
         typeDiscriminators.AddMapping<TimeRangeProfileFilter>("timerange-profile-filter");
 
         // Codecs
-        typeDiscriminators.AddMapping<PlainTextProfileLogCodec>("plaintext-profile-log-codec");
+        typeDiscriminators.AddMapping<PlainTextProfileLogCodecLegacy>("plaintext-profile-log-codec");
+        typeDiscriminators.AddMapping<PlainTextProfileLogCodec, PlainTextProfileLogCodecLegacy, PlainTextProfileLogCodecVer1To2Upgrader>("plaintext-profile-log-codec", 2);
         typeDiscriminators.AddMapping<XmlProfileLogCodec>("xml-profile-log-codec");
 
         // Misc
         typeDiscriminators.AddMapping<ProfileSettings>("profile-settings");
+        typeDiscriminators.AddMapping<MessageParsing>("message-parsing");
+        typeDiscriminators.AddMapping<PatternValue>("pattern-value");
     }
 }

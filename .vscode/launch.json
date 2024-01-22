@@ -6,7 +6,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/build/net7.0-windows/Starlog.exe",
+      "program": "${workspaceFolder}/build/net8.0-windows/Starlog.exe",
       "args": [
         /* Scenario 1: Providing all parameters
         "loadpath",
@@ -31,9 +31,10 @@
         "--template",
         "00000000-0000-0000-0000-000000000010"*/
       ],
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/build/net8.0-windows",
       "console": "internalConsole",
-      "stopAtEntry": false
+      "stopAtEntry": false,
+      "requireExactSource": false
     },
     {
       "name": ".NET Core Attach",

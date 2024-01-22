@@ -1,6 +1,7 @@
 using Genius.Starlog.Core.CommandHandlers;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.TestingUtil;
 
 namespace Genius.Starlog.Core.Tests.CommandHandlers;
 
@@ -18,7 +19,7 @@ public sealed class ProfileLoadAnonymousCommandHandlerTests
     public async Task Process_HappyFlowScenario()
     {
         // Arrange
-        var command = _harness.Create<ProfileLoadAnonymousCommand>();
+        var command = _harness.Fixture.Create<ProfileLoadAnonymousCommand>();
 
         // Act
         await _sut.ProcessAsync(command);

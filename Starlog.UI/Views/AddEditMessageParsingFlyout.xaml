@@ -1,0 +1,73 @@
+﻿<mah:Flyout x:Class="Genius.Starlog.UI.Views.AddEditMessageParsingFlyout"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
+        xmlns:autogrid="clr-namespace:Genius.Atom.UI.Forms.Controls.AutoGrid;assembly=Genius.Atom.UI.Forms"
+        xmlns:local="clr-namespace:Genius.Starlog.UI.Views"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        mc:Ignorable="d"
+        Header="{Binding PageTitle}"
+        Position="Right"
+        Width="600">
+    <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
+        <DockPanel>
+            <Label>Entity name:</Label>
+            <TextBox Text="{Binding Name}" />
+        </DockPanel>
+        <DockPanel>
+            <Label>Parsing mode:</Label>
+            <ComboBox ItemsSource="{Binding Methods}"
+                      SelectedItem="{Binding Method}"
+                      Validation.ErrorTemplate="{x:Null}" />
+        </DockPanel>
+        <DockPanel>
+            <Label>Pattern:</Label>
+            <TextBox Text="{Binding Pattern, UpdateSourceTrigger=PropertyChanged}" />
+        </DockPanel>
+        <DockPanel>
+            <Label>Only in logs with:</Label>
+            <ListBox SelectionMode="Multiple"
+                     ItemsSource="{Binding Filters}"
+                     DisplayMemberPath="Name"
+                     MaxHeight="400">
+                <i:Interaction.Behaviors>
+                    <atom:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedFilters}" />
+                </i:Interaction.Behaviors>
+            </ListBox>
+        </DockPanel>
+        <DockPanel>
+            <Label>
+                <TextBlock>Sample output:<LineBreak/>Only first 5 are shown</TextBlock>
+            </Label>
+            <StackPanel Orientation="Vertical">
+                <TextBlock Foreground="Red" Text="{Binding TestingError}" Visibility="{Binding TestingError, Converter={atom:NotNullToVisibilityConverter}}" />
+                <DataGrid autogrid:Properties.AutoGridBuilder="{Binding TestAutoGridBuilder}"
+                        autogrid:Properties.ItemsSource="{Binding TestEntries}">
+                    <i:Interaction.Behaviors>
+                        <autogrid:AttachingBehavior />
+                    </i:Interaction.Behaviors>
+                </DataGrid>
+            </StackPanel>
+        </DockPanel>
+        <DockPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                        Style="{StaticResource Starlog.ButtonBar.Button}"
+                        Content="Save"
+                        Background="DarkGreen"
+                        Command="{Binding CommitCommand}" />
+                <Button Grid.Column="1"
+                        Style="{StaticResource Starlog.ButtonBar.Button}"
+                        Content="Reset"
+                        Command="{Binding ResetCommand}" />
+            </Grid>
+        </DockPanel>
+    </StackPanel>
+</mah:Flyout>

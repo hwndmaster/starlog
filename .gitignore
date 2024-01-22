@@ -5,6 +5,9 @@
 
 _/
 
+# Starlog personal data
+Data/Profile.json
+
 # User-specific files
 *.rsuser
 *.suo

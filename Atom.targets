@@ -1,0 +1,77 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <AtomLocation>..\atom\</AtomLocation>
+  </PropertyGroup>
+
+  <Target Name="AtomDataReference" BeforeTargets="PrepareProjectReferences;CollectPackageReferences"
+    Condition="'$(ReferenceAtomData)' == 'true'">
+    <PropertyGroup>
+      <Name>Atom.Data</Name>
+      <Path>$(MSBuildThisFileDirectory)$(AtomLocation)$(Name)</Path>
+      <ProjectExists Condition="Exists('$(Path)')">true</ProjectExists>
+    </PropertyGroup>
+
+    <!-- <Message Text="$(Path)" Importance="High" />
+    <Message Text="ProjectExists: $(ProjectExists)" Importance="High" /> -->
+
+    <ItemGroup>
+      <Reference Include="Genius.$(Name)" Condition="'$(ProjectExists)' == 'true'">
+        <HintPath>$(Path)\bin\Debug\net8.0\Genius.$(Name).dll</HintPath>
+      </Reference>
+      <PackageReference Include="Genius.$(Name)" Condition="'$(ProjectExists)' != 'true'" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="AtomInfrastructureReference" BeforeTargets="PrepareProjectReferences;CollectPackageReferences"
+    Condition="'$(ReferenceAtomInfrastructure)' == 'true'">
+    <PropertyGroup>
+      <Name>Atom.Infrastructure</Name>
+      <Path>$(MSBuildThisFileDirectory)$(AtomLocation)$(Name)</Path>
+      <ProjectExists Condition="Exists('$(Path)')">true</ProjectExists>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="Genius.$(Name)" Condition="'$(ProjectExists)' == 'true'">
+        <HintPath>$(Path)\bin\Debug\net8.0\Genius.$(Name).dll</HintPath>
+      </Reference>
+      <PackageReference Include="Genius.$(Name)" Condition="'$(ProjectExists)' != 'true'" />
+    </ItemGroup>
+
+    <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
+      <Reference Include="Genius.$(Name).TestingUtil" Condition="'$(ProjectExists)' == 'true'">
+        <HintPath>$(Path).TestingUtil\bin\Debug\net8.0\Genius.$(Name).TestingUtil.dll</HintPath>
+      </Reference>
+      <PackageReference Include="Genius.$(Name).TestingUtil" Condition="'$(ProjectExists)' != 'true'" />
+    </ItemGroup>
+
+  </Target>
+
+  <Target Name="AtomUiFormsReference" BeforeTargets="PrepareProjectReferences;CollectPackageReferences"
+    Condition="'$(ReferenceAtomUiForms)' == 'true'">
+    <PropertyGroup>
+      <Name>Atom.UI.Forms</Name>
+      <Path>$(MSBuildThisFileDirectory)$(AtomLocation)$(Name)</Path>
+      <ProjectExists Condition="Exists('$(Path)')">true</ProjectExists>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="Genius.$(Name)" Condition="'$(ProjectExists)' == 'true'">
+        <HintPath>$(Path)\bin\Debug\net8.0-windows\Genius.$(Name).dll</HintPath>
+      </Reference>
+      <PackageReference Include="Genius.$(Name)" Condition="'$(ProjectExists)' != 'true'" />
+
+      <!-- 3rd-party dependencies from Atom.UI.Forms -->
+      <_AtomUiFormsThirdPartyDependencies Include="$(Path)\bin\Debug\net8.0-windows\*.dll" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_AtomUiFormsThirdPartyDependencies)" DestinationFolder="$(TargetDir)\" />
+
+    <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
+      <Reference Include="Genius.$(Name).TestingUtil" Condition="'$(ProjectExists)' == 'true'">
+        <HintPath>$(Path).TestingUtil\bin\Debug\net8.0-windows\Genius.$(Name).TestingUtil.dll</HintPath>
+      </Reference>
+      <PackageReference Include="Genius.$(Name).TestingUtil" Condition="'$(ProjectExists)' != 'true'" />
+    </ItemGroup>
+
+  </Target>
+</Project>

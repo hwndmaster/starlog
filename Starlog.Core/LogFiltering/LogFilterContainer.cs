@@ -1,5 +1,4 @@
 using Genius.Starlog.Core.Models;
-using Genius.Starlog.Core.LogFlow;
 
 namespace Genius.Starlog.Core.LogFiltering;
 
@@ -8,6 +7,16 @@ public interface ILogFilterContainer
     ProfileFilterBase CreateProfileFilter(LogFilter logFilter);
     TLogProfileFilter CreateProfileFilter<TLogProfileFilter>(string? name = null)
         where TLogProfileFilter : ProfileFilterBase;
+
+    /// <summary>
+    ///   Creates a profile filter with a predefined identifier. Used for "Quick Filters".
+    /// </summary>
+    /// <typeparam name="TLogProfileFilter">The type of the filter.</typeparam>
+    /// <param name="name">The name of the filter.</param>
+    /// <param name="predefinedId">The predefined identifier.</param>
+    TLogProfileFilter CreateProfileFilter<TLogProfileFilter>(string name, Guid predefinedId)
+        where TLogProfileFilter : ProfileFilterBase;
+
     IEnumerable<LogFilter> GetLogFilters();
     IFilterProcessor GetFilterProcessor(ProfileFilterBase profileFilter);
     void RegisterLogFilter<TProfileFilter, TFilterProcessor>(LogFilter logFilter)
@@ -29,25 +38,18 @@ internal sealed class LogFilterContainer : ILogFilterContainer
     public TLogProfileFilter CreateProfileFilter<TLogProfileFilter>(string? name = null)
         where TLogProfileFilter : ProfileFilterBase
     {
-        var type = typeof(TLogProfileFilter);
-        var registration = _registeredFilters.Values.Single(x => x.ProfileFilterType == type);
+        return CreateProfileFilterInternal<TLogProfileFilter>(name, null);
+    }
 
-        var filter = (TLogProfileFilter)CreateProfileFilter(registration.LogFilter);
-        if (name is not null)
-        {
-            filter.Name = name;
-        }
-        return filter;
+    public TLogProfileFilter CreateProfileFilter<TLogProfileFilter>(string name, Guid predefinedId)
+        where TLogProfileFilter : ProfileFilterBase
+    {
+        return CreateProfileFilterInternal<TLogProfileFilter>(name, predefinedId);
     }
 
     public ProfileFilterBase CreateProfileFilter(LogFilter logFilter)
     {
-        if (!_registeredFilters.TryGetValue(logFilter.Id, out var value))
-        {
-            throw new InvalidOperationException("The log filter '" + logFilter.Id + "' doesn't exists.");
-        }
-
-        return (ProfileFilterBase)Activator.CreateInstance(value.ProfileFilterType, logFilter).NotNull();
+        return CreateProfileFilterInternal(logFilter, null);
     }
 
     public IEnumerable<LogFilter> GetLogFilters()
@@ -75,6 +77,36 @@ internal sealed class LogFilterContainer : ILogFilterContainer
         }
 
         _registeredFilters.Add(logFilter.Id, new LogFilterRecord(logFilter, typeof(TProfileFilter), typeof(TFilterProcessor)));
+    }
+
+    private TLogProfileFilter CreateProfileFilterInternal<TLogProfileFilter>(string? name, Guid? predefinedId)
+        where TLogProfileFilter : ProfileFilterBase
+    {
+        var type = typeof(TLogProfileFilter);
+        var registration = _registeredFilters.Values.Single(x => x.ProfileFilterType == type);
+
+        var filter = (TLogProfileFilter)CreateProfileFilterInternal(registration.LogFilter, predefinedId);
+        if (name is not null)
+        {
+            filter.Name = name;
+        }
+        return filter;
+    }
+
+    private ProfileFilterBase CreateProfileFilterInternal(LogFilter logFilter, Guid? predefinedId)
+    {
+        if (!_registeredFilters.TryGetValue(logFilter.Id, out var value))
+        {
+            throw new InvalidOperationException("The log filter '" + logFilter.Id + "' doesn't exists.");
+        }
+
+        object[] parameters = predefinedId switch
+        {
+            null => new object[] { logFilter },
+            _ => new object[] { logFilter, predefinedId }
+        };
+
+        return (ProfileFilterBase)Activator.CreateInstance(value.ProfileFilterType, parameters).NotNull();
     }
 
     private readonly record struct LogFilterRecord(LogFilter LogFilter, Type ProfileFilterType, Type FilterProcessorType);

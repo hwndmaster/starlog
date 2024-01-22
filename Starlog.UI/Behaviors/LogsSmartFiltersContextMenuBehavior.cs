@@ -18,6 +18,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
     private readonly MenuItem _menuItemThreads;
     private readonly MenuItem _menuItemLoggers;
     private readonly MenuItem _menuItemLevels;
+    private readonly MenuItem _menuItemFiles;
     private readonly MenuItem _menuItemContainsMsg;
 
     public LogsSmartFiltersContextMenuBehavior()
@@ -72,6 +73,19 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
 
             vm.Filtering.ShowFlyoutForAddingNewFilter(filter);
         }) };
+        _menuItemFiles = new MenuItem { Header = "Files(s): {..., ...}", Command = new ActionCommand(_ =>
+        {
+            var vm = (ILogsViewModel)AssociatedObject.DataContext;
+            var files = vm.SelectedLogItems.Select(x => x.Record.File.FileName).Distinct().ToArray();
+
+            var name = LogFilterHelpers.ProposeNameForStringList("Files", files, false);
+            var filter = _logFilterContainer.CreateProfileFilter<FilesProfileFilter>(name);
+            filter.Exclude = false;
+            filter.FileNames = files;
+
+            vm.Filtering.ShowFlyoutForAddingNewFilter(filter);
+        }) };
+
         _menuItemContainsMsg = new MenuItem { Header = "Contains: {msg...}", Command = new ActionCommand(_ =>
         {
             var vm = (ILogsViewModel)AssociatedObject.DataContext;
@@ -93,6 +107,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
                 _menuItemThreads,
                 _menuItemLoggers,
                 _menuItemLevels,
+                _menuItemFiles,
                 _menuItemContainsMsg
             }
         };
@@ -136,6 +151,9 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
 
         var levels = string.Join(", ", vm.SelectedLogItems.Select(x => x.Record.Level.Name).Distinct());
         _menuItemLevels.Header = LogFilterHelpers.LimitNameLength("Level(s): " + levels);
+
+        var files = string.Join(", ", vm.SelectedLogItems.Select(x => x.Record.File.FileName).Distinct());
+        _menuItemFiles.Header = LogFilterHelpers.LimitNameLength("File(s): " + files);
 
         var msg = vm.SelectedLogItems[0].Record.Message;
         _menuItemContainsMsg.Header = LogFilterHelpers.LimitNameLength("Contains: " + msg);

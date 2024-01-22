@@ -11,6 +11,7 @@
         "/property:GenerateFullPaths=true",
         // Do not generate summary otherwise it leads to duplicate errors in Problems panel
         "/consoleloggerparameters:NoSummary",
+        //"/verbosity:n"
         //"/property:PERSONAL_ENV=true"
       ],
       "group": {
@@ -25,15 +26,15 @@
     },
     {
       "label": "test coverage",
-      "command": "dotnet",
+      "command": "reportgenerator",
       "type": "process",
       "args": [
-        "test",
-        "--no-build",
-        "/p:CollectCoverage=true",
-        "/p:CoverletOutputFormat=lcov",
-        "/p:CoverletOutput=${workspaceFolder}/lcov.info",
-        "/p:Exclude=\"[Genius.Atom.*]*\""
+        "-reports:TestResults\\**\\coverage.cobertura.xml",
+        "-reporttypes:lcov",
+        "-targetdir:TestCoverage",
+      ],
+      "dependsOn": [
+        "test coverage (collect)"
       ],
       "group": {
         "kind": "test",
@@ -41,8 +42,41 @@
       },
       "presentation": {
         "reveal": "silent"
+      }
+    },
+    {
+      "label": "test coverage (collect)",
+      "hide": true,
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "--no-restore",
+        "--no-build",
+        "--collect:\"Code Coverage;Format=Cobertura;CoverageFileName=coverage.xml\"",
+        "--results-directory:.\\TestResults",
+        "--blame-hang-timeout:30000"
+      ],
+      "dependsOn": [
+        "test coverage (cleanup)"
+      ],
+      "presentation": {
+        "reveal": "silent"
       },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test coverage (cleanup)",
+      "hide": true,
+      "type": "shell",
+      "command": "Remove-Item",
+      "args": [
+        "TestResults",
+        "-recurse"
+      ],
+      "presentation": {
+        "reveal": "silent"
+      },
     }
   ]
 }

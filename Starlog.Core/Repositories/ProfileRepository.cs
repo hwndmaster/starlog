@@ -17,11 +17,14 @@ public interface IProfileRepository : IRepository<Profile>
 
 internal sealed class ProfileRepository : RepositoryBase<Profile>, IProfileRepository, IProfileQueryService
 {
+    private readonly ISettingsRepository _settingsRepository;
+
     private Profile? _anonymousProfile;
 
-    public ProfileRepository(IEventBus eventBus, IJsonPersister persister, ILogger<ProfileRepository> logger)
+    public ProfileRepository(IEventBus eventBus, IJsonPersister persister, ILogger<ProfileRepository> logger, ISettingsRepository settingsRepository)
         : base(eventBus, persister, logger)
     {
+        _settingsRepository = settingsRepository.NotNull();
     }
 
     public override Task DeleteAsync(Guid entityId)
@@ -58,4 +61,17 @@ internal sealed class ProfileRepository : RepositoryBase<Profile>, IProfileRepos
 
     public void SetAnonymous(Profile? profile)
         => _anonymousProfile = profile;
+
+    protected override Task FillUpRelationsAsync(Profile entity)
+    {
+        // Upgrade PlainTextProfileLogCodec for profiles created before 14-Jan-2024
+        var settings = new Lazy<Settings>(() => _settingsRepository.Get());
+        if (entity.Settings.LogCodec is PlainTextProfileLogCodec plainTextCodec
+            && plainTextCodec.LinePatternId == Guid.Empty)
+        {
+            plainTextCodec.LinePatternId = settings.Value.PlainTextLogCodecLinePatterns.First().Id;
+        }
+
+        return base.FillUpRelationsAsync(entity);
+    }
 }

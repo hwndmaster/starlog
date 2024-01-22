@@ -3,6 +3,9 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Data;
 using System.Windows.Documents;
+using DynamicData;
+using Genius.Atom.UI.Forms.Controls;
+using Genius.Atom.UI.Forms.Controls.AutoGrid;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.LogFiltering;
@@ -31,6 +34,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private readonly ILogContainer _logContainer;
     private readonly ILogRecordMatcher _logRecordMatcher;
     private readonly ILogArtifactsFormatter _artifactsFormatter;
+    private readonly IMessageParsingHandler _messageParsingHandler;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly CompositeDisposable _subscriptions;
     private LogRecordMatcherContext? _filterContext;
@@ -45,16 +49,18 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         ILogsFilteringViewModel logsFilteringViewModel,
         ILogsSearchViewModel logsSearchViewModel,
         IMainController controller,
+        IMessageParsingHandler messageParsingHandler,
         IUiDispatcher uiDispatcher)
     {
         Guard.NotNull(controller);
 
         // Dependencies:
+        AutoGridBuilder = autoGridBuilder.NotNull();
+        _artifactsFormatter = artifactsFormatter.NotNull();
         _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
-        AutoGridBuilder = autoGridBuilder.NotNull();
         _logRecordMatcher = logRecordMatcher.NotNull();
-        _artifactsFormatter = artifactsFormatter.NotNull();
+        _messageParsingHandler = messageParsingHandler.NotNull();
         _uiDispatcher = uiDispatcher.NotNull();
         Filtering = logsFilteringViewModel.NotNull();
         Search = logsSearchViewModel.NotNull();
@@ -66,6 +72,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         // Actions:
         ShareCommand = new ActionCommand(async _ =>
             await controller.ShowShareViewAsync(SelectedLogItems));
+        ReloadProfileCommand = new ActionCommand(async _ =>
+            {
+                if (_currentProfile.Profile is null) return;
+                _suspendUpdate = true;
+                await controller.LoadProfileAsync(_currentProfile.Profile);
+            });
 
         // Subscriptions:
         _subscriptions = new(
@@ -76,9 +88,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                     _uiDispatcher.BeginInvoke(() =>
                     {
                         IsProfileReady = false;
+                        IsRefreshVisible = false;
                         LogItems.Clear();
                         SelectedLogItems.Clear();
                         SelectedLogItem = null;
+                        Search.DropAllSearches();
                     });
                 }),
             _currentProfile.ProfileChanged
@@ -93,9 +107,14 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                         _suspendUpdate = false;
                     });
                 }),
+            _currentProfile.UnknownChangesDetected
+                .Subscribe(_ => IsRefreshVisible = true),
             _logContainer.LogsAdded
                 .Where(_ => !_suspendUpdate)
                 .Subscribe(x => _uiDispatcher.BeginInvoke(() => AddLogs(x))),
+            _logContainer.LogsRemoved
+                .Where(_ => !_suspendUpdate)
+                .Subscribe(x => _uiDispatcher.BeginInvoke(() => RemoveLogs(x))),
             _logContainer.FileRenamed
                 .Subscribe(args =>
                 {
@@ -107,6 +126,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                                 logItem.HandleFileRenamed(args.NewRecord);
                             }
                         }});
+                }),
+            _logContainer.FilesCountChanged
+                .Subscribe(filesCount =>
+                {
+                    IsFileColumnVisible = filesCount > 1;
                 }),
             Filtering.FilterChanged.Merge(Search.SearchChanged)
                 .Subscribe(_ => RefreshFilteredItems()),
@@ -185,6 +209,25 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         RefreshFilteredItems();
     }
 
+    private void RemoveLogs(ICollection<LogRecord> logs)
+    {
+        if (!logs.Any())
+        {
+            return;
+        }
+
+        using (var suppressed = LogItems.DelayNotifications())
+        {
+            var toRemove = LogItems.Where(x => logs.Contains(x.Record)).ToList();
+            foreach (var item in toRemove)
+            {
+                suppressed.Remove(item);
+            }
+        }
+
+        RefreshFilteredItems();
+    }
+
     private void OnLogItemsViewFilter(object sender, FilterEventArgs e)
     {
         var viewModel = (ILogItemViewModel)e.Item;
@@ -205,8 +248,48 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             Search.CreateContext()
         );
 
+        // `MessageParsingColumns` needs to be updated in a UI thread to avoid WPF binding errors.
+        DynamicColumnsViewModel? messageParsingColumnsToSet = null;
+
+        // TODO: Cover with unit tests
+        if (_filterContext.Filter.MessageParsings.Length > 0
+            || MessageParsingColumns is not null)
+        {
+            // TODO: Check if there were changes in `_filterContext.Filter.MessageParsings`
+            //       to prevent re-initialization in case of no changes.
+
+            var messageParsings = _filterContext.Filter.MessageParsings;
+            var extractedColumns = (from messageParsing in messageParsings
+                                    from extractedColumn in _messageParsingHandler.RetrieveColumns(messageParsing)
+                                    select (messageParsing, extractedColumn)).ToArray();
+
+            foreach (var logItem in LogItems)
+            {
+                logItem.MessageParsingEntries = new DynamicColumnEntriesViewModel(() =>
+                {
+                    List<string> parsedEntriesCombined = new();
+                    foreach (var messageParsing in messageParsings)
+                    {
+                        var parsedEntries = _messageParsingHandler.ParseMessage(messageParsing, logItem.Record);
+                        parsedEntriesCombined.AddRange(parsedEntries);
+                    }
+                    return parsedEntriesCombined;
+                });
+            }
+
+            messageParsingColumnsToSet = new DynamicColumnsViewModel(extractedColumns.Select(x => x.extractedColumn).ToArray());
+        }
+
         _uiDispatcher.BeginInvoke(() =>
         {
+            if (messageParsingColumnsToSet is not null)
+            {
+                MessageParsingColumns = messageParsingColumnsToSet;
+            }
+
+            SearchText = Search.Text;
+            SearchUseRegex = Search.UseRegex;
+
             LogItemsView.View.Refresh();
 
             var filteredItems = LogItemsView.View.Cast<ILogItemViewModel>().ToList();
@@ -221,6 +304,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     }
 
     public bool IsProfileReady
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool IsRefreshVisible
     {
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
@@ -275,5 +364,36 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
+    public bool IsFileColumnVisible
+    {
+        get => GetOrDefault(true);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    /// <summary>
+    ///   Used for binding into DataGrid's text highlighting.
+    /// </summary>
+    public string SearchText
+    {
+        get => GetOrDefault<string>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    /// <summary>
+    ///   Used for binding into DataGrid's text highlighting.
+    /// </summary>
+    public bool SearchUseRegex
+    {
+        get => GetOrDefault<bool>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public DynamicColumnsViewModel? MessageParsingColumns
+    {
+        get => GetOrDefault<DynamicColumnsViewModel?>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
     public IActionCommand ShareCommand { get; }
+    public IActionCommand ReloadProfileCommand { get; }
 }

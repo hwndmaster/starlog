@@ -49,9 +49,29 @@ internal sealed class SettingsRepository : ISettingsRepository
 
     private static Settings CreateDefaultSettings() => new()
     {
-        PlainTextLogCodecLineRegexes = new List<SettingStringValue>
+        PlainTextLogCodecLinePatterns = new List<PatternValue>
         {
-            new SettingStringValue("LEVEL DATETIME [Thread] Logger - Message", @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>[^\s]+)\s-\s(?<message>.+)")
+            new PatternValue
+            {
+                Id = new Guid("bfd6380c-22a1-4808-b1f4-5e3146c1e5c1"),
+                Name = "LEVEL DATETIME [Thread] Logger - Message",
+                Type = PatternType.RegularExpression,
+                Pattern = @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>[^\s]+)\s-\s(?<message>.+)"
+            },
+            new PatternValue
+            {
+                Id = new Guid("04a8fc59-1208-416c-8dee-1393251857b7"),
+                Name = "DATETIME TIMEZONE [LEVEL] Message",
+                Type = PatternType.RegularExpression,
+                Pattern = @"(?<datetime>[\d\-]+\s[\d:\.]+\s[-+][\d:]+)\s\[(?<level>\w+)\]\s(?<message>.+)"
+            },
+            new PatternValue
+            {
+                Id = new Guid("2ee1a513-c85a-4921-b402-b58f5309effb"),
+                Name = "DATETIME [LEVEL] <THREAD> Logger - Message",
+                Type = PatternType.RegularExpression,
+                Pattern = @"(?<datetime>[\d\-]+\s[\d:\.]+)\s\[(?<level>\w+)\]\s<(?<thread>\w+)>\s(?<logger>\w+)\s-\s(?<message>.+)"
+            }
         }
     };
 }

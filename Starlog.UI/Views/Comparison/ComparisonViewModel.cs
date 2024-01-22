@@ -10,7 +10,7 @@ public interface IComparisonViewModel : ITabViewModel
 }
 
 // TODO: Cover with unit tests
-internal sealed class ComparisonViewModel : TabViewModelBase, IComparisonViewModel
+public sealed class ComparisonViewModel : TabViewModelBase, IComparisonViewModel
 {
     private ComparisonContext? _context;
 
