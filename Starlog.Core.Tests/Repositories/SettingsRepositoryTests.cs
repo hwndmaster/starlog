@@ -39,7 +39,7 @@ public sealed class SettingsRepositoryTests
         var result = sut.Get();
         Assert.Null(result.AutoLoadProfile);
         Assert.False(result.AutoLoadPreviouslyOpenedProfile);
-        Assert.Equal(2, result.PlainTextLogCodecLinePatterns.Count);
+        Assert.Equal(3, result.PlainTextLogCodecLinePatterns.Count);
     }
 
     [Fact]
