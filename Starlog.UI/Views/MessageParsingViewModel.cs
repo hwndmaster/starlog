@@ -129,7 +129,7 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
 
         if (HasErrors)
         {
-            _ui.ShowWarning("Cannot proceed while there are errors in the form.");
+            _ui.ShowWarning(StringResources.ValidationError);
             return false;
         }
 

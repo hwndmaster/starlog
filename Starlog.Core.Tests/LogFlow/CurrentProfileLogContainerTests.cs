@@ -7,10 +7,12 @@ using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.TestingUtil;
 using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.Tests.LogFlow;
 
+[Trait(TestCategory.Trait, TestCategory.Integration)]
 public sealed class CurrentProfileLogContainerTests
 {
     private record FileWithContentRecord(string FullPath, byte[] Content, LogReadingResult Result);
@@ -20,7 +22,7 @@ public sealed class CurrentProfileLogContainerTests
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly TestDirectoryMonitor _directoryMonitor = new();
     private readonly TestFileService _fileService = new();
-    private readonly TestFileSystemWatcher _fileWatcher = new();
+    private readonly TestFileSystemWatcherFactory _fileWatcherFactory = new();
     private readonly TestEventBus _eventBus = new();
     private readonly TestSynchronousScheduler _scheduler = new();
     private readonly TestLogger<LogContainer> _logger = new();
@@ -35,15 +37,22 @@ public sealed class CurrentProfileLogContainerTests
     {
         new SupportMutableValueTypesCustomization().Customize(_fixture);
 
-        ProfileLoader profileLoader = new(_fileService, _logCodecContainerMock.Object, new TestLogger<ProfileLoader>());
-        _sut = new CurrentProfileLogContainer(_eventBus, _directoryMonitor, _fileService, _fileWatcher,
-            profileLoader, _scheduler, _logger);
+        var profileLoaderFactory = new ProfileLoaderFactory(_directoryMonitor, _eventBus, _fileService, _fileWatcherFactory,
+            _logCodecContainerMock.Object, new TestLogger<FileBasedProfileLoader>(), _scheduler);
+        _sut = new CurrentProfileLogContainer(_eventBus, profileLoaderFactory);
 
-        _sampleProfile = _fixture.Create<Profile>();
-        _sampleProfile.Settings.LogsLookupPattern = "*" + LOGFILE_EXTENSION;
+        _sampleProfile = new Profile
+        {
+            Name = _fixture.Create<string>(),
+            Settings = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
+            {
+                Path = _fixture.Create<string>(),
+                LogsLookupPattern = "*" + LOGFILE_EXTENSION
+            }
+        };
 
         _logCodecProcessorMock = new Mock<ILogCodecProcessor>();
-        _logCodecContainerMock.Setup(x => x.CreateLogCodecProcessor(_sampleProfile.Settings.LogCodec))
+        _logCodecContainerMock.Setup(x => x.FindLogCodecProcessor(_sampleProfile.Settings))
             .Returns(() => _logCodecProcessorMock.Object);
     }
 
@@ -56,31 +65,33 @@ public sealed class CurrentProfileLogContainerTests
         int logsAddedHandled = 0;
         int logsRemovedHandled = 0;
         int fileRemovedHandled = 0;
-        List<FileRecord> filesAdded = new();
+        List<LogSourceBase> sourcesAdded = new();
         Profile? profileSelected = null;
         _sut.LogsAdded.Subscribe(_ => logsAddedHandled++);
         _sut.LogsRemoved.Subscribe(_ => logsRemovedHandled++);
-        _sut.FileAdded.Subscribe(filesAdded.Add);
-        _sut.FileRemoved.Subscribe(_ => fileRemovedHandled++);
+        _sut.SourceAdded.Subscribe(sourcesAdded.Add);
+        _sut.SourceRemoved.Subscribe(_ => fileRemovedHandled++);
         _sut.ProfileChanged.Subscribe(x => profileSelected = x);
 
         // Pre-verify
         Assert.Null(_sut.Profile);
-        Assert.False(_fileWatcher.IsListening);
+        Assert.Equal(0, _fileWatcherFactory.InstancesCreated);
 
         // Act
         await _sut.LoadProfileAsync(_sampleProfile);
 
         // Verify
-        filesAdded = filesAdded.OrderBy(x => x.FullPath).ToList();
+        sourcesAdded = sourcesAdded.OrderBy(x => x.Name).ToList();
         _eventBus.AssertNoEventOfType<ProfileLoadingErrorEvent>();
         Assert.Equal(_sampleProfile, _sut.Profile);
         Assert.Equal(_sampleProfile, profileSelected);
         Assert.Equal(files.Length, logsAddedHandled);
-        Assert.Equal(files.Length, filesAdded.Count);
-        Assert.Equivalent(filesAdded, _sut.GetFiles(), strict: true);
-        Assert.True(_fileWatcher.IsListening);
-        Assert.Equal(_sampleProfile.Path, _fileWatcher.ListeningPath);
+        Assert.Equal(files.Length, sourcesAdded.Count);
+        Assert.Equivalent(sourcesAdded, _sut.GetSources(), strict: true);
+        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
+        Assert.True(_fileWatcherFactory.RecentlyCreatedInstance.IsListening);
+        Assert.Equal(_sampleProfile.Settings.Source, _fileWatcherFactory.RecentlyCreatedInstance.ListeningPath);
+        Assert.Equal(1, _fileWatcherFactory.InstancesCreated);
         Assert.Equal(0, logsRemovedHandled);
         Assert.Equal(0, fileRemovedHandled);
         Assert.True(_directoryMonitor.MonitoringStarted); // DirectoryMonitor is being started for folders
@@ -91,7 +102,7 @@ public sealed class CurrentProfileLogContainerTests
     {
         // Arrange
         var file = SampleFile(_sampleProfile, true);
-        _sampleProfile!.Path = file.FullPath;
+        ((PlainTextProfileSettings)_sampleProfile!.Settings).Path = file.FullPath;
 
         // Act
         await _sut.LoadProfileAsync(_sampleProfile);
@@ -99,9 +110,11 @@ public sealed class CurrentProfileLogContainerTests
         // Verify
         _eventBus.AssertNoEventOfType<ProfileLoadingErrorEvent>();
         Assert.Equal(_sampleProfile, _sut.Profile);
-        Assert.Equal(1, _sut.FilesCount);
-        Assert.True(_fileWatcher.IsListening);
-        Assert.Equal(Path.GetDirectoryName(_sampleProfile.Path), _fileWatcher.ListeningPath);
+        Assert.Equal(1, _sut.SourcesCount);
+        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
+        Assert.True(_fileWatcherFactory.RecentlyCreatedInstance.IsListening);
+        Assert.Equal(Path.GetDirectoryName(_sampleProfile.Settings.Source), _fileWatcherFactory.RecentlyCreatedInstance.ListeningPath);
+        Assert.Equal(1, _fileWatcherFactory.InstancesCreated);
         Assert.False(_directoryMonitor.MonitoringStarted); // DirectoryMonitor is not started for files
     }
 
@@ -128,12 +141,13 @@ public sealed class CurrentProfileLogContainerTests
 
         // Pre-Verify
         Assert.NotNull(_sut.Profile);
-        Assert.NotEmpty(_sut.GetFiles());
+        Assert.NotEmpty(_sut.GetSources());
         Assert.NotEmpty(_sut.GetLogs());
         Assert.NotEmpty(_sut.GetLoggers());
         Assert.NotEmpty(_sut.GetLogLevels());
         Assert.NotEmpty(_sut.GetThreads());
-        Assert.True(_fileWatcher.IsListening);
+        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
+        Assert.True(_fileWatcherFactory.RecentlyCreatedInstance.IsListening);
 
         // Act
         _sut.CloseProfile();
@@ -141,12 +155,13 @@ public sealed class CurrentProfileLogContainerTests
         // Verify
         Assert.Null(_sut.Profile);
         Assert.True(profileClosed);
-        Assert.Empty(_sut.GetFiles());
+        Assert.Empty(_sut.GetSources());
         Assert.Empty(_sut.GetLogs());
         Assert.Empty(_sut.GetLoggers());
         Assert.Empty(_sut.GetLogLevels());
         Assert.Empty(_sut.GetThreads());
-        Assert.False(_fileWatcher.IsListening);
+        Assert.False(_fileWatcherFactory.RecentlyCreatedInstance.IsListening);
+        Assert.Equal(1, _fileWatcherFactory.InstancesCreated);
     }
 
     [Fact]
@@ -154,21 +169,23 @@ public sealed class CurrentProfileLogContainerTests
     {
         // Arrange & Pre-verify
         var files = SampleFiles(_sampleProfile);
-        Assert.Empty(_sut.GetFiles());
+        Assert.Empty(_sut.GetSources());
         await _sut.LoadProfileAsync(_sampleProfile);
 
         // Act
-        var actual = _sut.GetFiles()
-            .OrderBy(x => x.FullPath)
+        var actual = _sut.GetSources()
+            .OrderBy(x => x.Name)
             .ToArray();
 
         // Verify
         Assert.Equal(files.Length, actual.Length);
         for (var i = 0; i < files.Length; i++)
         {
-            Assert.Equal(files[i].FullPath, actual[i].FullPath);
-            Assert.Equal(files[i].Result.FileArtifacts, actual[i].Artifacts);
-            Assert.Equal(files[i].Content.Length, (int)actual[i].LastReadOffset);
+            var fileRecord = actual[i] as FileRecord;
+            Assert.NotNull(fileRecord);
+            Assert.Equal(files[i].FullPath, actual[i].Name);
+            Assert.Equal(files[i].Result.FileArtifacts, fileRecord.Artifacts);
+            Assert.Equal(files[i].Content.Length, (int)fileRecord.LastReadOffset);
         }
     }
 
@@ -240,19 +257,20 @@ public sealed class CurrentProfileLogContainerTests
         var files = SampleFiles(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
 
-        var addedFile = SampleFile(_sampleProfile, _sampleProfile.Settings.FileArtifactLinesCount > 0);
+        var addedFile = SampleFile(_sampleProfile, null);
         List<LogRecord> logsAdded = new();
-        List<FileRecord> filesAdded = new();
+        List<LogSourceBase> sourcesAdded = new();
         _sut.LogsAdded.Subscribe(logs => logsAdded.AddRange(logs));
-        _sut.FileAdded.Subscribe(filesAdded.Add);
+        _sut.SourceAdded.Subscribe(sourcesAdded.Add);
 
         // Act
-        _fileWatcher.OnCreated(_sampleProfile.Path, Path.GetFileName(addedFile.FullPath));
+        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
+        _fileWatcherFactory.RecentlyCreatedInstance.OnCreated(_sampleProfile.Settings.Source, Path.GetFileName(addedFile.FullPath));
 
         // Verify
-        Assert.Single(filesAdded);
-        Assert.Equal(addedFile.FullPath, filesAdded[0].FullPath);
-        Assert.Contains(_sut.GetFiles(), x => x.FullPath.Equals(addedFile.FullPath));
+        Assert.Single(sourcesAdded);
+        Assert.Equal(addedFile.FullPath, sourcesAdded[0].Name);
+        Assert.Contains(_sut.GetSources(), x => x.Name.Equals(addedFile.FullPath));
         AssertLogRecords(addedFile.Result.Records, logsAdded);
     }
 
@@ -266,7 +284,7 @@ public sealed class CurrentProfileLogContainerTests
         List<LogRecord> logsAdded = new();
         bool anyFileAdded = false;
         _sut.LogsAdded.Subscribe(logs => logsAdded.AddRange(logs));
-        _sut.FileAdded.Subscribe(_ => anyFileAdded = true);
+        _sut.SourceAdded.Subscribe(_ => anyFileAdded = true);
         var initialLastReadOffset = files[0].Content.Length;
         files[0] = files[0] with {
             Content = files[0].Content.Concat(_fixture.CreateMany<byte>(_fixture.Create<int>())).ToArray(),
@@ -277,14 +295,17 @@ public sealed class CurrentProfileLogContainerTests
         var initialLogs = _sut.GetLogs();
 
         // Act
-        _fileWatcher.OnChanged(_sampleProfile.Path, Path.GetFileName(files[0].FullPath));
+        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
+        _fileWatcherFactory.RecentlyCreatedInstance.OnChanged(_sampleProfile.Settings.Source, Path.GetFileName(files[0].FullPath));
 
         // Verify
         Assert.False(anyFileAdded);
         var actualLogs = _sut.GetLogs();
         AssertLogRecords(files[0].Result.Records, logsAdded);
         AssertLogRecords(initialLogs.Concat(logsAdded), actualLogs);
-        var actualFile = _sut.GetFiles().SingleOrDefault(x => x.FullPath.Equals(files[0].FullPath, StringComparison.OrdinalIgnoreCase));
+        var actualFile = _sut.GetSources()
+            .SingleOrDefault(x => x.Name.Equals(files[0].FullPath, StringComparison.OrdinalIgnoreCase))
+            as FileRecord;
         Assert.NotNull(actualFile);
         Assert.Equal(files[0].Content.Length, actualFile.LastReadOffset);
     }
@@ -296,36 +317,40 @@ public sealed class CurrentProfileLogContainerTests
         var files = SampleFiles(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
         var oldFilePath = files[0].FullPath;
-        var newFilePath = Path.Combine(_sampleProfile.Path, _fixture.Create<string>());
+        var newFilePath = Path.Combine(_sampleProfile.Settings.Source, _fixture.Create<string>());
         _fileService.MoveFile(files[0].FullPath, newFilePath);
         files[0] = files[0] with { FullPath = newFilePath };
-        FileRecord? fileRenamedEventOldRecord = null, fileRenamedEventNewRecord = null;
-        _sut.FileRenamed.Subscribe(x => (fileRenamedEventOldRecord, fileRenamedEventNewRecord) = (x.OldRecord, x.NewRecord));
+        LogSourceBase? sourceRenamedEventOldRecord = null, sourceRenamedEventNewRecord = null;
+        _sut.SourceRenamed.Subscribe(x => (sourceRenamedEventOldRecord, sourceRenamedEventNewRecord) = (x.OldRecord, x.NewRecord));
 
         // Act
-        _fileWatcher.OnRenamed(_sampleProfile.Path, Path.GetFileName(newFilePath), Path.GetFileName(oldFilePath));
+        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
+        _fileWatcherFactory.RecentlyCreatedInstance.OnRenamed(_sampleProfile.Settings.Source, Path.GetFileName(newFilePath), Path.GetFileName(oldFilePath));
 
         // Verify
-        Assert.NotNull(fileRenamedEventOldRecord);
-        Assert.NotNull(fileRenamedEventNewRecord);
-        Assert.Equal(oldFilePath, fileRenamedEventOldRecord.FullPath);
-        Assert.Equal(newFilePath, fileRenamedEventNewRecord.FullPath);
-        var actualFiles = _sut.GetFiles();
-        Assert.DoesNotContain(actualFiles, x => x.FullPath.Equals(oldFilePath));
-        Assert.Contains(actualFiles, x => x.FullPath.Equals(newFilePath));
+        Assert.NotNull(sourceRenamedEventOldRecord);
+        Assert.NotNull(sourceRenamedEventNewRecord);
+        Assert.Equal(oldFilePath, sourceRenamedEventOldRecord.Name);
+        Assert.Equal(newFilePath, sourceRenamedEventNewRecord.Name);
+        var actualFiles = _sut.GetSources();
+        Assert.DoesNotContain(actualFiles, x => x.Name.Equals(oldFilePath));
+        Assert.Contains(actualFiles, x => x.Name.Equals(newFilePath));
         var actualLogs = _sut.GetLogs();
-        Assert.DoesNotContain(actualLogs, x => x.File.FullPath.Equals(oldFilePath));
-        Assert.Contains(actualLogs, x => x.File.FullPath.Equals(newFilePath));
+        Assert.DoesNotContain(actualLogs, x => x.Source.Name.Equals(oldFilePath));
+        Assert.Contains(actualLogs, x => x.Source.Name.Equals(newFilePath));
     }
 
     [Fact]
-    public void FileWatcher_Error_ThenHandledWithLogger()
+    public async Task FileWatcher_Error_ThenHandledWithLogger()
     {
         // Arrange
+        var files = SampleFiles(_sampleProfile);
+        await _sut.LoadProfileAsync(_sampleProfile);
         var exception = new Exception(_fixture.Create<string>());
 
         // Act
-        _fileWatcher.OnError(exception);
+        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
+        _fileWatcherFactory.RecentlyCreatedInstance.OnError(exception);
 
         // Verify
         _logger.Logs.Any(x => x.LogLevel == LogLevel.Error
@@ -346,18 +371,18 @@ public sealed class CurrentProfileLogContainerTests
 
         var files = SampleFiles(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
-        var lastReadSize = _fileService.GetDirectorySize(_sampleProfile.Path, _sampleProfile.Settings.LogsLookupPattern, recursive: true);
+        var lastReadSize = _fileService.GetDirectorySize(_sampleProfile.Settings.Source, ((PlainTextProfileSettings)_sampleProfile.Settings).LogsLookupPattern, recursive: true);
 
         // Act scenario when lastReadSize == actual size
         _directoryMonitor.TriggerPulse(lastReadSize);
-        autoResetEvent.WaitOne(CurrentProfileLogContainer.UPDATE_LASTREADSIZE_WAIT_TIMEOUT_MS + 20);
+        autoResetEvent.WaitOne(FileBasedProfileLoader.UPDATE_LASTREADSIZE_WAIT_TIMEOUT_MS + 20);
 
         // Verify scenario when lastReadSize == actual size
         Assert.False(unknownChangesDetectedHandled);
 
         // Act scenario when lastReadSize != actual size
         _directoryMonitor.TriggerPulse(lastReadSize + 1);
-        autoResetEvent.WaitOne(CurrentProfileLogContainer.UPDATE_LASTREADSIZE_WAIT_TIMEOUT_MS + 20);
+        autoResetEvent.WaitOne(FileBasedProfileLoader.UPDATE_LASTREADSIZE_WAIT_TIMEOUT_MS + 20);
 
         // Verify scenario when lastReadSize != actual size
         Assert.True(unknownChangesDetectedHandled);
@@ -371,7 +396,7 @@ public sealed class CurrentProfileLogContainerTests
         foreach (var (expectedItem, actualItem) in expectedOrdered.Zip(actualOrdered))
         {
             Assert.Equal(expectedItem.DateTime, actualItem.DateTime);
-            Assert.Equal(expectedItem.File.FullPath, actualItem.File.FullPath);
+            Assert.Equal(expectedItem.Source.Name, actualItem.Source.Name);
             Assert.Equal(expectedItem.Level, actualItem.Level);
             Assert.Equal(expectedItem.Logger, actualItem.Logger);
             Assert.Equal(expectedItem.Message, actualItem.Message);
@@ -385,11 +410,13 @@ public sealed class CurrentProfileLogContainerTests
         return Enumerable.Range(1, 3).Select(_ => SampleFile(profile, true)).OrderBy(x => x.FullPath).ToArray();
     }
 
-    private FileWithContentRecord SampleFile(Profile profile, bool readFileArtifacts)
+    private FileWithContentRecord SampleFile(Profile profile, bool? readFileArtifacts)
     {
+        _logCodecProcessorMock.Setup(x => x.MayContainSourceArtifacts(profile.Settings)).Returns(true);
+
         var fileName = _fixture.Create<string>() + LOGFILE_EXTENSION;
         var sampleContent = _fixture.CreateMany<byte>(_fixture.Create<int>()).ToArray();
-        var fullPath = Path.Combine(profile.Path, fileName);
+        var fullPath = Path.Combine(profile.Settings.Source, fileName);
         _fileService.AddFile(fullPath, sampleContent);
         var sampleResults = SampleLogReadingResult(fullPath);
         var record = new FileWithContentRecord(fullPath, sampleContent, sampleResults);
@@ -399,20 +426,21 @@ public sealed class CurrentProfileLogContainerTests
 
     private LogReadingResult SampleLogReadingResult(string fullPath)
     {
-        return new LogReadingResult(_fixture.Create<FileArtifacts>(),
+        return new LogReadingResult(_fixture.Create<SourceArtifacts>(),
             ImmutableArray.Create(_fixture.Build<LogRecord>()
-                .With(x => x.File, new FileRecord(fullPath, 0))
+                .With(x => x.Source, new FileRecord(fullPath, 0))
                 .CreateMany().ToArray()),
             _fixture.CreateMany<LoggerRecord>().ToArray(),
-            _fixture.CreateMany<LogLevelRecord>().ToArray());
+            _fixture.CreateMany<LogLevelRecord>().ToArray(),
+            []);
     }
 
-    private void SetupProcessorRead(Profile profile, FileWithContentRecord record, bool readFileArtifacts, int? verifyLastReadOffset = null)
+    private void SetupProcessorRead(Profile profile, FileWithContentRecord record, bool? readFileArtifacts, int? verifyLastReadOffset = null)
     {
         _logCodecProcessorMock.Setup(x => x.ReadAsync(profile,
                 It.Is<FileRecord>(fr => fr.FullPath.Equals(record.FullPath, StringComparison.OrdinalIgnoreCase)),
                 It.IsAny<Stream>(),
-                It.Is<LogReadingSettings>(s => s.ReadFileArtifacts == readFileArtifacts)))
+                It.Is<LogReadingSettings>(s => !readFileArtifacts.HasValue || s.ReadFileArtifacts == readFileArtifacts)))
             .ReturnsAsync((Profile _, FileRecord fileRecord, Stream stream, LogReadingSettings _) =>
             {
                 if (verifyLastReadOffset is not null)
@@ -423,7 +451,7 @@ public sealed class CurrentProfileLogContainerTests
                 stream.Read(new byte[stream.Length], 0, (int)stream.Length);
                 return record.Result with {
                     Records = record.Result.Records
-                        .Select(r => r with { File = fileRecord })
+                        .Select(r => r with { Source = fileRecord })
                         .ToImmutableArray()
                 };
             });

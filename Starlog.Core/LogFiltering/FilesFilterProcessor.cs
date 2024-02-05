@@ -9,7 +9,7 @@ public sealed class FilesFilterProcessor : IFilterProcessor
     {
         var filter = (FilesProfileFilter)profileFilter;
 
-        var result = filter.FileNames.Contains(log.File.FileName, StringComparer.OrdinalIgnoreCase);
+        var result = filter.FileNames.Contains(log.Source.DisplayName, StringComparer.OrdinalIgnoreCase);
 
         return filter.Exclude ? !result : result;
     }

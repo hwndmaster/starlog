@@ -5,7 +5,6 @@ using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.TestingUtil;
-using Starlog.Core.TestingUtil;
 
 namespace Genius.Starlog.Core.Tests;
 

@@ -5,7 +5,7 @@ namespace Genius.Starlog.Core.LogFlow;
 /// <summary>
 ///   A class contains information about a reading log file.
 /// </summary>
-public sealed class FileRecord
+public sealed class FileRecord : LogSourceBase
 {
     public FileRecord(string fullPath, long lastReadOffset)
         : this(fullPath.NotNull(), Path.GetFileName(fullPath).NotNull(), lastReadOffset)
@@ -20,10 +20,14 @@ public sealed class FileRecord
     }
 
     [Pure]
-    public FileRecord WithNewName(string newFullPath)
+    public override LogSourceBase WithNewName(string newName)
     {
-        return new FileRecord(newFullPath, LastReadOffset);
+        return new FileRecord(newName, LastReadOffset);
     }
+
+    public override string Name => FullPath;
+
+    public override string DisplayName => FileName;
 
     /// <summary>
     ///   The full path to the log file.
@@ -39,9 +43,4 @@ public sealed class FileRecord
     ///   The offset when the last reading was finished.
     /// </summary>
     public long LastReadOffset { get; set; }
-
-    /// <summary>
-    ///   The file artifacts.
-    /// </summary>
-    public FileArtifacts? Artifacts { get; set; }
 }

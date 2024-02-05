@@ -21,7 +21,7 @@ internal sealed class ClipboardHelper : IClipboardHelper
 
     public string CreateLogsStringForClipboard(IEnumerable<ILogItemViewModel> items)
     {
-        var itemGroups = items.GroupBy(x => x.Record.File.FileName, x => x.Record);
+        var itemGroups = items.GroupBy(x => x.Record.Source.DisplayName, x => x.Record);
         StringBuilder sb = new();
         foreach (var itemGroup in itemGroups)
         {
@@ -33,7 +33,7 @@ internal sealed class ClipboardHelper : IClipboardHelper
             }
 
             sb.Append("File: ").AppendLine(itemGroup.Key);
-            foreach (var fileArtifact in itemGroup.First().File.Artifacts?.Artifacts ?? Array.Empty<string>())
+            foreach (var fileArtifact in itemGroup.First().Source.Artifacts?.Artifacts ?? Array.Empty<string>())
             {
                 sb.AppendLine(fileArtifact);
             }

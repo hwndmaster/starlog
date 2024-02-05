@@ -74,7 +74,7 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
 
         if (HasErrors || FilterSettings.HasErrors)
         {
-            _ui.ShowWarning("Cannot proceed while there are errors in the form.");
+            _ui.ShowWarning(StringResources.ValidationError);
             return false;
         }
 

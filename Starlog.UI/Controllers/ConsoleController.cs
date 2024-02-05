@@ -37,7 +37,7 @@ internal sealed class ConsoleController : IConsoleController
 
     public async Task LoadPathAsync(LoadPathCommandLineOptions options)
     {
-        ProfileSettings? settings = null;
+        ProfileSettingsBase? settings = null;
         if (!string.IsNullOrEmpty(options.Template))
         {
             // TODO: Cover this condition with unit tests
@@ -52,21 +52,21 @@ internal sealed class ConsoleController : IConsoleController
             }
             if (template is not null)
             {
-                settings = template.Settings;
+                settings = template.Settings.Clone();
             }
         }
 
         if (settings is null)
         {
-            var codecName = options.Codec ?? "Plain Text";
+            var codecName = options.Codec ?? PlainTextProfileSettings.CodecName;
             var logCodec = _logCodecContainer.GetLogCodecs().FirstOrDefault(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
             if (logCodec is null)
             {
                 _logger.LogWarning("Couldn't load a profile with unknown codec '{codec}'.", codecName);
                 return;
             }
-            var profileLogCodec = _logCodecContainer.CreateProfileLogCodec(logCodec);
-            if (profileLogCodec is null)
+            settings = _logCodecContainer.CreateProfileSettings(logCodec);
+            if (settings is null)
             {
                 // TODO: Cover this condition with unit tests
                 _logger.LogWarning("Couldn't create profile codec settings for codec '{codec}'.", codecName);
@@ -74,22 +74,27 @@ internal sealed class ConsoleController : IConsoleController
             }
             if (options.CodecSettings is not null)
             {
-                var processor = _logCodecContainer.CreateLogCodecProcessor(profileLogCodec);
-                if (!processor.ReadFromCommandLineArguments(profileLogCodec, options.CodecSettings.ToArray()))
+                var processor = _logCodecContainer.FindLogCodecProcessor(settings);
+                if (!processor.ReadFromCommandLineArguments(settings, options.CodecSettings.ToArray()))
                 {
                     // Couldn't read arguments, terminating...
                     _logger.LogWarning("Couldn't load a profile from '{path}' with codec '{codec}' and the following settings: {settings}", options.Path, codecName, string.Join(',', options.CodecSettings));
                     return;
                 }
             }
-
-            settings = new ProfileSettings
-            {
-                LogCodec = profileLogCodec,
-                FileArtifactLinesCount = options.FileArtifactLinesCount ?? 0
-            };
         }
 
-        await _mainController.LoadPathAsync(options.Path, settings).ConfigureAwait(false);
+        if (settings is PlainTextProfileSettings plainTextProfileSettings)
+        {
+            plainTextProfileSettings.Path = options.Path;
+
+            // TODO: Might be worth taking it to `processor.ReadFromCommandLineArguments()`
+            if (options.FileArtifactLinesCount is not null)
+            {
+                plainTextProfileSettings.FileArtifactLinesCount = options.FileArtifactLinesCount.Value;
+            }
+        }
+
+        await _mainController.LoadProfileSettingsAsync(settings).ConfigureAwait(false);
     }
 }

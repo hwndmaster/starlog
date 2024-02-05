@@ -14,11 +14,11 @@ internal sealed partial class ComparisonService : IComparisonService
     private const int LOOK_AHEAD_THRESHOLD_MS = 500;
     private static readonly TimeSpan LookAheadThreshold = TimeSpan.FromMilliseconds(LOOK_AHEAD_THRESHOLD_MS);
 
-    private readonly IProfileLoader _profileLoader;
+    private readonly IProfileLoaderFactory _profileLoaderFactory;
 
-    public ComparisonService(IProfileLoader profileLoader)
+    public ComparisonService(IProfileLoaderFactory profileLoaderFactory)
     {
-        _profileLoader = profileLoader.NotNull();
+        _profileLoaderFactory = profileLoaderFactory.NotNull();
     }
 
     // TODO: Cover with unit tests
@@ -27,12 +27,21 @@ internal sealed partial class ComparisonService : IComparisonService
         var logContainer1 = new LogContainer();
         var logContainer2 = new LogContainer();
 
-        var taskProfileLoading1 = _profileLoader.LoadProfileAsync(profile1, logContainer1);
-        var taskProfileLoading2 = _profileLoader.LoadProfileAsync(profile2, logContainer2);
+        var profileLoader1 = _profileLoaderFactory.Create(profile1);
+        var profileLoader2 = _profileLoaderFactory.Create(profile2);
+
+        if (profileLoader1 is null || profileLoader2 is null)
+        {
+            throw new NotImplementedException();
+            // TODO: return ComparisonContext.WithError();
+        }
+
+        var taskProfileLoading1 = profileLoader1.LoadProfileAsync(profile1, logContainer1);
+        var taskProfileLoading2 = profileLoader2.LoadProfileAsync(profile2, logContainer2);
 
         await Task.WhenAll(taskProfileLoading1, taskProfileLoading2).ConfigureAwait(false);
 
-        if (!taskProfileLoading1.Result || !taskProfileLoading2.Result)
+        if (taskProfileLoading1.Result is null || taskProfileLoading2.Result is null)
         {
             return null;
         }
@@ -99,9 +108,9 @@ internal sealed partial class ComparisonService : IComparisonService
 
     private LogComparisonContext CalculateLogRecordHashes(LogContainer logContainer)
     {
-        var files = logContainer.GetFiles().ToDictionary(
-            x => x.FileName.GetHashCode(),
-            x => DigitsAndNonCharRegex().Replace(x.FileName, (m) => ""));
+        var files = logContainer.GetSources().ToDictionary(
+            x => x.DisplayName.GetHashCode(),
+            x => DigitsAndNonCharRegex().Replace(x.DisplayName, (m) => ""));
         var logs = logContainer.GetLogs();
         var initialTime = logs[0].DateTime;
         var logsCalculated = logContainer.GetLogs().Select(x => new LogRecordWithHash(x, CalculateHash(x, files))).ToImmutableArray();
@@ -110,7 +119,7 @@ internal sealed partial class ComparisonService : IComparisonService
 
     private int CalculateHash(LogRecord logRecord, Dictionary<int, string> filesDict)
     {
-        var fileName = filesDict[logRecord.File.FileName.GetHashCode()];
+        var fileName = filesDict[logRecord.Source.DisplayName.GetHashCode()];
 
         // TODO: Make trimming optional
         var messageTrimmed = DigitsAndNonCharRegex().Replace(logRecord.Message, (m) => "");

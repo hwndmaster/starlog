@@ -76,7 +76,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
         _menuItemFiles = new MenuItem { Header = "Files(s): {..., ...}", Command = new ActionCommand(_ =>
         {
             var vm = (ILogsViewModel)AssociatedObject.DataContext;
-            var files = vm.SelectedLogItems.Select(x => x.Record.File.FileName).Distinct().ToArray();
+            var files = vm.SelectedLogItems.Select(x => x.Record.Source.DisplayName).Distinct().ToArray();
 
             var name = LogFilterHelpers.ProposeNameForStringList("Files", files, false);
             var filter = _logFilterContainer.CreateProfileFilter<FilesProfileFilter>(name);
@@ -152,7 +152,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
         var levels = string.Join(", ", vm.SelectedLogItems.Select(x => x.Record.Level.Name).Distinct());
         _menuItemLevels.Header = LogFilterHelpers.LimitNameLength("Level(s): " + levels);
 
-        var files = string.Join(", ", vm.SelectedLogItems.Select(x => x.Record.File.FileName).Distinct());
+        var files = string.Join(", ", vm.SelectedLogItems.Select(x => x.Record.Source.DisplayName).Distinct());
         _menuItemFiles.Header = LogFilterHelpers.LimitNameLength("File(s): " + files);
 
         var msg = vm.SelectedLogItems[0].Record.Message;

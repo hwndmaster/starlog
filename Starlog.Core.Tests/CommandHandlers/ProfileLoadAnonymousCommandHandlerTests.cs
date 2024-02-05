@@ -28,7 +28,6 @@ public sealed class ProfileLoadAnonymousCommandHandlerTests
         Mock.Get(_harness.ProfileRepo).Verify(x => x.SetAnonymous(It.Is<Profile>(x =>
             x.Id == Profile.AnonymousProfileId
             && x.Name == "Unnamed"
-            && x.Path == command.Path
             && x.Settings == command.Settings)));
     }
 }

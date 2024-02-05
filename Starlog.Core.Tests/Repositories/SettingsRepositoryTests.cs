@@ -27,7 +27,7 @@ public sealed class SettingsRepositoryTests
     }
 
     [Fact]
-    public void Constructor__WhenNoExistingSettings_ThenDefaultLoaded()
+    public void Constructor_WhenNoExistingSettings_ThenDefaultLoaded()
     {
         // Arrange
         Settings? settings = null;
@@ -39,7 +39,7 @@ public sealed class SettingsRepositoryTests
         var result = sut.Get();
         Assert.Null(result.AutoLoadProfile);
         Assert.False(result.AutoLoadPreviouslyOpenedProfile);
-        Assert.Equal(2, result.PlainTextLogCodecLinePatterns.Count);
+        Assert.Equal(3, result.PlainTextLogCodecLinePatterns.Count);
     }
 
     [Fact]

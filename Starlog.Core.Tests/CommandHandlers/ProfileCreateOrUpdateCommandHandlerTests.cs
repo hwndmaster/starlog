@@ -28,7 +28,6 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         // Verify
         Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(It.Is<Profile>(x =>
             x.Name == command.Name
-            && x.Path == command.Path
             && x.Settings == command.Settings)));
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
     }
@@ -41,8 +40,7 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         var command = new ProfileUpdateCommand(profile.Id)
         {
             Name = _harness.Fixture.Create<string>(),
-            Path = _harness.Fixture.Create<string>(),
-            Settings = _harness.Fixture.Create<ProfileSettings>()
+            Settings = _harness.Fixture.Create<ProfileSettingsBase>()
         };
 
         // Act
@@ -52,7 +50,6 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(It.Is<Profile>(x =>
             x.Id == command.ProfileId
             && x.Name == command.Name
-            && x.Path == command.Path
             && x.Settings == command.Settings)));
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
     }
@@ -64,8 +61,7 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         var command = new ProfileUpdateCommand(_harness.Fixture.Create<Guid>())
         {
             Name = _harness.Fixture.Create<string>(),
-            Path = _harness.Fixture.Create<string>(),
-            Settings = _harness.Fixture.Create<ProfileSettings>()
+            Settings = _harness.Fixture.Create<ProfileSettingsBase>()
         };
 
         // Act

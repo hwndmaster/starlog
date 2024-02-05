@@ -4,7 +4,7 @@ using Genius.Atom.Data.Persistence;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.Models;
 
-namespace Genius.Starlog.Core.Repositories;
+namespace Genius.Starlog.Core.Serialization;
 
 internal sealed class LogFilterJsonConverter : JsonConverter<LogFilter>, IJsonConverter
 {

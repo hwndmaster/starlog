@@ -5,12 +5,17 @@ namespace Genius.Starlog.Core.LogReading;
 
 public sealed class XmlLogCodecProcessor : ILogCodecProcessor
 {
-    public Task<LogReadingResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings)
+    public bool MayContainSourceArtifacts(ProfileSettingsBase profileSettings)
     {
         throw new NotImplementedException();
     }
 
-    public bool ReadFromCommandLineArguments(ProfileLogCodecBase profileLogCodec, string[] codecSettings)
+    public Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings)
+    {
+        throw new NotImplementedException();
+    }
+
+    public bool ReadFromCommandLineArguments(ProfileSettingsBase profileSettings, string[] codecSettings)
     {
         return true;
     }

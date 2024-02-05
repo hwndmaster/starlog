@@ -8,31 +8,31 @@ namespace Genius.Starlog.Core.LogFlow;
 internal class LogContainer : ILogContainer, ILogContainerWriter
 {
     private readonly ReaderWriterLockSlim _lock = new();
-    private readonly ConcurrentDictionary<string, FileRecord> _files = new();
+    private readonly ConcurrentDictionary<string, LogSourceBase> _sources = new();
     private readonly List<LogRecord> _logs = new();
     private readonly ConcurrentDictionary<int, LoggerRecord> _loggers = new();
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
     private readonly ConcurrentDictionary<string, byte> _logThreads = new();
 
-    private readonly Subject<FileRecord> _fileAdded = new();
-    private readonly Subject<(FileRecord OldRecord, FileRecord NewRecord)> _fileRenamed = new();
-    private readonly Subject<FileRecord> _fileRemoved = new();
-    private readonly Subject<int> _filesCountChanged = new();
+    private readonly Subject<LogSourceBase> _sourceAdded = new();
+    private readonly Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)> _sourceRenamed = new();
+    private readonly Subject<LogSourceBase> _sourceRemoved = new();
+    private readonly Subject<int> _sourcesCountChanged = new();
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
     private readonly Subject<ImmutableArray<LogRecord>> _logsRemoved = new();
 
     public LogContainer()
     {
         // TODO: Cover with unit tests
-        _fileAdded
-            .Concat(_fileRemoved)
-            .Subscribe(_ => _filesCountChanged.OnNext(FilesCount));
+        _sourceAdded
+            .Concat(_sourceRemoved)
+            .Subscribe(_ => _sourcesCountChanged.OnNext(SourcesCount));
     }
 
-    public void AddFile(FileRecord fileRecord)
+    public void AddSource(LogSourceBase sourceRecord)
     {
-        _files.TryAdd(fileRecord.FullPath, fileRecord);
-        _fileAdded.OnNext(fileRecord);
+        _sources.TryAdd(sourceRecord.Name, sourceRecord);
+        _sourceAdded.OnNext(sourceRecord);
     }
 
     public void AddLogger(LoggerRecord logger)
@@ -59,9 +59,9 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
         _logsAdded.OnNext(logRecords);
     }
 
-    public ImmutableArray<FileRecord> GetFiles()
+    public ImmutableArray<LogSourceBase> GetSources()
     {
-        return _files.Values.ToImmutableArray();
+        return _sources.Values.ToImmutableArray();
     }
 
     public ImmutableArray<LogRecord> GetLogs()
@@ -88,24 +88,15 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
         return _logThreads.Keys.ToImmutableArray();
     }
 
-    protected void Clear()
+    public LogSourceBase? GetSource(string name)
     {
-        _files.Clear();
-        _loggers.Clear();
-        _logLevels.Clear();
-        _logThreads.Clear();
-        _logs.Clear();
-    }
-
-    protected FileRecord? GetFile(string fullPath)
-    {
-        return _files.TryGetValue(fullPath, out var fileRecord) ? fileRecord : null;
+        return _sources.TryGetValue(name, out var source) ? source : null;
     }
 
     // TODO: Cover with unit tests
-    protected void RemoveFile(string fullPath)
+    public void RemoveSource(string name)
     {
-        if (_files.TryRemove(fullPath, out var record))
+        if (_sources.TryRemove(name, out var record))
         {
             List<LogRecord> logsRemoved = new();
             HashSet<int> loggersAffected = new();
@@ -114,7 +105,7 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
             // Step 1: Remove logs
             _logs.RemoveAll(x =>
             {
-                if (x.File.FullPath.Equals(record.FullPath, StringComparison.InvariantCulture))
+                if (x.Source.Name.Equals(record.Name, StringComparison.InvariantCulture))
                 {
                     logsRemoved.Add(x);
                     loggersAffected.Add(x.Logger.Id);
@@ -144,30 +135,30 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
 
             // Step 3: Raise events
             _logsRemoved.OnNext(logsRemoved.ToImmutableArray());
-            _fileRemoved.OnNext(record);
+            _sourceRemoved.OnNext(record);
         }
     }
 
-    protected void RenameFile(string oldFullPath, string newFullPath)
+    public void RenameSource(string oldName, string newName)
     {
-        FileRecord newRecord;
+        LogSourceBase newSource;
         _lock.EnterWriteLock();
 
-        if (!_files.TryRemove(oldFullPath, out var previousRecord))
+        if (!_sources.TryRemove(oldName, out var previousSource))
         {
             return;
         }
 
         try
         {
-            newRecord = previousRecord.WithNewName(newFullPath);
-            _files.TryAdd(previousRecord.FileName, newRecord);
+            newSource = previousSource.WithNewName(newName);
+            _sources.TryAdd(previousSource.Name, newSource);
 
             for (var i = 0; i < _logs.Count; i++)
             {
-                if (_logs[i].File == previousRecord)
+                if (_logs[i].Source == previousSource)
                 {
-                    _logs[i] = _logs[i] with { File = newRecord };
+                    _logs[i] = _logs[i] with { Source = newSource };
                 }
             }
         }
@@ -176,15 +167,24 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
             _lock.ExitWriteLock();
         }
 
-        _fileRenamed.OnNext((previousRecord, newRecord));
+        _sourceRenamed.OnNext((previousSource, newSource));
     }
 
-    public IObservable<FileRecord> FileAdded => _fileAdded;
-    public IObservable<(FileRecord OldRecord, FileRecord NewRecord)> FileRenamed => _fileRenamed;
-    public IObservable<FileRecord> FileRemoved => _fileRemoved;
-    public IObservable<int> FilesCountChanged => _filesCountChanged;
+    protected void Clear()
+    {
+        _sources.Clear();
+        _loggers.Clear();
+        _logLevels.Clear();
+        _logThreads.Clear();
+        _logs.Clear();
+    }
+
+    public IObservable<LogSourceBase> SourceAdded => _sourceAdded;
+    public IObservable<(LogSourceBase OldRecord, LogSourceBase NewRecord)> SourceRenamed => _sourceRenamed;
+    public IObservable<LogSourceBase> SourceRemoved => _sourceRemoved;
+    public IObservable<int> SourcesCountChanged => _sourcesCountChanged;
     public IObservable<ImmutableArray<LogRecord>> LogsAdded => _logsAdded;
     public IObservable<ImmutableArray<LogRecord>> LogsRemoved => _logsRemoved;
 
-    public int FilesCount => _files.Count;
+    public int SourcesCount => _sources.Count;
 }

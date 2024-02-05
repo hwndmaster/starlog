@@ -11,7 +11,7 @@ public class LoadPathCommandLineOptions
     [Option('t', "template", HelpText = "Defines a template name or its identifier which will be used to set up a session-time profile.")]
     public string? Template { get; set; }
 
-    [Option('r', "codec", Required = false, HelpText = "Defines a log codec to be used for the selected path. Default is 'Plain Text'.")]
+    [Option('r', "codec", Required = false, HelpText = "Defines a log codec to be used for the selected path. Default is 'Plain Text'. Only file/folder-based codecs are supported.")]
     public string? Codec { get; set; }
 
     [Option('s', "settings", Required = false, HelpText = "Defines the log codec settings.")]

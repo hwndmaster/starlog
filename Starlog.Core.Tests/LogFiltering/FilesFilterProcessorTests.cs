@@ -20,7 +20,7 @@ public sealed class FilesFilterProcessorTests
             Exclude = false
         };
         var logRecord = _fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(_fixture.Create<string>() + "\\" + profileFilter.FileNames[1], 0))
+            .With(x => x.Source, new FileRecord(_fixture.Create<string>() + "\\" + profileFilter.FileNames[1], 0))
             .Create();
 
         // Act
@@ -78,7 +78,7 @@ public sealed class FilesFilterProcessorTests
             Exclude = true
         };
         var logRecord = _fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(_fixture.Create<string>() + "\\" + profileFilter.FileNames[1], 0))
+            .With(x => x.Source, new FileRecord(_fixture.Create<string>() + "\\" + profileFilter.FileNames[1], 0))
             .Create();
 
         // Act

@@ -73,7 +73,7 @@ public sealed class PlainTextLogCodecProcessorTests
             """
             1900-01-01 10:11:12.444 LEVEL1 1 Logger1 Some test message
             """));
-        profile.Settings.FileArtifactLinesCount = 0;
+        ((PlainTextProfileSettings)profile.Settings).FileArtifactLinesCount = 0;
 
         // Act
         var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadFileArtifacts: true));
@@ -151,7 +151,7 @@ public sealed class PlainTextLogCodecProcessorTests
         // Arrange
         var profile = CreateSampleProfile();
         using var stream = new MemoryStream(Encoding.Default.GetBytes(_fixture.Create<string>()));
-        ((PlainTextProfileLogCodec)profile.Settings.LogCodec).LinePatternId = Guid.NewGuid();
+        ((PlainTextProfileSettings)profile.Settings).LinePatternId = Guid.NewGuid();
 
         // Act & Verify
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -186,8 +186,11 @@ public sealed class PlainTextLogCodecProcessorTests
         {
             PlainTextLogCodecLinePatterns = new List<PatternValue> { pattern }
         });
-        var profileLogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>());
-        string[] codecSettings = new [] { lineRegexName };
+        var profileLogCodec = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
+        {
+            Path = _fixture.Create<string>()
+        };
+        string[] codecSettings = [lineRegexName];
 
         // Act
         var result = _sut.ReadFromCommandLineArguments(profileLogCodec, codecSettings);
@@ -201,7 +204,10 @@ public sealed class PlainTextLogCodecProcessorTests
     public void ReadFromCommandLineArguments_WhenNoCodecSettingsProvided_ReturnsFalse()
     {
         // Arrange
-        var profileLogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>());
+        var profileLogCodec = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
+        {
+            Path = _fixture.Create<string>()
+        };
         string[] codecSettings = Array.Empty<string>();
 
         // Act
@@ -217,19 +223,25 @@ public sealed class PlainTextLogCodecProcessorTests
         // Arrange
         var lineRegexName = _fixture.Create<string>();
         var anotherLineRegexName = _fixture.Create<string>();
+        var patternId = Guid.NewGuid();
         _settingsQueryMock.Setup(x => x.Get()).Returns(new Settings
         {
             PlainTextLogCodecLinePatterns = new List<PatternValue>
             {
                 new PatternValue {
+                    Id = patternId,
                     Name = lineRegexName,
                     Type = PatternType.RegularExpression,
                     Pattern = _fixture.Create<string>()
                 }
             }
         });
-        var profileLogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>());
-        string[] codecSettings = new [] { anotherLineRegexName };
+        var profileLogCodec = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
+        {
+            Path = _fixture.Create<string>(),
+            LinePatternId = patternId
+        };
+        string[] codecSettings = [anotherLineRegexName];
 
         // Act
         var result = _sut.ReadFromCommandLineArguments(profileLogCodec, codecSettings);
@@ -252,6 +264,7 @@ public sealed class PlainTextLogCodecProcessorTests
     private Profile CreateSampleProfile()
     {
         var pattern = new PatternValue {
+            Id = Guid.NewGuid(),
             Name = _fixture.Create<string>(),
             Type = PatternType.RegularExpression,
             Pattern = @"(?<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3})\s(?<level>\w+)\s(?<thread>\d+)\s(?<logger>\w+)\s(?<message>.*)"
@@ -265,14 +278,11 @@ public sealed class PlainTextLogCodecProcessorTests
         return new Profile
         {
             Name = _fixture.Create<string>(),
-            Path = _fixture.Create<string>(),
-            Settings = new ProfileSettings
+            Settings = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
             {
+                Path = _fixture.Create<string>(),
                 FileArtifactLinesCount = 2,
-                LogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>())
-                {
-                    LinePatternId = pattern.Id
-                }
+                LinePatternId = pattern.Id,
             }
         };
     }

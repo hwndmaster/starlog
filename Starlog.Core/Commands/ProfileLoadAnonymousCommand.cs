@@ -5,12 +5,10 @@ namespace Genius.Starlog.Core.Commands;
 
 public sealed class ProfileLoadAnonymousCommand : ICommandMessageExchange<Profile>
 {
-    public ProfileLoadAnonymousCommand(string path, ProfileSettings settings)
+    public ProfileLoadAnonymousCommand(ProfileSettingsBase settings)
     {
-        Path = path.NotNull();
         Settings = settings.NotNull();
     }
 
-    public string Path { get; }
-    public ProfileSettings Settings { get; }
+    public ProfileSettingsBase Settings { get; }
 }

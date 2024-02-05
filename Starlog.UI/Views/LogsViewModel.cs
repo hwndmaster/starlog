@@ -115,22 +115,22 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             _logContainer.LogsRemoved
                 .Where(_ => !_suspendUpdate)
                 .Subscribe(x => _uiDispatcher.BeginInvoke(() => RemoveLogs(x))),
-            _logContainer.FileRenamed
+            _logContainer.SourceRenamed
                 .Subscribe(args =>
                 {
                     _uiDispatcher.BeginInvoke(() => {
                         foreach (var logItem in LogItems)
                         {
-                            if (logItem.Record.File.FileName.Equals(args.OldRecord.FileName, StringComparison.Ordinal))
+                            if (logItem.Record.Source.DisplayName.Equals(args.OldRecord.DisplayName, StringComparison.Ordinal))
                             {
-                                logItem.HandleFileRenamed(args.NewRecord);
+                                logItem.HandleSourceRenamed(args.NewRecord);
                             }
                         }});
                 }),
-            _logContainer.FilesCountChanged
-                .Subscribe(filesCount =>
+            _logContainer.SourcesCountChanged
+                .Subscribe(sourcesCount =>
                 {
-                    IsFileColumnVisible = filesCount > 1;
+                    IsFileColumnVisible = sourcesCount > 1;
                 }),
             Filtering.FilterChanged.Merge(Search.SearchChanged)
                 .Subscribe(_ => RefreshFilteredItems()),

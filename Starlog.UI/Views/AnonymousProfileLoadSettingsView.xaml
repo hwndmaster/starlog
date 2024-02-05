@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:profilesettings="clr-namespace:Genius.Starlog.UI.Views.ProfileSettings"
         xmlns:views="clr-namespace:Genius.Starlog.UI.Views"
         mc:Ignorable="d">
     <Grid>
@@ -13,7 +14,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <views:ProfileSettingsView DataContext="{Binding ProfileSettings}" />
+        <profilesettings:ProfileSettingsView DataContext="{Binding ProfileSettings}" />
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,8">
             <Button Content="OK" Width="100"

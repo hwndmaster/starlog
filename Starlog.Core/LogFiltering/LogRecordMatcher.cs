@@ -24,7 +24,7 @@ internal sealed class LogRecordMatcher : ILogRecordMatcher
         }
 
         if (context.Filter.FilesSelected.Count > 0
-            && !context.Filter.FilesSelected.Contains(item.File.FileName))
+            && !context.Filter.FilesSelected.Contains(item.Source.DisplayName))
         {
             return false;
         }

@@ -31,8 +31,8 @@ public sealed class ProfileContextMenuBehavior : Behavior<DataGrid>
         });
         contextMenu.Items.Add(new MenuItem
         {
-            Header = "Open containing folder",
-            Command = new ActionCommand(_ => OpenContainingFolder())
+            Header = "Locate profile",
+            Command = new ActionCommand(_ => LocateProfile())
         });
         contextMenu.Items.Add(new MenuItem
         {
@@ -112,12 +112,12 @@ public sealed class ProfileContextMenuBehavior : Behavior<DataGrid>
         vm.OpenEditProfileFlyoutCommand.Execute(null);
     }
 
-    private void OpenContainingFolder()
+    private void LocateProfile()
     {
         if (AssociatedObject.DataContext is not IProfilesViewModel vm)
             return;
 
         var profile = vm.Profiles.FirstOrDefault(x => x.IsSelected);
-        profile?.OpenContainingFolderCommand.Execute(null);
+        profile?.LocateCommand.Execute(null);
     }
 }

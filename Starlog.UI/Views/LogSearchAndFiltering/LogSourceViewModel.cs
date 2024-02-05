@@ -4,25 +4,25 @@ using Genius.Starlog.Core.LogFlow;
 namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 
 // TODO: Cover with unit tests
-public sealed class LogFileViewModel : ViewModelBase, ILogFilterNodeViewModel
+public sealed class LogSourceViewModel : ViewModelBase, ILogFilterNodeViewModel
 {
-    public LogFileViewModel(FileRecord file)
+    public LogSourceViewModel(LogSourceBase source)
     {
-        File = file.NotNull();
+        Source = source.NotNull();
         AddChildCommand = new ActionCommand(_ => throw new NotSupportedException());
         PinCommand = new ActionCommand(_ => IsPinned = !IsPinned);
     }
 
-    internal void HandleFileRenamed(FileRecord newRecord)
+    internal void HandleSourceRenamed(LogSourceBase newRecord)
     {
-        File = newRecord;
-        Title = File.FileName;
+        Source = newRecord;
+        Title = Source.DisplayName;
     }
 
-    public FileRecord File { get; private set; }
+    public LogSourceBase Source { get; private set; }
     public string Title
     {
-        get => GetOrDefault(File.FileName);
+        get => GetOrDefault(Source.DisplayName);
         set => RaiseAndSetIfChanged(value);
     }
 

@@ -1,17 +1,26 @@
+using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.UI.Views.ProfileSettings;
 
 namespace Genius.Starlog.UI.Views;
 
 public sealed class AnonymousProfileLoadSettingsViewModel : ViewModelBase
 {
-    public AnonymousProfileLoadSettingsViewModel(IViewModelFactory vmFactory, IActionCommand closeCommand,
-        IActionCommand<ProfileSettings> confirmCommand)
+    public AnonymousProfileLoadSettingsViewModel(
+        ILogCodecContainer logCodecContainer,
+        IViewModelFactory vmFactory,
+        string path,
+        IActionCommand closeCommand,
+        IActionCommand<ProfileSettingsBase> confirmCommand)
     {
         // Dependencies:
         Guard.NotNull(vmFactory);
 
         // Members initialization:
-        ProfileSettings = vmFactory.CreateProfileSettings(null);
+        var logCodec = logCodecContainer.GetLogCodecs().First(x => x.Name.Equals(PlainTextProfileSettings.CodecName, StringComparison.OrdinalIgnoreCase));
+        var profileSettings = logCodecContainer.CreateProfileSettings(logCodec);
+        ((PlainTextProfileSettings)profileSettings).Path = path;
+        ProfileSettings = vmFactory.CreateProfileSettings(profileSettings);
 
         // Actions:
         CloseCommand = closeCommand;

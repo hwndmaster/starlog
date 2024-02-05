@@ -17,4 +17,8 @@
     <PackageReference Include="System.Threading.Tasks.Dataflow" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Genius.Starlog.Core.TestingUtil" />
+  </ItemGroup>
+
 </Project>

@@ -1,6 +1,6 @@
 using Genius.Starlog.Core.Models;
 
-namespace Starlog.Core.TestingUtil;
+namespace Genius.Starlog.Core.TestingUtil;
 
 public sealed class TestProfileFilter : ProfileFilterBase
 {

@@ -7,7 +7,7 @@ namespace Genius.Starlog.UI.Views;
 
 public interface ILogItemViewModel : IViewModel
 {
-    void HandleFileRenamed(FileRecord newRecord);
+    void HandleSourceRenamed(LogSourceBase newRecord);
 
     LogRecord Record { get; }
     bool ColorizeByThread { get; set; }
@@ -29,13 +29,13 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
 
         Record = record.NotNull();
         _artifactsLazy = new Lazy<FlowDocument>(() =>
-            artifactsFormatter.CreateArtifactsDocument(Record.File.Artifacts, Record.LogArtifacts));
+            artifactsFormatter.CreateArtifactsDocument(Record.Source.Artifacts, Record.LogArtifacts));
     }
 
-    public void HandleFileRenamed(FileRecord newRecord)
+    public void HandleSourceRenamed(LogSourceBase newRecord)
     {
-        Record = Record with { File = newRecord };
-        File = Record.File.FileName;
+        Record = Record with { Source = newRecord };
+        DisplayName = Record.Source.DisplayName;
     }
 
     public LogRecord Record { get; private set; }
@@ -44,9 +44,9 @@ public sealed class LogItemViewModel : ViewModelBase, ILogItemViewModel
     public string Level => Record.Level.Name;
     public string Thread => Record.Thread;
 
-    public string File
+    public string DisplayName
     {
-        get => GetOrDefault(Record.File.FileName);
+        get => GetOrDefault(Record.Source.DisplayName);
         set => RaiseAndSetIfChanged(value);
     }
 
