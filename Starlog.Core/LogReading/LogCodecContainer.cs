@@ -5,17 +5,17 @@ namespace Genius.Starlog.Core.LogReading;
 
 public interface ILogCodecContainer
 {
-    ProfileLogCodecBase CreateProfileLogCodec(LogCodec logCodec);
-    ILogCodecProcessor CreateLogCodecProcessor(ProfileLogCodecBase profileLogCodec);
+    ProfileSettingsBase CreateProfileSettings(LogCodec logCodec);
+    ILogCodecProcessor FindLogCodecProcessor(ProfileSettingsBase profileSettings);
     IEnumerable<LogCodec> GetLogCodecs();
-    void RegisterLogCodec<TProfileLogCodec, TLogCodec>(LogCodec logCodec)
-        where TProfileLogCodec : ProfileLogCodecBase
+    void RegisterLogCodec<TProfileSettings, TLogCodec>(LogCodec logCodec)
+        where TProfileSettings : ProfileSettingsBase
         where TLogCodec : class, ILogCodecProcessor;
 }
 
 internal sealed class LogCodecContainer : ILogCodecContainer, IQueryService<LogCodec>
 {
-    private readonly record struct LogCodecRecord(LogCodec Codec, Type ProfileLogCodecType, Type ProcessorType);
+    private readonly record struct LogCodecRecord(LogCodec Codec, Type ProfileSettingsType, Type ProcessorType);
 
     private readonly Dictionary<Guid /* LogCodec.Id */, LogCodecRecord> _registeredLogCodecs = new();
 
@@ -26,21 +26,21 @@ internal sealed class LogCodecContainer : ILogCodecContainer, IQueryService<LogC
         _processors = logCodecProcessors;
     }
 
-    public ProfileLogCodecBase CreateProfileLogCodec(LogCodec logCodec)
+    public ProfileSettingsBase CreateProfileSettings(LogCodec logCodec)
     {
         if (!_registeredLogCodecs.TryGetValue(logCodec.Id, out var value))
         {
             throw new InvalidOperationException("The log codec '" + logCodec.Id + "' doesn't exists.");
         }
 
-        return (ProfileLogCodecBase)Activator.CreateInstance(value.ProfileLogCodecType, logCodec).NotNull();
+        return (ProfileSettingsBase)Activator.CreateInstance(value.ProfileSettingsType, logCodec).NotNull();
     }
 
-    public ILogCodecProcessor CreateLogCodecProcessor(ProfileLogCodecBase profileLogCodec)
+    public ILogCodecProcessor FindLogCodecProcessor(ProfileSettingsBase profileSettings)
     {
-        if (!_registeredLogCodecs.TryGetValue(profileLogCodec.LogCodec.Id, out var value))
+        if (!_registeredLogCodecs.TryGetValue(profileSettings.LogCodec.Id, out var value))
         {
-            throw new InvalidOperationException("The log codec '" + profileLogCodec.LogCodec.Id + "' doesn't exists.");
+            throw new InvalidOperationException("The log codec '" + profileSettings.LogCodec.Id + "' doesn't exists.");
         }
 
         return _processors.Value.First(x => x.GetType() == value.ProcessorType);
@@ -64,8 +64,8 @@ internal sealed class LogCodecContainer : ILogCodecContainer, IQueryService<LogC
         return _registeredLogCodecs.Select(x => x.Value.Codec);
     }
 
-    public void RegisterLogCodec<TProfileLogCodec, TLogCodecProcessor>(LogCodec logCodec)
-        where TProfileLogCodec : ProfileLogCodecBase
+    public void RegisterLogCodec<TProfileSettings, TLogCodecProcessor>(LogCodec logCodec)
+        where TProfileSettings : ProfileSettingsBase
         where TLogCodecProcessor : class, ILogCodecProcessor
     {
         if (_registeredLogCodecs.ContainsKey(logCodec.Id))
@@ -73,6 +73,6 @@ internal sealed class LogCodecContainer : ILogCodecContainer, IQueryService<LogC
             throw new InvalidOperationException("The log codec '" + logCodec.Id + "' already exists.");
         }
 
-        _registeredLogCodecs.Add(logCodec.Id, new LogCodecRecord(logCodec, typeof(TProfileLogCodec), typeof(TLogCodecProcessor)));
+        _registeredLogCodecs.Add(logCodec.Id, new LogCodecRecord(logCodec, typeof(TProfileSettings), typeof(TLogCodecProcessor)));
     }
 }

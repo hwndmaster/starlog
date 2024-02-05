@@ -1,10 +1,10 @@
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.Infrastructure.Io;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
@@ -25,12 +25,11 @@ public interface IMainController
     Task AutoLoadProfileAsync();
 
     /// <summary>
-    ///   Loads a file or folder by the specified path with an anonymous not-persisted profile.
+    ///   Loads an anonymous not-persisted profile.
     /// </summary>
-    /// <param name="path">The path to load.</param>
     /// <param name="profileSettings">The profile settings.</param>
     /// <returns>A task for awaiting the operation completion.</returns>
-    Task LoadPathAsync(string path, ProfileSettings profileSettings);
+    Task LoadProfileSettingsAsync(ProfileSettingsBase profileSettings);
 
     /// <summary>
     ///   Loads a profile.
@@ -42,7 +41,7 @@ public interface IMainController
     void NotifyMainWindowIsLoaded();
     void NotifyProfilesAreLoaded();
 
-    void OpenProfileContainingFolder(Profile profile);
+    void Locate(Profile profile);
     void SetBusy(bool isBusy);
     void ShowAddProfileForPath(string path);
     void ShowLogsTab();
@@ -60,6 +59,7 @@ internal sealed class MainController : IMainController
     private readonly IDialogCoordinator _dialogCoordinator;
     private readonly IEventBus _eventBus;
     private readonly IFileService _fileService;
+    private readonly ILogCodecContainer _logCodecContainer;
     private readonly ISettingsQueryService _settingsQuery;
     private readonly IUserInteraction _ui;
     private readonly Lazy<IMainViewModel> _mainViewModel;
@@ -76,6 +76,7 @@ internal sealed class MainController : IMainController
         IDialogCoordinator dialogCoordinator,
         IEventBus eventBus,
         IFileService fileService,
+        ILogCodecContainer logCodecContainer,
         ISettingsQueryService settingsQuery,
         IUserInteraction ui,
         Lazy<IMainViewModel> mainViewModel,
@@ -87,6 +88,7 @@ internal sealed class MainController : IMainController
         _dialogCoordinator = dialogCoordinator.NotNull();
         _eventBus = eventBus.NotNull();
         _fileService = fileService.NotNull();
+        _logCodecContainer = logCodecContainer.NotNull();
         _settingsQuery = settingsQuery.NotNull();
         _ui = ui.NotNull();
         _mainViewModel = mainViewModel.NotNull();
@@ -111,7 +113,7 @@ internal sealed class MainController : IMainController
         }
     }
 
-    public async Task LoadPathAsync(string path, ProfileSettings profileSettings)
+    public async Task LoadProfileSettingsAsync(ProfileSettingsBase profileSettings)
     {
         _anonymousProfileToBeLoaded = true;
         await Loaded;
@@ -121,7 +123,7 @@ internal sealed class MainController : IMainController
         await Task.Delay(10); // TODO: Helps to let the UI to show a 'busy' overlay, find a better way around.
         await Task.Run(async() =>
         {
-            var profile = await _commandBus.SendAsync(new ProfileLoadAnonymousCommand(path, profileSettings));
+            var profile = await _commandBus.SendAsync(new ProfileLoadAnonymousCommand(profileSettings));
             await _currentProfile.LoadProfileAsync(profile).ConfigureAwait(false);
             ShowLogsTab();
         })
@@ -166,15 +168,30 @@ internal sealed class MainController : IMainController
         _profilesAreLoaded.TrySetResult();
     }
 
-    [ExcludeFromCodeCoverage]
-    public void OpenProfileContainingFolder(Profile profile)
+    public void Locate(Profile profile)
     {
-        var path = _fileService.IsDirectory(profile.Path)
-            ? profile.Path
-            : Path.GetDirectoryName(profile.Path);
-        if (path is null)
-            return;
-        System.Diagnostics.Process.Start("explorer.exe", path);
+        // TODO: Cover cases with unit tests, including `else`
+        if (profile.Settings is PlainTextProfileSettings plainTextProfileSettings)
+        {
+            var path = _fileService.IsDirectory(plainTextProfileSettings.Path)
+                ? plainTextProfileSettings.Path
+                : Path.GetDirectoryName(plainTextProfileSettings.Path);
+            if (path is null)
+                return;
+            System.Diagnostics.Process.Start("explorer.exe", path);
+        }
+        else if (profile.Settings is XmlProfileSettings xmlProfileSettings)
+        {
+            throw new NotImplementedException();
+        }
+        else if (profile.Settings is WindowsEventProfileSettings windowsEventProfileSettings)
+        {
+            throw new NotImplementedException();
+        }
+        else
+        {
+            throw new NotSupportedException();
+        }
     }
 
     public void SetBusy(bool isBusy)
@@ -189,7 +206,7 @@ internal sealed class MainController : IMainController
         tab.IsAddEditProfileVisible = false;
         tab.OpenAddProfileFlyoutCommand.Execute(null);
         tab.EditingProfile!.Name = Path.GetFileNameWithoutExtension(path);
-        tab.EditingProfile!.Path = path;
+        tab.EditingProfile!.ProfileSettings.SelectPlainTextForPath(path);
     }
 
     public void ShowLogsTab()
@@ -218,10 +235,14 @@ internal sealed class MainController : IMainController
     public async Task ShowAnonymousProfileLoadSettingsViewAsync(string path)
     {
         var customDialog = new CustomDialog { Title = "Set up logs" };
+        // TODO: Fix injection of `IViewModelFactory` here.
         var viewModelFactory = App.ServiceProvider.GetRequiredService<IViewModelFactory>(); // Cannot initialize it from ctor due to circular dependency.
-        var viewModel = new AnonymousProfileLoadSettingsViewModel(viewModelFactory,
+        var viewModel = new AnonymousProfileLoadSettingsViewModel(
+            _logCodecContainer,
+            viewModelFactory,
+            path,
             new ActionCommand(async _ => await _dialogCoordinator.HideMetroDialogAsync(_mainViewModel.Value, customDialog)),
-            new ActionCommand<ProfileSettings>(async profileSettings => await LoadPathAsync(path, profileSettings).ConfigureAwait(false)));
+            new ActionCommand<ProfileSettingsBase>(LoadProfileSettingsAsync));
         customDialog.Content = new AnonymousProfileLoadSettingsView { DataContext = viewModel };
         await _dialogCoordinator.ShowMetroDialogAsync(_mainViewModel.Value, customDialog);
     }

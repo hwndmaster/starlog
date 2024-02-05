@@ -18,28 +18,29 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
         _plainTextLogCodecLineMaskPatternParserLogger = plainTextLogCodecLineMaskPatternParserLogger.NotNull();
     }
 
-    public async Task<LogReadingResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings)
+    public async Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings)
     {
+        var profileSettings = (PlainTextProfileSettings)profile.Settings;
+
         using var reader = new StreamReader(stream, leaveOpen: true);
-        var fileArtifacts = settings.ReadFileArtifacts ? await ReadFileArtifactsAsync(profile.Settings, reader) : null;
+        var fileArtifacts = settings.ReadFileArtifacts ? await ReadFileArtifactsAsync(profileSettings, reader) : null;
 
         if (reader.EndOfStream)
         {
             return LogReadingResult.Empty;
         }
 
-        var logCodecSettings = (PlainTextProfileLogCodec)profile.Settings.LogCodec;
-        var patternValue = _settingsQuery.Get().PlainTextLogCodecLinePatterns.FirstOrDefault(x => x.Id == logCodecSettings.LinePatternId);
+        var patternValue = _settingsQuery.Get().PlainTextLogCodecLinePatterns.FirstOrDefault(x => x.Id == profileSettings.LinePatternId);
         if (patternValue is null)
         {
-            throw new InvalidOperationException("Profile Pattern couldn't not be found: " + logCodecSettings.LinePatternId);
+            throw new InvalidOperationException("Profile Pattern couldn't not be found: " + profileSettings.LinePatternId);
         }
 
         // TODO: Cover switch with unit tests
         IPlainTextLogCodecLineParser lineParser = patternValue.Type switch
         {
             PatternType.RegularExpression => new PlainTextLogCodecLineRegexParser(patternValue.Pattern),
-            PatternType.MaskPattern => new PlainTextLogCodecLineMaskPatternParser(profile.Settings.DateTimeFormat, patternValue.Pattern, _plainTextLogCodecLineMaskPatternParserLogger),
+            PatternType.MaskPattern => new PlainTextLogCodecLineMaskPatternParser(profileSettings.DateTimeFormat, patternValue.Pattern, _plainTextLogCodecLineMaskPatternParserLogger),
             _ => throw new NotSupportedException($"Pattern type '{patternValue.Type}' is not supported.")
         };
 
@@ -49,6 +50,7 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
 
         LogRecord? lastRecord = null;
         List<string> lastRecordArtifacts = new();
+        List<string> errors = new();
 
         while (true)
         {
@@ -76,10 +78,16 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
             }
 
             var level = match.Value.Level;
-            var dateTime = DateTimeOffset.ParseExact(match.Value.DateTime,
-                profile.Settings.DateTimeFormat,
+            var dateTimeParsed = DateTimeOffset.TryParseExact(match.Value.DateTime,
+                profileSettings.DateTimeFormat,
                 Thread.CurrentThread.CurrentCulture,
-                System.Globalization.DateTimeStyles.AssumeUniversal);
+                System.Globalization.DateTimeStyles.AssumeUniversal,
+                out var dateTime);
+            if (!dateTimeParsed)
+            {
+                errors.Add("Could not parse datetime: " + match.Value.DateTime);
+                continue;
+            }
             var thread = match.Value.Thread;
             var logger = match.Value.Logger;
             var message = match.Value.Message;
@@ -98,10 +106,10 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
                 logLevels.Add(logLevelHash, logLevelRecord);
             }
 
-            lastRecord = new LogRecord(dateTime, logLevelRecord, thread, fileRecord, loggerRecord, message, null);
+            lastRecord = new LogRecord(dateTime, logLevelRecord, thread, source, loggerRecord, message, null);
         }
 
-        return new LogReadingResult(fileArtifacts, records.ToImmutableArray(), loggers.Values, logLevels.Values);
+        return new LogReadingResult(fileArtifacts, records.ToImmutableArray(), loggers.Values, logLevels.Values, errors);
 
         void FlushRecentRecord()
         {
@@ -119,11 +127,39 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
         }
     }
 
-    private static async Task<FileArtifacts> ReadFileArtifactsAsync(ProfileSettings settings, StreamReader reader)
+    public bool ReadFromCommandLineArguments(ProfileSettingsBase profileSettings, string[] codecSettings)
+    {
+        Guard.NotNull(profileSettings);
+
+        if (codecSettings is null || codecSettings.Length == 0)
+        {
+            return false;
+        }
+
+        var plainTextSettings = (PlainTextProfileSettings)profileSettings;
+
+        var settings = _settingsQuery.Get();
+        var pattern = settings.PlainTextLogCodecLinePatterns.FirstOrDefault(x => x.Name.Equals(codecSettings[0], StringComparison.OrdinalIgnoreCase));
+        if (pattern is null)
+            return false;
+
+        plainTextSettings.LinePatternId = pattern.Id;
+        return true;
+    }
+
+    public bool MayContainSourceArtifacts(ProfileSettingsBase profileSettings)
+    {
+        if (profileSettings is not PlainTextProfileSettings plainTextProfileSettings)
+            return false;
+
+        return plainTextProfileSettings.FileArtifactLinesCount > 0;
+    }
+
+    private static async Task<SourceArtifacts> ReadFileArtifactsAsync(PlainTextProfileSettings settings, StreamReader reader)
     {
         if (settings.FileArtifactLinesCount == 0)
         {
-            return new FileArtifacts(Array.Empty<string>());
+            return new SourceArtifacts(Array.Empty<string>());
         }
 
         List<string> artifacts = new();
@@ -133,32 +169,12 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
             if (line is null)
             {
                 // File has insufficient number of lines, skipping.
-                return new FileArtifacts(Array.Empty<string>());
+                return new SourceArtifacts(Array.Empty<string>());
             }
 
             artifacts.Add(line);
         }
 
-        return new FileArtifacts(artifacts.ToArray());
-    }
-
-    public bool ReadFromCommandLineArguments(ProfileLogCodecBase profileLogCodec, string[] codecSettings)
-    {
-        Guard.NotNull(profileLogCodec);
-
-        if (codecSettings is null || codecSettings.Length == 0)
-        {
-            return false;
-        }
-
-        var logCodecSettings = (PlainTextProfileLogCodec)profileLogCodec;
-
-        var settings = _settingsQuery.Get();
-        var pattern = settings.PlainTextLogCodecLinePatterns.FirstOrDefault(x => x.Name.Equals(codecSettings[0], StringComparison.OrdinalIgnoreCase));
-        if (pattern is null)
-            return false;
-
-        logCodecSettings.LinePatternId = pattern.Id;
-        return true;
+        return new SourceArtifacts(artifacts.ToArray());
     }
 }

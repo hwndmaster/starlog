@@ -7,13 +7,13 @@ namespace Genius.Starlog.UI.Helpers;
 
 public interface ILogArtifactsFormatter
 {
-    FlowDocument CreateArtifactsDocument(FileArtifacts? fileArtifacts, string? logArtifacts);
+    FlowDocument CreateArtifactsDocument(SourceArtifacts? fileArtifacts, string? logArtifacts);
 }
 
 // TODO: Cover with unit tests
 public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
 {
-    public FlowDocument CreateArtifactsDocument(FileArtifacts? fileArtifacts, string? logArtifacts)
+    public FlowDocument CreateArtifactsDocument(SourceArtifacts? fileArtifacts, string? logArtifacts)
     {
         var document = new FlowDocument();
 

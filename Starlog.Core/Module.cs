@@ -16,6 +16,7 @@ using Genius.Atom.Infrastructure.Entities;
 using Microsoft.Extensions.Configuration;
 using Genius.Starlog.Core.Configuration;
 using Genius.Starlog.Core.Models.VersionUpgraders;
+using Genius.Starlog.Core.Serialization;
 
 namespace Genius.Starlog.Core;
 
@@ -36,7 +37,6 @@ public static class Module
         services.AddSingleton<ICurrentProfile>(x => x.GetRequiredService<CurrentProfileLogContainer>());
         services.AddSingleton<ILogContainer>(x => x.GetRequiredService<CurrentProfileLogContainer>());
         services.AddSingleton<ILogFilterContainer, LogFilterContainer>();
-        services.AddSingleton<IProfileLoader, ProfileLoader>();
         services.AddSingleton<IComparisonService, ComparisonService>();
 
         services.AddSingleton<LogCodecContainer>();
@@ -52,6 +52,7 @@ public static class Module
         services.AddTransient<IFilterProcessor, TimeRangeFilterProcessor>();
         services.AddTransient<ILogCodecProcessor, PlainTextLogCodecProcessor>();
         services.AddTransient<ILogCodecProcessor, XmlLogCodecProcessor>();
+        services.AddTransient<ILogCodecProcessor, WindowsEventLogCodecProcessor>();
         services.AddTransient<ILogRecordMatcher, LogRecordMatcher>();
         services.AddTransient<IQuickFilterProvider, QuickFilterProvider>();
 
@@ -75,6 +76,8 @@ public static class Module
         services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();
         services.AddTransient<IMessageParsingHandler, MessageParsingHandler>();
         services.AddSingleton<PlainTextProfileLogCodecVer1To2Upgrader>();
+        services.AddSingleton<ProfileSettingsLegacyUpgrader>();
+        services.AddSingleton<IProfileLoaderFactory, ProfileLoaderFactory>();
 
         // Configurations
         services.Configure<LogLevelMappingConfiguration>(config.GetSection("LogLevelMapping"));
@@ -109,10 +112,12 @@ public static class Module
     private static void RegisterLogCodecs(IServiceProvider serviceProvider)
     {
         var logCodecContainer = serviceProvider.GetRequiredService<ILogCodecContainer>();
-        logCodecContainer.RegisterLogCodec<PlainTextProfileLogCodec, PlainTextLogCodecProcessor>(
-            new LogCodec(new Guid("a38a40b6-c07f-49d5-a143-5c9f9f42149b"), "Plain Text"));
-        logCodecContainer.RegisterLogCodec<XmlProfileLogCodec, XmlLogCodecProcessor>(
-            new LogCodec(new Guid("0cb976bc-6d87-4450-8202-530d9db09b40"), "XML"));
+        logCodecContainer.RegisterLogCodec<PlainTextProfileSettings, PlainTextLogCodecProcessor>(
+            new LogCodec(new Guid("a38a40b6-c07f-49d5-a143-5c9f9f42149b"), PlainTextProfileSettings.CodecName));
+        logCodecContainer.RegisterLogCodec<XmlProfileSettings, XmlLogCodecProcessor>(
+            new LogCodec(new Guid("0cb976bc-6d87-4450-8202-530d9db09b40"), XmlProfileSettings.CodecName));
+        logCodecContainer.RegisterLogCodec<WindowsEventProfileSettings, WindowsEventLogCodecProcessor>(
+            new LogCodec(new Guid("23b498d4-576b-4967-b79f-3db43c9247e9"), WindowsEventProfileSettings.CodecName));
     }
 
     private static void RegisterTypeDiscriminators(IServiceProvider serviceProvider)
@@ -129,12 +134,16 @@ public static class Module
         typeDiscriminators.AddMapping<TimeRangeProfileFilter>("timerange-profile-filter");
 
         // Codecs
-        typeDiscriminators.AddMapping<PlainTextProfileLogCodecLegacy>("plaintext-profile-log-codec");
-        typeDiscriminators.AddMapping<PlainTextProfileLogCodec, PlainTextProfileLogCodecLegacy, PlainTextProfileLogCodecVer1To2Upgrader>("plaintext-profile-log-codec", 2);
-        typeDiscriminators.AddMapping<XmlProfileLogCodec>("xml-profile-log-codec");
+#pragma warning disable CS0618 // Type or member is obsolete
+        typeDiscriminators.AddMapping<ProfileSettingsLegacy>("profile-settings"); // For backwards compatibility only
+        typeDiscriminators.AddMapping<PlainTextProfileLogCodecV1>("plaintext-profile-log-codec"); // For backwards compatibility only
+        typeDiscriminators.AddMapping<PlainTextProfileLogCodecV2, PlainTextProfileLogCodecV1, PlainTextProfileLogCodecVer1To2Upgrader>("plaintext-profile-log-codec", 2); // For backwards compatibility only
+        typeDiscriminators.AddMapping<PlainTextProfileSettings, ProfileSettingsLegacy, ProfileSettingsLegacyUpgrader>("plaintext-profile-settings", 3);
+#pragma warning restore CS0618 // Type or member is obsolete
+        typeDiscriminators.AddMapping<XmlProfileSettings>("xml-profile-settings");
+        typeDiscriminators.AddMapping<WindowsEventProfileSettings>("winevent-profile-settings");
 
         // Misc
-        typeDiscriminators.AddMapping<ProfileSettings>("profile-settings");
         typeDiscriminators.AddMapping<MessageParsing>("message-parsing");
         typeDiscriminators.AddMapping<PatternValue>("pattern-value");
     }

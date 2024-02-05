@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reactive;
 using System.Windows;
 using System.Windows.Media;
+using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Configuration;
 using Genius.Starlog.Core.LogFlow;
@@ -15,7 +16,7 @@ namespace Genius.Starlog.UI.Tests.ValueConverters;
 public sealed class LogLevelToColorConverterTests
 {
     private static readonly Color _standardColor = Colors.LightGoldenrodYellow;
-    private readonly IFixture _fixture = new Fixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
 
     public LogLevelToColorConverterTests()
     {

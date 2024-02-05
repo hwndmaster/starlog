@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.TestingUtil;
 using TechTalk.SpecFlow;
 
 namespace Genius.Starlog.Core.Tests.LogFlow;
@@ -10,7 +11,7 @@ namespace Genius.Starlog.Core.Tests.LogFlow;
 public sealed class ComparisonServiceStepDefinitions
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly Mock<IProfileLoader> _profileLoaderMock = new();
+    private readonly TestProfileLoaderFactory _profileLoaderFactory = new();
     private readonly ComparisonService _sut;
 
     private readonly ScenarioContext _scenarioContext;
@@ -19,7 +20,7 @@ public sealed class ComparisonServiceStepDefinitions
     {
         _scenarioContext = scenarioContext;
 
-        _sut = new ComparisonService(_profileLoaderMock.Object);
+        _sut = new ComparisonService(_profileLoaderFactory);
     }
 
     [Given("log records from profile (.*):")]
@@ -28,15 +29,7 @@ public sealed class ComparisonServiceStepDefinitions
         var profile = new Profile
         {
             Name = _fixture.Create<string>(),
-            Path = _fixture.Create<string>(),
-            Settings = new ProfileSettings
-            {
-                FileArtifactLinesCount = 2,
-                LogCodec = new PlainTextProfileLogCodec(_fixture.Create<LogCodec>())
-                {
-                    LinePatternId = Guid.NewGuid()
-                }
-            }
+            Settings = _fixture.Create<ProfileSettingsBase>()
         };
 
         var records = table.Rows.Select(row => new LogRecord(
@@ -48,18 +41,22 @@ public sealed class ComparisonServiceStepDefinitions
             row[5],
             null)).ToImmutableArray();
 
-        _profileLoaderMock.Setup(x => x.LoadProfileAsync(profile, It.IsAny<ILogContainerWriter>()))
+        var profileLoaderMock = new Mock<IProfileLoader>();
+        _profileLoaderFactory.InstanceToReturn = profileLoaderMock.Object;
+
+        profileLoaderMock.Setup(x => x.LoadProfileAsync(profile, It.IsAny<ILogContainerWriter>()))
             .Callback((Profile profile, ILogContainerWriter logContainerWriter) =>
             {
                 logContainerWriter.AddLogs(records);
 
-                var files = records.Select(x => x.File).DistinctBy(x => x.FileName);
-                foreach (var file in files)
+                var sources = records.Select(x => x.Source).DistinctBy(x => x.DisplayName);
+                foreach (var source in sources)
                 {
-                    logContainerWriter.AddFile(file);
+                    logContainerWriter.AddSource(source);
                 }
             })
-            .Returns(Task.FromResult(true));
+            // TODO: create a proper FilesBasedProfileState
+            .ReturnsAsync(_fixture.Create<ProfileStateBase>());
 
         _scenarioContext.Add("Profile" + profileIndex, profile);
     }

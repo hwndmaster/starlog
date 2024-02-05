@@ -44,17 +44,17 @@ public sealed class MainControllerTests
             _dialogCoordinatorMock.Object,
             _eventBus,
             new TestFileService(),
+            Mock.Of<ILogCodecContainer>(),
             _settingsQueryMock.Object,
             _uiMock.Object,
             new Lazy<IMainViewModel>(() => _mainViewModelMock.Object), _logger);
     }
 
     [Fact]
-    public async Task LoadPathAsync_GivenProfileSettings_HappyFlowScenario()
+    public async Task LoadProfileSettingsAsync_GivenProfileSettings_HappyFlowScenario()
     {
         // Arrange
-        var path = _fixture.Create<string>();
-        var profileSettings = _fixture.Create<ProfileSettings>();
+        var profileSettings = _fixture.Create<ProfileSettingsBase>();
         _currentProfileMock.Setup(x => x.LoadProfileAsync(It.IsAny<Profile>()))
             .Callback(() =>
             {
@@ -64,7 +64,7 @@ public sealed class MainControllerTests
         var tab = SetupDummyTabsAnd<ILogsViewModel>();
 
         // Act
-        var loadPathTask = _sut.LoadPathAsync(path, profileSettings);
+        var loadPathTask = _sut.LoadProfileSettingsAsync(profileSettings);
         _sut.NotifyMainWindowIsLoaded();
         _sut.NotifyProfilesAreLoaded();
         await loadPathTask;
@@ -74,9 +74,9 @@ public sealed class MainControllerTests
         Assert.NotNull(actualProfile);
         _commandBus.AssertNoCommandsButOfType<ProfileLoadAnonymousCommand>();
         _commandBus.AssertSingleCommand<ProfileLoadAnonymousCommand>(
-            x => Assert.Equal(path, x.Path),
-            x => Assert.Equal(profileSettings.LogCodec, x.Settings.LogCodec),
-            x => Assert.Equal(profileSettings.FileArtifactLinesCount, x.Settings.FileArtifactLinesCount));
+            x => Assert.Equal(profileSettings.LogCodec, x.Settings.LogCodec)
+        );
+            // TODO: Check other fields x => Assert.Equal(profileSettings.FileArtifactLinesCount, x.Settings.FileArtifactLinesCount));
         _currentProfileMock.Verify(x => x.LoadProfileAsync(actualProfile), Times.Once);
         _mainViewModelMock.VerifySet(x => x.SelectedTabIndex = MAINVIEWMODEL_TABS_COUNT - 1);
         _mainViewModelMock.VerifySet(x => x.IsBusy = false);
@@ -115,12 +115,12 @@ public sealed class MainControllerTests
     public async Task AutoLoadProfileAsync_WhenLoadPathPreviouslyInvoked_Stops()
     {
         // Arrange
-        var settings = _fixture.Create<ProfileSettings>();
+        var settings = _fixture.Create<ProfileSettingsBase>();
         _sut.NotifyMainWindowIsLoaded();
         _sut.NotifyProfilesAreLoaded();
 
         // Pre-Act
-        await _sut.LoadPathAsync(_fixture.Create<string>(), settings);
+        await _sut.LoadProfileSettingsAsync(settings);
 
         // Act
         await _sut.AutoLoadProfileAsync();

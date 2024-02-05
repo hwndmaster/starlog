@@ -15,7 +15,7 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
         // Arrange
         var pattern = @"%{datetime} %{level} %{thread} %{logger} - %{message}";
         var dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
-        var line = "12-34-56 11:22:33.444 INFO 888 Component1 - Some Message with 123 numbers, 50% percents + $ymb\\ols!";
+        var line = "12-34-56 11:22:33.444 INFO 888 Component1 - Some Message with 123 numbers, 50% percents + $[y]mb\\ols!";
         var sut = new PlainTextLogCodecLineMaskPatternParser(dateTimeFormat, pattern, _logger);
 
         // Act
@@ -27,7 +27,7 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
         Assert.Equal("INFO", result.Value.Level);
         Assert.Equal("888", result.Value.Thread);
         Assert.Equal("Component1", result.Value.Logger);
-        Assert.Equal("Some Message with 123 numbers, 50% percents + $ymb\\ols!", result.Value.Message);
+        Assert.Equal("Some Message with 123 numbers, 50% percents + $[y]mb\\ols!", result.Value.Message);
     }
 
     [Fact]

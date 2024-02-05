@@ -10,7 +10,9 @@
   "editor.tabSize": 4,
   "cSpell.words": [
     "Regexes",
-    "Starlog"
+    "Starlog",
+    "Upgrader",
+    "Upgraders"
   ],
   "dotnet.defaultSolution": "Starlog.sln"
 }

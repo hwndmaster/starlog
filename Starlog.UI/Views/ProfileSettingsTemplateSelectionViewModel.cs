@@ -13,5 +13,5 @@ public sealed class ProfileSettingsTemplateSelectionViewModel : ViewModelBase
 
     public string Name => _model.Name;
 
-    public ProfileSettings Settings => _model.Settings;
+    public ProfileSettingsBase Settings => _model.Settings;
 }

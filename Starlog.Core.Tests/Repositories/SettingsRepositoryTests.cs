@@ -27,7 +27,7 @@ public sealed class SettingsRepositoryTests
     }
 
     [Fact]
-    public void Constructor__WhenNoExistingSettings_ThenDefaultLoaded()
+    public void Constructor_WhenNoExistingSettings_ThenDefaultLoaded()
     {
         // Arrange
         Settings? settings = null;

@@ -16,7 +16,7 @@ public sealed class FilesProfileFilterSettingsViewModel : ProfileFilterSettingsV
         Guard.NotNull(logContainer);
 
         // Members initialization:
-        Files = logContainer.GetFiles().Select(x => x.FileName)
+        Files = logContainer.GetSources().Select(x => x.DisplayName)
             .Union(profileFilter.FileNames)
             .Order()
             .ToArray();

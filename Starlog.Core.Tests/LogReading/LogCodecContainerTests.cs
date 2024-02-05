@@ -14,7 +14,7 @@ public sealed class LogCodecContainerTests
         var sut = CreateSystemUnderTest();
 
         // Act & Verify
-        Assert.Throws<InvalidOperationException>(() => sut.CreateProfileLogCodec(logCodec));
+        Assert.Throws<InvalidOperationException>(() => sut.CreateProfileSettings(logCodec));
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public sealed class LogCodecContainerTests
         sut.RegisterLogCodec<DummyProfileLogRead, DummyLogReadProcessor>(logCodec);
 
         // Act
-        var result = sut.CreateProfileLogCodec(logCodec);
+        var result = sut.CreateProfileSettings(logCodec);
 
         // Verify
         Assert.NotNull(result);
@@ -35,17 +35,17 @@ public sealed class LogCodecContainerTests
     }
 
     [Fact]
-    public void CreateLogCodecProcessor_WhenNoCodecAvailable_ThrowsException()
+    public void FindLogCodecProcessor_WhenNoCodecAvailable_ThrowsException()
     {
         // Arrange
         var sut = CreateSystemUnderTest();
 
         // Act & Verify
-        Assert.Throws<InvalidOperationException>(() => sut.CreateLogCodecProcessor(new DummyProfileLogRead()));
+        Assert.Throws<InvalidOperationException>(() => sut.FindLogCodecProcessor(new DummyProfileLogRead()));
     }
 
     [Fact]
-    public void CreateLogCodecProcessor_ReturnsProcessorForMatchingFilterType()
+    public void FindLogCodecProcessor_ReturnsProcessorForMatchingFilterType()
     {
         // Arrange
         var sut = CreateSystemUnderTest();
@@ -53,7 +53,7 @@ public sealed class LogCodecContainerTests
         sut.RegisterLogCodec<DummyProfileLogRead, DummyLogReadProcessor>(profileFilter.LogCodec);
 
         // Act
-        var result = sut.CreateLogCodecProcessor(profileFilter);
+        var result = sut.FindLogCodecProcessor(profileFilter);
 
         // Verify
         Assert.NotNull(result);
@@ -98,16 +98,26 @@ public sealed class LogCodecContainerTests
 
     private class DummyLogReadProcessor : ILogCodecProcessor
     {
-        public Task<LogReadingResult> ReadAsync(Profile profile, FileRecord fileRecord, Stream stream, LogReadingSettings settings)
+        public Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings)
             => throw new NotImplementedException();
 
-        public bool ReadFromCommandLineArguments(ProfileLogCodecBase profileLogCodec, string[]? codecSettings)
+        public bool ReadFromCommandLineArguments(ProfileSettingsBase profileSettings, string[]? codecSettings)
             => throw new NotImplementedException();
+
+        public bool MayContainSourceArtifacts(ProfileSettingsBase profileSettings)
+            => false;
     }
 
-    private class DummyProfileLogRead : ProfileLogCodecBase
+    private class DummyProfileLogRead : ProfileSettingsBase
     {
         public DummyProfileLogRead() : base(new LogCodec(Guid.NewGuid(), Guid.NewGuid().ToString())) { }
         public DummyProfileLogRead(LogCodec logCodec) : base(logCodec) { }
+
+        public override string Source => throw new NotImplementedException();
+
+        internal override ProfileSettingsBase CloneInternal()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

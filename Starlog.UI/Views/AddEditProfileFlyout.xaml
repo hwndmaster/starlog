@@ -5,7 +5,7 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
-        xmlns:logcodecs="clr-namespace:Genius.Starlog.UI.Views.ProfileLogCodecs"
+        xmlns:profilesettings="clr-namespace:Genius.Starlog.UI.Views.ProfileSettings"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:views="clr-namespace:Genius.Starlog.UI.Views"
         mc:Ignorable="d"
@@ -17,11 +17,7 @@
             <Label>Profile name:</Label>
             <TextBox Text="{Binding Name}" />
         </DockPanel>
-        <DockPanel>
-            <Label>Profile path:</Label>
-            <TextBox Text="{Binding Path}" />
-        </DockPanel>
-        <views:ProfileSettingsView DataContext="{Binding ProfileSettings}" />
+        <profilesettings:ProfileSettingsView DataContext="{Binding ProfileSettings}" />
         <DockPanel>
             <Grid>
                 <Grid.ColumnDefinitions>

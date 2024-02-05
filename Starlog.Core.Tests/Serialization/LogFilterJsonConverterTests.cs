@@ -3,9 +3,9 @@ using System.Text;
 using System.Text.Json;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.Models;
-using Genius.Starlog.Core.Repositories;
+using Genius.Starlog.Core.Serialization;
 
-namespace Genius.Starlog.Core.Tests.Repositories;
+namespace Genius.Starlog.Core.Tests.Serialization;
 
 public sealed class LogFilterJsonConverterTests
 {

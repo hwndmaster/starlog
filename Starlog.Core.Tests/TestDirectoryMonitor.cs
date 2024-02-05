@@ -1,5 +1,5 @@
-using System.Reactive;
 using System.Reactive.Subjects;
+using Genius.Atom.Infrastructure;
 
 namespace Genius.Starlog.Core.Tests;
 
@@ -13,9 +13,11 @@ internal sealed class TestDirectoryMonitor : IDirectoryMonitor
         _pulse.OnNext(newValue);
     }
 
-    public void StartMonitoring(string path, string searchPattern)
+    public IDisposable StartMonitoring(string path, string searchPattern)
     {
         MonitoringStarted = true;
+
+        return new DisposableAction(() => StopMonitoring());
     }
 
     public void StopMonitoring()

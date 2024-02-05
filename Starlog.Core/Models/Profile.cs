@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Genius.Atom.Infrastructure.Entities;
 
 namespace Genius.Starlog.Core.Models;
@@ -14,17 +15,19 @@ public sealed class Profile : EntityBase
     /// </summary>
     public required string Name { get; set; }
 
-    /// <summary>
-    ///   The path where the log files will be loaded from.
-    /// </summary>
-    public required string Path { get; set; }
+    [Obsolete("Used for backwards compatibility only. To be removed in the next major version.")]
+    public string? Path { get; set; }
 
+    /// <summary>
+    ///   Gets a boolean value which indicates whether this profile is anonymous or not.
+    /// </summary>
+    [JsonIgnore]
     public bool IsAnonymous => Id == AnonymousProfileId;
 
     /// <summary>
-    ///   The log codec which defines the strategy of how the logs are being read.
+    ///   The profile settings with the log codec in it, which defines the strategy of how the logs are being read.
     /// </summary>
-    public required ProfileSettings Settings { get; set; }
+    public required ProfileSettingsBase Settings { get; set; }
 
     /// <summary>
     ///   The user-defined filters.

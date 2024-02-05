@@ -33,7 +33,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IUserInteraction _ui;
     private readonly IViewModelFactory _vmFactory;
-    private readonly LogFilterCategoryViewModel<LogFileViewModel> _filesCategory = new("Files", "FolderFiles32", sort: true);
+    private readonly LogFilterCategoryViewModel<LogSourceViewModel> _sourcesCategory = new("Sources", "FolderFiles32", sort: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _quickFiltersCategory = new("Quick filters", "FolderDown32", expanded: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _userFiltersCategory = new("User filters", "FolderFavs32", expanded: true, canAddChildren: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _bookmarkedCategory = new LogFilterBookmarkedCategoryViewModel();
@@ -68,7 +68,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
         SubscribeToPinningEvents(_quickFiltersCategory.CategoryItems, () => _filterChanged.OnNext(Unit.Default));
 
-        FilterCategories.Add(_filesCategory);
+        FilterCategories.Add(_sourcesCategory);
         FilterCategories.Add(_quickFiltersCategory);
         FilterCategories.Add(_userFiltersCategory);
         FilterCategories.Add(_bookmarkedCategory);
@@ -84,8 +84,8 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                     _uiDispatcher.BeginInvoke(() =>
                     {
                         IsAddEditProfileFilterVisible = false;
-                        _filesCategory.CategoryItems.Clear();
-                        _filesCategory.CategoryItemsView.View.Refresh();
+                        _sourcesCategory.CategoryItems.Clear();
+                        _sourcesCategory.CategoryItemsView.View.Refresh();
                         _userFiltersCategory.CategoryItems.Clear();
                         _messageParsingCategory.CategoryItems.Clear();
                     });
@@ -100,30 +100,30 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
                     _uiDispatcher.BeginInvoke(() =>
                     {
-                        AddFiles(_logContainer.GetFiles());
+                        AddSources(_logContainer.GetSources());
                         AddUserFilters(profile.Filters);
                         AddMessageParsings(profile.MessageParsings);
                         _suspendUpdate = false;
                     });
                 }),
-            _logContainer.FileAdded
+            _logContainer.SourceAdded
                 .Where(_ => !_suspendUpdate)
                 .Subscribe(x => _uiDispatcher.BeginInvoke(() =>
-                    AddFiles(new[] { x }))),
-            _logContainer.FileRenamed
+                    AddSources([x]))),
+            _logContainer.SourceRenamed
                 .Where(_ => !_suspendUpdate)
                 .Subscribe(x =>
                 {
-                    var item = _filesCategory.CategoryItems.FirstOrDefault(ci => ci.File == x.OldRecord);
-                    _uiDispatcher.BeginInvoke(() => item?.HandleFileRenamed(x.NewRecord));
+                    var item = _sourcesCategory.CategoryItems.FirstOrDefault(ci => ci.Source == x.OldRecord);
+                    _uiDispatcher.BeginInvoke(() => item?.HandleSourceRenamed(x.NewRecord));
                 }),
-            _logContainer.FileRemoved
+            _logContainer.SourceRemoved
                 .Where(_ => !_suspendUpdate)
                 .Subscribe(x =>
                 {
-                    var item = _filesCategory.CategoryItems.FirstOrDefault(ci => ci.File == x);
+                    var item = _sourcesCategory.CategoryItems.FirstOrDefault(ci => ci.Source == x);
                     if (item is not null)
-                        _uiDispatcher.BeginInvoke(() => _filesCategory.RemoveItem(item));
+                        _uiDispatcher.BeginInvoke(() => _sourcesCategory.RemoveItem(item));
                 }),
 
             _userFiltersCategory.AddChildCommand.Executed
@@ -164,20 +164,20 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
         var filters = SelectedFilters
             .Except(messageParsingVms)
-            .Union(_filesCategory.CategoryItems.Where(x => x.IsPinned))
+            .Union(_sourcesCategory.CategoryItems.Where(x => x.IsPinned))
             .Union(_quickFiltersCategory.CategoryItems.Where(x => x.IsPinned))
             .Union(_userFiltersCategory.CategoryItems.Where(x => x.IsPinned))
             .ToList();
 
-        var filesSelected = filters.OfType<LogFileViewModel>()
-            .Select(x => x.File.FileName)
+        var sourcesSelected = filters.OfType<LogSourceViewModel>()
+            .Select(x => x.Source.DisplayName)
             .ToHashSet();
         var filtersSelected = filters.OfType<LogFilterViewModel>()
             .Select(x => x.Filter)
             .ToImmutableArray();
 
-        return new(HasAnythingSpecified: filesSelected.Any() || filtersSelected.Any(),
-            filesSelected, filtersSelected, ShowBookmarked: false, UseOrCombination: IsOr,
+        return new(HasAnythingSpecified: sourcesSelected.Any() || filtersSelected.Any(),
+            sourcesSelected, filtersSelected, ShowBookmarked: false, UseOrCombination: IsOr,
             messageParsings);
     }
 
@@ -319,11 +319,11 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         return vms;
     }
 
-    private void AddFiles(IEnumerable<FileRecord> files)
+    private void AddSources(IEnumerable<LogSourceBase> sources)
     {
-        _filesCategory.AddItems(
-            files.OrderBy(x => x.FileName)
-                .Select(x => new LogFileViewModel(x))
+        _sourcesCategory.AddItems(
+            sources.OrderBy(x => x.DisplayName)
+                .Select(x => new LogSourceViewModel(x))
         );
     }
 

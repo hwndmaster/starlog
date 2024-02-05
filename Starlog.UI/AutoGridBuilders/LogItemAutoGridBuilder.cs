@@ -27,7 +27,7 @@ public sealed class LogItemAutoGridBuilder : IAutoGridBuilder
                     .AddText(x => x.DateTime, opts => opts.WithDisplayFormat("yyyy-MM-dd HH:mm:ss.fff"))
                     .AddText(x => x.Level)
                     .AddText(x => x.Thread)
-                    .AddText(x => x.File, opts => opts.WithVisibility(x => x.IsFileColumnVisible))
+                    .AddText(x => x.DisplayName, opts => opts.WithVisibility(x => x.IsFileColumnVisible))
                     .AddText(x => x.Logger, opts => opts.WithToolTipPath(x => x.Logger))
                     .AddText(x => x.Message, opts => opts
                         .WithToolTipPath(x => x.Message)

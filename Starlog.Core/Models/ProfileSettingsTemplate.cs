@@ -15,5 +15,5 @@ public sealed class ProfileSettingsTemplate : EntityBase
     /// <summary>
     ///   The settings instance.
     /// </summary>
-    public required ProfileSettings Settings { get; set; }
+    public required ProfileSettingsBase Settings { get; set; }
 }

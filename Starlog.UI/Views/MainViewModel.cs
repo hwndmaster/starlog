@@ -42,7 +42,7 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
         {
             CurrentProfileName = profile is null
                 ? "N/A"
-                : $"{profile.Name} ({profile.Path})";
+                : $"{profile.Name} ({profile.Settings.Source})";
         });
     }
 

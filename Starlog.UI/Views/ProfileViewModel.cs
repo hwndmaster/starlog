@@ -4,6 +4,7 @@ using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Controllers;
+using Genius.Starlog.UI.Views.ProfileSettings;
 
 namespace Genius.Starlog.UI.Views;
 
@@ -14,10 +15,11 @@ public interface IProfileViewModel : ISelectable
     Guid? Id { get; }
     Profile? Profile { get; }
     string Name { get; set; }
-    string Path { get; set; }
+    string Source { get; }
+    IProfileSettingsViewModel ProfileSettings { get; }
     IActionCommand CommitProfileCommand { get; }
     IActionCommand LoadProfileCommand { get; }
-    IActionCommand OpenContainingFolderCommand { get; }
+    IActionCommand LocateCommand { get; }
 }
 
 // TODO: Cover with unit tests
@@ -51,8 +53,6 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         ProfileSettings = _vmFactory.CreateProfileSettings(_profile?.Settings);
 
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Name)));
-        AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Path)));
-        AddValidationRule(new PathExistsValidationRule(nameof(Path)));
 
         InitializeProperties(() =>
         {
@@ -62,7 +62,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         // Actions:
         CommitProfileCommand = new ActionCommand(_ => CommitProfile());
         LoadProfileCommand = new ActionCommand(async _ => await _controller.LoadProfileAsync(_profile!));
-        OpenContainingFolderCommand = new ActionCommand(_ => _controller.OpenProfileContainingFolder(_profile!),
+        LocateCommand = new ActionCommand(_ => _controller.Locate(_profile!),
             _ => _profile is not null);
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profile is not null);
     }
@@ -73,7 +73,6 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             return;
 
         Name = sourceProfile.Name + (nameSuffix ?? string.Empty);
-        Path = sourceProfile.Path;
         ProfileSettings.CopyFrom(sourceProfile.ProfileSettings);
     }
 
@@ -83,7 +82,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
         if (HasErrors)
         {
-            _ui.ShowWarning("Cannot proceed while there are errors in the form.");
+            _ui.ShowWarning(StringResources.ValidationError);
             return false;
         }
 
@@ -98,21 +97,20 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
             var profileId = await _commandBus.SendAsync(new ProfileCreateCommand
             {
                 Name = Name,
-                Path = Path,
                 Settings = profileSettings
             });
             _profile = await _profileQuery.FindByIdAsync(profileId);
-            ProfileSettings.ResetForm(_profile!.Settings);
         }
         else
         {
             await _commandBus.SendAsync(new ProfileUpdateCommand(_profile.Id)
             {
                 Name = Name,
-                Path = Path,
                 Settings = profileSettings
             });
         }
+
+        OnPropertyChanged(nameof(Source));
 
         return true;
     }
@@ -120,7 +118,6 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     private void ResetForm()
     {
         Name = _profile?.Name ?? Name;
-        Path = _profile?.Path ?? Path;
 
         ProfileSettings.ResetForm();
     }
@@ -136,10 +133,9 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
-    public string Path
+    public string Source
     {
-        get => GetOrDefault<string>();
-        set => RaiseAndSetIfChanged(value);
+        get => ProfileSettings.Source;
     }
 
     public IProfileSettingsViewModel ProfileSettings { get; private set; }
@@ -152,6 +148,6 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
     public IActionCommand CommitProfileCommand { get; }
     public IActionCommand LoadProfileCommand { get; }
-    public IActionCommand OpenContainingFolderCommand { get; }
+    public IActionCommand LocateCommand { get; }
     public IActionCommand ResetCommand { get; }
 }

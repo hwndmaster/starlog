@@ -33,9 +33,9 @@ public sealed class ComparisonViewModel : TabViewModelBase, IComparisonViewModel
         _context = comparisonContext.NotNull();
 
         Profile1Name = _context.Profile1.Name;
-        Profile1Path = _context.Profile1.Path;
+        Profile1Path = _context.Profile1.Settings.Source;
         Profile2Name = _context.Profile2.Name;
-        Profile2Path = _context.Profile2.Path;
+        Profile2Path = _context.Profile2.Settings.Source;
 
         // TODO: Further load
     }

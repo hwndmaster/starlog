@@ -10,19 +10,19 @@ using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
 using Genius.Starlog.UI.Views.ProfileFilters;
-using Genius.Starlog.UI.Views.ProfileLogCodecs;
+using Genius.Starlog.UI.Views.ProfileSettings;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Genius.Starlog.UI.Views;
 
 public interface IViewModelFactory
 {
-    LogCodecViewModel CreateLogCodec(LogCodec logCodec, ProfileLogCodecBase? profileLogCodec);
+    ProfileSettingsBaseViewModel CreateLogCodec(LogCodec logCodec, ProfileSettingsBase? profileSettings);
     IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing);
     IProfileViewModel CreateProfile(Profile? profile);
     IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter);
     IProfileFilterSettingsViewModel CreateProfileFilterSettings(LogFilter logFilter, ProfileFilterBase? profileFilter);
-    IProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings);
+    IProfileSettingsViewModel CreateProfileSettings(ProfileSettingsBase? profileSettings);
 }
 
 [ExcludeFromCodeCoverage]
@@ -75,17 +75,18 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _ui = ui.NotNull();
     }
 
-    public LogCodecViewModel CreateLogCodec(LogCodec logCodec, ProfileLogCodecBase? profileLogCodec)
+    public ProfileSettingsBaseViewModel CreateLogCodec(LogCodec logCodec, ProfileSettingsBase? profileSettings)
     {
-        profileLogCodec = profileLogCodec is not null && logCodec.Id == profileLogCodec.LogCodec.Id
-            ? profileLogCodec
-            : _logCodecContainer.CreateProfileLogCodec(logCodec);
+        profileSettings = profileSettings is not null && logCodec.Id == profileSettings.LogCodec.Id
+            ? profileSettings
+            : _logCodecContainer.CreateProfileSettings(logCodec);
 
-        return profileLogCodec switch
+        return profileSettings switch
         {
-            PlainTextProfileLogCodec plainText => new PlainTextLogCodecViewModel(plainText, _settingsQuery),
-            XmlProfileLogCodec xml => new XmlLogCodecViewModel(xml),
-            _ => throw new InvalidOperationException($"{nameof(profileLogCodec)} is of unexpected type {profileLogCodec.GetType().Name}")
+            PlainTextProfileSettings plainText => new PlainTextProfileSettingsViewModel(plainText, _settingsQuery),
+            XmlProfileSettings xml => new XmlProfileSettingsViewModel(xml),
+            WindowsEventProfileSettings windowsEvent => new WindowsEventProfileSettingsViewModel(windowsEvent),
+            _ => throw new InvalidOperationException($"{nameof(profileSettings)} is of unexpected type {profileSettings.GetType().Name}")
         };
     }
 
@@ -125,14 +126,15 @@ internal sealed class ViewModelFactory : IViewModelFactory
         };
     }
 
-    public IProfileSettingsViewModel CreateProfileSettings(ProfileSettings? profileSettings)
+    public IProfileSettingsViewModel CreateProfileSettings(ProfileSettingsBase? profileSettings)
     {
-        var codecName = "Plain Text";
-        var logCodec = _logCodecContainer.GetLogCodecs().First(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
-        profileSettings ??= new ProfileSettings
+        var defaultCodecName = PlainTextProfileSettings.CodecName;
+
+        if (profileSettings is null)
         {
-            LogCodec = _logCodecContainer.CreateProfileLogCodec(logCodec)
-        };
+            var logCodec = _logCodecContainer.GetLogCodecs().First(x => x.Name.Equals(defaultCodecName, StringComparison.OrdinalIgnoreCase));
+            profileSettings = _logCodecContainer.CreateProfileSettings(logCodec);
+        }
 
         return new ProfileSettingsViewModel(profileSettings, _eventBus, _profileSettingsTemplateQuery,
             _logCodecContainer, this, _dispatcher, _ui);
