@@ -21,16 +21,16 @@ internal sealed class ConsoleController : IConsoleController
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly IProfileSettingsTemplateQueryService _templatesQuery;
     private readonly ILogger<ConsoleController> _logger;
-    private readonly IMainController _mainController;
+    private readonly IProfileLoadingController _controller;
 
     public ConsoleController(
         ILogCodecContainer logCodecContainer,
         IProfileSettingsTemplateQueryService templatesQuery,
-        IMainController mainController,
+        IProfileLoadingController controller,
         ILogger<ConsoleController> logger)
     {
         _logCodecContainer = logCodecContainer.NotNull();
-        _mainController = mainController.NotNull();
+        _controller = controller.NotNull();
         _templatesQuery = templatesQuery.NotNull();
         _logger = logger.NotNull();
     }
@@ -40,7 +40,6 @@ internal sealed class ConsoleController : IConsoleController
         ProfileSettingsBase? settings = null;
         if (!string.IsNullOrEmpty(options.Template))
         {
-            // TODO: Cover this condition with unit tests
             ProfileSettingsTemplate? template = null;
             if (Guid.TryParse(options.Template, out var templateId))
             {
@@ -68,7 +67,6 @@ internal sealed class ConsoleController : IConsoleController
             settings = _logCodecContainer.CreateProfileSettings(logCodec);
             if (settings is null)
             {
-                // TODO: Cover this condition with unit tests
                 _logger.LogWarning("Couldn't create profile codec settings for codec '{codec}'.", codecName);
                 return;
             }
@@ -84,6 +82,7 @@ internal sealed class ConsoleController : IConsoleController
             }
         }
 
+        // TODO: To cover with unit tests
         if (settings is PlainTextProfileSettings plainTextProfileSettings)
         {
             plainTextProfileSettings.Path = options.Path;
@@ -95,6 +94,6 @@ internal sealed class ConsoleController : IConsoleController
             }
         }
 
-        await _mainController.LoadProfileSettingsAsync(settings).ConfigureAwait(false);
+        await _controller.LoadProfileSettingsAsync(settings).ConfigureAwait(false);
     }
 }

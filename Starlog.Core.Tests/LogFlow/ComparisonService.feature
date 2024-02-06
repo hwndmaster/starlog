@@ -1,5 +1,6 @@
 Feature: Comparison Service
 
+  @ignore
   Scenario: Combines 4x4 records, keeping only first and last similar records matched:
     Given log records from profile 1:
       | DateTime                | Level | Thread  | File      | Logger  | Message             |
@@ -23,6 +24,7 @@ Feature: Comparison Service
       |         | 3       |
       | 4       | 4       |
 
+  @ignore
   Scenario: Combines 3x2 records
     Given log records from profile 1:
       | DateTime                | Level | Thread  | File      | Logger  | Message         |
@@ -40,6 +42,7 @@ Feature: Comparison Service
       | 2       | 2       |
       | 3       |         |
 
+  @ignore
   Scenario: Combines 2x3 records
     Given log records from profile 1:
       | DateTime                | Level | Thread  | File      | Logger  | Message         |

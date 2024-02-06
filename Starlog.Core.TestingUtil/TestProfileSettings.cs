@@ -4,14 +4,24 @@ namespace Genius.Starlog.Core.TestingUtil;
 
 public sealed class TestProfileSettings : ProfileSettingsBase
 {
-    public TestProfileSettings() : base(new Fixture().Create<LogCodec>())
+    public TestProfileSettings()
+        : base(new Fixture().Create<LogCodec>())
     {
     }
 
-    public override string Source => throw new NotImplementedException();
+    public TestProfileSettings(LogCodec logCodec)
+        : base(logCodec)
+    {
+    }
 
     internal override ProfileSettingsBase CloneInternal()
     {
-        throw new NotImplementedException();
+        return new TestProfileSettings(LogCodec)
+        {
+            IsCloned = true
+        };
     }
+
+    public bool IsCloned { get; private set; } = false;
+    public override string Source => throw new NotImplementedException();
 }

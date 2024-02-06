@@ -2,6 +2,7 @@ using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
+using Genius.Starlog.Core.TestingUtil;
 using Genius.Starlog.UI.Console;
 using Genius.Starlog.UI.Controllers;
 using Microsoft.Extensions.Logging;
@@ -12,7 +13,7 @@ public sealed class ConsoleControllerTests
 {
     private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
     private readonly Mock<IProfileSettingsTemplateQueryService> _templatesQueryMock = new();
-    private readonly Mock<IMainController> _mainControllerMock = new();
+    private readonly Mock<IProfileLoadingController> _profileLoadingControllerMock = new();
     private readonly TestLogger<ConsoleController> _logger = new();
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
 
@@ -21,7 +22,7 @@ public sealed class ConsoleControllerTests
     public ConsoleControllerTests()
     {
         _sut = new(_logCodecContainerMock.Object,
-            _templatesQueryMock.Object, _mainControllerMock.Object,
+            _templatesQueryMock.Object, _profileLoadingControllerMock.Object,
             _logger);
     }
 
@@ -42,11 +43,8 @@ public sealed class ConsoleControllerTests
         await _sut.LoadPathAsync(options);
 
         // Verify
-        _mainControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.Is<ProfileSettingsBase>(ps =>
-            ps.LogCodec == profileSettings.LogCodec
-            // TODO: Verify other fields, including `options.Path`
-            //&& ps.FileArtifactLinesCount == options.FileArtifactLinesCount
-            )), Times.Once);
+        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.Is<ProfileSettingsBase>(
+            ps => ps == profileSettings)), Times.Once);
         Assert.DoesNotContain(_logger.Logs, x => x.LogLevel == LogLevel.Warning);
     }
 
@@ -62,7 +60,7 @@ public sealed class ConsoleControllerTests
         await _sut.LoadPathAsync(options);
 
         // Verify
-        _mainControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.IsAny<ProfileSettingsBase>()), Times.Never);
+        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.IsAny<ProfileSettingsBase>()), Times.Never);
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
     }
 
@@ -84,7 +82,68 @@ public sealed class ConsoleControllerTests
         await _sut.LoadPathAsync(options);
 
         // Verify
-        _mainControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.IsAny<ProfileSettingsBase>()), Times.Never);
+        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.IsAny<ProfileSettingsBase>()), Times.Never);
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
+    }
+
+    [Fact]
+    public async Task LoadPathAsync_WhenProfileSettingsCannotBeCreated_Stops()
+    {
+        // Arrange
+        var options = _fixture.Create<LoadPathCommandLineOptions>();
+        var codec = new LogCodec(Guid.NewGuid(), options.Codec!);
+        var allCodecs = _fixture.CreateMany<LogCodec>().Append(codec);
+        _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns(allCodecs);
+
+        // Act
+        await _sut.LoadPathAsync(options);
+
+        // Verify
+        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.IsAny<ProfileSettingsBase>()), Times.Never);
+        Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
+    }
+
+    [Fact]
+    public async Task LoadPathAsync_GivenTemplateName_HappyFlowScenario()
+    {
+        // Arrange
+        var options = _fixture.Create<LoadPathCommandLineOptions>();
+        var template = new ProfileSettingsTemplate
+        {
+            Name = options.Template!,
+            Settings = new TestProfileSettings()
+        };
+        _templatesQueryMock.Setup(x => x.GetAllAsync()).ReturnsAsync([template]);
+
+        // Act
+        await _sut.LoadPathAsync(options);
+
+        // Verify
+        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.Is<TestProfileSettings>(
+            y => y.LogCodec == template.Settings.LogCodec && y.IsCloned)), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoadPathAsync_GivenTemplateId_HappyFlowScenario()
+    {
+        // Arrange
+        var templateId = Guid.NewGuid();
+        var options = _fixture.Build<LoadPathCommandLineOptions>()
+            .With(x => x.Template, templateId.ToString())
+            .Create();
+        var template = new ProfileSettingsTemplate
+        {
+            Id = templateId,
+            Name = _fixture.Create<string>(),
+            Settings = new TestProfileSettings()
+        };
+        _templatesQueryMock.Setup(x => x.FindByIdAsync(templateId)).ReturnsAsync(template);
+
+        // Act
+        await _sut.LoadPathAsync(options);
+
+        // Verify
+        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.Is<TestProfileSettings>(
+            y => y.LogCodec == template.Settings.LogCodec && y.IsCloned)), Times.Once);
     }
 }

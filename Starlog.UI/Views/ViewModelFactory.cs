@@ -17,6 +17,9 @@ namespace Genius.Starlog.UI.Views;
 
 public interface IViewModelFactory
 {
+    AnonymousProfileLoadSettingsViewModel CreateAnonymousProfileLoadSettings(string path,
+        IActionCommand closeCommand,
+        IActionCommand<ProfileSettingsBase> confirmCommand);
     ProfileSettingsBaseViewModel CreateLogCodec(LogCodec logCodec, ProfileSettingsBase? profileSettings);
     IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing);
     IProfileViewModel CreateProfile(Profile? profile);
@@ -36,6 +39,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly IMainController _mainController;
     private readonly IMessageParsingHandler _messageParsingHandler;
+    private readonly IProfileLoadingController _profileLoadingController;
     private readonly IProfileQueryService _profileQuery;
     private readonly IProfileSettingsTemplateQueryService _profileSettingsTemplateQuery;
     private readonly ISettingsQueryService _settingsQuery;
@@ -52,6 +56,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
         ILogCodecContainer logCodecContainer,
         IMainController mainController,
         IMessageParsingHandler messageParsingHandler,
+        IProfileLoadingController profileLoadingController,
         IProfileQueryService profileQuery,
         IProfileSettingsTemplateQueryService profileSettingsTemplateQuery,
         ISettingsQueryService settingsQuery,
@@ -68,11 +73,22 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _logCodecContainer = logCodecContainer.NotNull();
         _mainController = mainController.NotNull();
         _messageParsingHandler = messageParsingHandler.NotNull();
+        _profileLoadingController = profileLoadingController.NotNull();
         _profileQuery = profileQuery.NotNull();
         _profileSettingsTemplateQuery = profileSettingsTemplateQuery.NotNull();
         _settingsQuery = settingsQuery.NotNull();
         _quickFilterProvider = quickFilterProvider.NotNull();
         _ui = ui.NotNull();
+    }
+
+    public AnonymousProfileLoadSettingsViewModel CreateAnonymousProfileLoadSettings(string path, IActionCommand closeCommand, IActionCommand<ProfileSettingsBase> confirmCommand)
+    {
+        return new AnonymousProfileLoadSettingsViewModel(
+            _logCodecContainer,
+            this,
+            path,
+            closeCommand,
+            confirmCommand);
     }
 
     public ProfileSettingsBaseViewModel CreateLogCodec(LogCodec logCodec, ProfileSettingsBase? profileSettings)
@@ -98,7 +114,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
     public IProfileViewModel CreateProfile(Profile? profile)
     {
-        return new ProfileViewModel(profile, _commandBus, _mainController, _profileQuery, this, _ui);
+        return new ProfileViewModel(profile, _commandBus, _mainController, _profileLoadingController, _profileQuery, this, _ui);
     }
 
     public IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter)

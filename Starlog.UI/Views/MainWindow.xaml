@@ -16,6 +16,16 @@
         <mah:FlyoutsControl x:Name="flyoutsControl">
         </mah:FlyoutsControl>
     </mah:MetroWindow.Flyouts>
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands ShowLastSeparator="False">
+            <Button Command="{Binding OpenLogs}"
+                    ToolTip="Show recent errors"
+                    Width="32"
+                    Height="32">
+                <Image Source="{StaticResource Warning32}" />
+            </Button>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />

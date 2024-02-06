@@ -20,6 +20,7 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
         ILogsViewModel logs,
         IComparisonViewModel compare,
         ISettingsViewModel settings,
+        IErrorsViewModel errors,
         ICurrentProfile currentProfile)
     {
         Guard.NotNull(profiles);
@@ -28,6 +29,8 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
         Guard.NotNull(settings);
         Guard.NotNull(currentProfile);
 
+        // Member initialization:
+        Errors = errors.NotNull();
         Tabs = new ITabViewModel[] {
             profiles,
             logs,
@@ -35,6 +38,10 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
             settings
         }.ToImmutableArray();
 
+        // Actions:
+        OpenLogs = new ActionCommand(_ => IsErrorsFlyoutVisible = !IsErrorsFlyoutVisible);
+
+        // Subscriptions:
         currentProfile.ProfileClosed.Subscribe(_ =>
             CurrentProfileName = "N/A");
 
@@ -44,9 +51,16 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
                 ? "N/A"
                 : $"{profile.Name} ({profile.Settings.Source})";
         });
+
+        Errors.WhenChanged(x => x.IsErrorsFlyoutVisible)
+            .Subscribe(value => IsErrorsFlyoutVisible = value);
+        this.WhenChanged(x => x.IsErrorsFlyoutVisible)
+            .Subscribe(value => Errors.IsErrorsFlyoutVisible = value);
     }
 
     public ImmutableArray<ITabViewModel> Tabs { get; }
+
+    public IErrorsViewModel Errors { get; }
 
     public string CurrentProfileName
     {
@@ -75,5 +89,13 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
+    public bool IsErrorsFlyoutVisible
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
     public bool ComparisonFeatureEnabled => App.ComparisonFeatureEnabled;
+
+    public IActionCommand OpenLogs { get; }
 }

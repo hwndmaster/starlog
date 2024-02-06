@@ -37,10 +37,13 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         Profile? profile,
         ICommandBus commandBus,
         IMainController controller,
+        IProfileLoadingController profileLoadingController,
         IProfileQueryService profileQuery,
         IViewModelFactory vmFactory,
         IUserInteraction ui)
     {
+        Guard.NotNull(profileLoadingController);
+
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _controller = controller.NotNull();
@@ -61,7 +64,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 
         // Actions:
         CommitProfileCommand = new ActionCommand(_ => CommitProfile());
-        LoadProfileCommand = new ActionCommand(async _ => await _controller.LoadProfileAsync(_profile!));
+        LoadProfileCommand = new ActionCommand(async _ => await profileLoadingController.LoadProfileAsync(_profile!));
         LocateCommand = new ActionCommand(_ => _controller.Locate(_profile!),
             _ => _profile is not null);
         ResetCommand = new ActionCommand(_ => ResetForm(), _ => _profile is not null);

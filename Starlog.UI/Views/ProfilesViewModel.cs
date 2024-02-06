@@ -2,11 +2,9 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
 using Genius.Atom.Infrastructure.Commands;
-using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
-using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
@@ -30,30 +28,30 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     private readonly IComparisonController _comparisonController;
     private readonly IMainController _controller;
     private readonly IProfileQueryService _profileQuery;
-    private readonly IViewModelFactory _vmFactory;
+    private readonly IViewModelFactory _viewModelFactory;
     private readonly CompositeDisposable _disposables = new();
 
     public ProfilesViewModel(
         ICommandBus commandBus,
         IComparisonController comparisonController,
         ICurrentProfile currentProfile,
-        IEventBus eventBus,
         IMainController controller,
+        IProfileLoadingController profileLoadingController,
         IProfileQueryService profileQuery,
-        IViewModelFactory vmFactory,
+        IViewModelFactory viewModelFactory,
         IUserInteraction ui,
         ProfileAutoGridBuilder autoGridBuilder)
     {
         Guard.NotNull(commandBus);
         Guard.NotNull(currentProfile);
-        Guard.NotNull(eventBus);
+        Guard.NotNull(profileLoadingController);
         Guard.NotNull(ui);
 
         // Dependencies:
         _comparisonController = comparisonController.NotNull();
         _controller = controller.NotNull();
         _profileQuery = profileQuery.NotNull();
-        _vmFactory = vmFactory.NotNull();
+        _viewModelFactory = viewModelFactory.NotNull();
         AutoGridBuilder = autoGridBuilder.NotNull();
 
         // Member initialization:
@@ -70,7 +68,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                 {
                     if (dropObj is string[] fileDrop)
                     {
-                        _controller.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0]);
+                        profileLoadingController.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0], viewModelFactory);
                     }
                 })
         };
@@ -93,7 +91,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
             IsAddEditProfileVisible = !IsAddEditProfileVisible;
             if (IsAddEditProfileVisible)
             {
-                EditingProfile = vmFactory.CreateProfile(null);
+                EditingProfile = viewModelFactory.CreateProfile(null);
                 EditingProfile.CommitProfileCommand
                     .OnOneTimeExecutedBooleanAction()
                     .Subscribe(async _ => {
@@ -142,10 +140,6 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
             .Subscribe(_ => IsAddEditProfileVisible = false)
             .DisposeWith(_disposables);
 
-        eventBus.WhenFired<ProfileLoadingErrorEvent>()
-            .Subscribe(args => ui.ShowWarning(args.Reason))
-            .DisposeWith(_disposables);
-
         // Final preparation:
         Task.Run(() => ReloadListAsync());
     }
@@ -159,7 +153,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     {
         IsAddEditProfileVisible = false;
         var profileVms = (await _profileQuery.GetAllAsync())
-            .Select(x => _vmFactory.CreateProfile(x))
+            .Select(x => _viewModelFactory.CreateProfile(x))
             .ToList();
         Profiles.ReplaceItems(profileVms);
 

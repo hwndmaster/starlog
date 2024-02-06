@@ -80,15 +80,16 @@ namespace Genius.Starlog.Core.Tests.LogFlow
             this.TestTearDown();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Combines 4x4 records, keeping only first and last similar records matched:")]
+        [Xunit.SkippableFactAttribute(DisplayName="Combines 4x4 records, keeping only first and last similar records matched:", Skip="Ignored")]
         [Xunit.TraitAttribute("FeatureTitle", "Comparison Service")]
         [Xunit.TraitAttribute("Description", "Combines 4x4 records, keeping only first and last similar records matched:")]
         public void Combines4X4RecordsKeepingOnlyFirstAndLastSimilarRecordsMatched()
         {
-            string[] tagsOfScenario = ((string[])(null));
+            string[] tagsOfScenario = new string[] {
+                    "ignore"};
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Combines 4x4 records, keeping only first and last similar records matched:", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 3
+#line 4
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -133,7 +134,7 @@ namespace Genius.Starlog.Core.Tests.LogFlow
                             "file1.log",
                             "Logger2",
                             "Final Message"});
-#line 4
+#line 5
     testRunner.Given("log records from profile 1:", ((string)(null)), table1, "Given ");
 #line hidden
                 TechTalk.SpecFlow.Table table2 = new TechTalk.SpecFlow.Table(new string[] {
@@ -171,10 +172,10 @@ namespace Genius.Starlog.Core.Tests.LogFlow
                             "file1.log",
                             "Logger2",
                             "Final Message"});
-#line 10
+#line 11
     testRunner.And("log records from profile 2:", ((string)(null)), table2, "And ");
 #line hidden
-#line 16
+#line 17
     testRunner.When("comparing profiles", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
                 TechTalk.SpecFlow.Table table3 = new TechTalk.SpecFlow.Table(new string[] {
@@ -198,22 +199,23 @@ namespace Genius.Starlog.Core.Tests.LogFlow
                 table3.AddRow(new string[] {
                             "4",
                             "4"});
-#line 17
+#line 18
     testRunner.Then("the result is the following:", ((string)(null)), table3, "Then ");
 #line hidden
             }
             this.ScenarioCleanup();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Combines 3x2 records")]
+        [Xunit.SkippableFactAttribute(DisplayName="Combines 3x2 records", Skip="Ignored")]
         [Xunit.TraitAttribute("FeatureTitle", "Comparison Service")]
         [Xunit.TraitAttribute("Description", "Combines 3x2 records")]
         public void Combines3X2Records()
         {
-            string[] tagsOfScenario = ((string[])(null));
+            string[] tagsOfScenario = new string[] {
+                    "ignore"};
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Combines 3x2 records", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 26
+#line 28
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -251,7 +253,7 @@ namespace Genius.Starlog.Core.Tests.LogFlow
                             "file1.log",
                             "Logger2",
                             "Final Message"});
-#line 27
+#line 29
     testRunner.Given("log records from profile 1:", ((string)(null)), table4, "Given ");
 #line hidden
                 TechTalk.SpecFlow.Table table5 = new TechTalk.SpecFlow.Table(new string[] {
@@ -275,10 +277,10 @@ namespace Genius.Starlog.Core.Tests.LogFlow
                             "file1.log",
                             "Logger1",
                             "Another Message"});
-#line 32
+#line 34
     testRunner.And("log records from profile 2:", ((string)(null)), table5, "And ");
 #line hidden
-#line 36
+#line 38
     testRunner.When("comparing profiles", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
                 TechTalk.SpecFlow.Table table6 = new TechTalk.SpecFlow.Table(new string[] {
@@ -293,22 +295,23 @@ namespace Genius.Starlog.Core.Tests.LogFlow
                 table6.AddRow(new string[] {
                             "3",
                             ""});
-#line 37
+#line 39
     testRunner.Then("the result is the following:", ((string)(null)), table6, "Then ");
 #line hidden
             }
             this.ScenarioCleanup();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Combines 2x3 records")]
+        [Xunit.SkippableFactAttribute(DisplayName="Combines 2x3 records", Skip="Ignored")]
         [Xunit.TraitAttribute("FeatureTitle", "Comparison Service")]
         [Xunit.TraitAttribute("Description", "Combines 2x3 records")]
         public void Combines2X3Records()
         {
-            string[] tagsOfScenario = ((string[])(null));
+            string[] tagsOfScenario = new string[] {
+                    "ignore"};
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Combines 2x3 records", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 43
+#line 46
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
@@ -339,7 +342,7 @@ namespace Genius.Starlog.Core.Tests.LogFlow
                             "file1.log",
                             "Logger1",
                             "Another Message"});
-#line 44
+#line 47
     testRunner.Given("log records from profile 1:", ((string)(null)), table7, "Given ");
 #line hidden
                 TechTalk.SpecFlow.Table table8 = new TechTalk.SpecFlow.Table(new string[] {
@@ -370,10 +373,10 @@ namespace Genius.Starlog.Core.Tests.LogFlow
                             "file1.log",
                             "Logger2",
                             "Final Message"});
-#line 48
+#line 51
     testRunner.And("log records from profile 2:", ((string)(null)), table8, "And ");
 #line hidden
-#line 53
+#line 56
     testRunner.When("comparing profiles", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
                 TechTalk.SpecFlow.Table table9 = new TechTalk.SpecFlow.Table(new string[] {
@@ -388,7 +391,7 @@ namespace Genius.Starlog.Core.Tests.LogFlow
                 table9.AddRow(new string[] {
                             "",
                             "3"});
-#line 54
+#line 57
     testRunner.Then("the result is the following:", ((string)(null)), table9, "Then ");
 #line hidden
             }

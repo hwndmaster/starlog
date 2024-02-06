@@ -1,6 +1,6 @@
 using Genius.Atom.UI.Forms;
 
-namespace Genius.Starlog.UI.Tests.ValueConverters;
+namespace Genius.Starlog.UI.Tests;
 
 public sealed class ObservableExtensionsTests
 {

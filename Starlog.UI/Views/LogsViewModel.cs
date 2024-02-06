@@ -50,9 +50,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         ILogsSearchViewModel logsSearchViewModel,
         IMainController controller,
         IMessageParsingHandler messageParsingHandler,
+        IProfileLoadingController profileLoadingController,
         IUiDispatcher uiDispatcher)
     {
         Guard.NotNull(controller);
+        Guard.NotNull(profileLoadingController);
 
         // Dependencies:
         AutoGridBuilder = autoGridBuilder.NotNull();
@@ -76,7 +78,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             {
                 if (_currentProfile.Profile is null) return;
                 _suspendUpdate = true;
-                await controller.LoadProfileAsync(_currentProfile.Profile);
+                await profileLoadingController.LoadProfileAsync(_currentProfile.Profile);
             });
 
         // Subscriptions:
