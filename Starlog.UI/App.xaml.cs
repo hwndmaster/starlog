@@ -42,7 +42,11 @@ public partial class App : Application
         // This is necessary to manually resolve Atom.UI.Forms's dependencies,
         // when referenced directly to dll, avoiding NuGet.
         AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
+            if (args.RequestingAssembly is null)
+                return null;
             var proposedPath = Path.GetDirectoryName(args.RequestingAssembly!.Location) + "\\" + args.Name.Split(',')[0] + ".dll";
+            if (!File.Exists(proposedPath))
+                proposedPath = args.RequestingAssembly.Location;
             if (!File.Exists(proposedPath))
                 return null;
             var assembly = Assembly.LoadFile(proposedPath);
@@ -62,13 +66,14 @@ public partial class App : Application
 
         var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
         var mainController = ServiceProvider.GetRequiredService<IMainController>();
+        var profileLoadingController = ServiceProvider.GetRequiredService<IProfileLoadingController>();
         var consoleParser = ServiceProvider.GetRequiredService<IConsoleParser>();
 
         mainWindow.Loaded += (_, __) => mainController.NotifyMainWindowIsLoaded();
         mainWindow.Show();
 
         consoleParser.Process(e.Args);
-        Task.Run(() => mainController.AutoLoadProfileAsync());
+        Task.Run(() => profileLoadingController.AutoLoadProfileAsync());
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -90,11 +95,13 @@ public partial class App : Application
         services.AddSingleton<IComparisonController, ComparisonController>();
         services.AddSingleton<IConsoleController, ConsoleController>();
         services.AddSingleton<IMainController, MainController>();
+        services.AddSingleton<IProfileLoadingController, ProfileLoadingController>();
 
         // Views, View models, View model factories
         services.AddSingleton<MainWindow>();
         services.AddSingleton<IViewModelFactory, ViewModelFactory>();
         services.AddSingleton<IMainViewModel, MainViewModel>();
+        services.AddSingleton<IErrorsViewModel, ErrorsViewModel>();
         services.AddSingleton<IProfilesViewModel, ProfilesViewModel>();
         services.AddTransient<IProfileViewModel, ProfileViewModel>();
         services.AddSingleton<ILogsViewModel, LogsViewModel>();

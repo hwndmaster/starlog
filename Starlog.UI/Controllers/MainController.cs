@@ -1,42 +1,15 @@
 using System.IO;
-using Genius.Atom.Infrastructure.Commands;
-using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.Infrastructure.Io;
-using Genius.Starlog.Core;
-using Genius.Starlog.Core.Commands;
-using Genius.Starlog.Core.LogReading;
-using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
-using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using MahApps.Metro.Controls.Dialogs;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.UI.Controllers;
 
 public interface IMainController
 {
-    /// <summary>
-    ///   Performs automatic loading of a profile at startup.
-    /// </summary>
-    /// <returns>A task for awaiting the operation completion.</returns>
-    Task AutoLoadProfileAsync();
-
-    /// <summary>
-    ///   Loads an anonymous not-persisted profile.
-    /// </summary>
-    /// <param name="profileSettings">The profile settings.</param>
-    /// <returns>A task for awaiting the operation completion.</returns>
-    Task LoadProfileSettingsAsync(ProfileSettingsBase profileSettings);
-
-    /// <summary>
-    ///   Loads a profile.
-    /// </summary>
-    /// <param name="profile">The profile.</param>
-    /// <returns>A task for awaiting the operation completion.</returns>
-    Task LoadProfileAsync(Profile profile);
+    IProfilesViewModel GetProfilesTab();
 
     void NotifyMainWindowIsLoaded();
     void NotifyProfilesAreLoaded();
@@ -46,7 +19,6 @@ public interface IMainController
     void ShowAddProfileForPath(string path);
     void ShowLogsTab();
     Task ShowShareViewAsync(IReadOnlyCollection<ILogItemViewModel> items);
-    Task ShowAnonymousProfileLoadSettingsViewAsync(string path);
 
     Task Loaded { get; }
 }
@@ -54,107 +26,26 @@ public interface IMainController
 internal sealed class MainController : IMainController
 {
     private readonly IClipboardHelper _clipboardHelper;
-    private readonly ICommandBus _commandBus;
-    private readonly ICurrentProfile _currentProfile;
     private readonly IDialogCoordinator _dialogCoordinator;
-    private readonly IEventBus _eventBus;
     private readonly IFileService _fileService;
-    private readonly ILogCodecContainer _logCodecContainer;
-    private readonly ISettingsQueryService _settingsQuery;
     private readonly IUserInteraction _ui;
     private readonly Lazy<IMainViewModel> _mainViewModel;
-    private readonly ILogger<MainController> _logger;
 
     private readonly TaskCompletionSource _profilesAreLoaded = new();
     private readonly TaskCompletionSource _mainWindowIsLoaded = new();
-    private bool _anonymousProfileToBeLoaded;
 
     public MainController(
         IClipboardHelper clipboardHelper,
-        ICommandBus commandBus,
-        ICurrentProfile currentProfile,
         IDialogCoordinator dialogCoordinator,
-        IEventBus eventBus,
         IFileService fileService,
-        ILogCodecContainer logCodecContainer,
-        ISettingsQueryService settingsQuery,
         IUserInteraction ui,
-        Lazy<IMainViewModel> mainViewModel,
-        ILogger<MainController> logger)
+        Lazy<IMainViewModel> mainViewModel)
     {
         _clipboardHelper = clipboardHelper.NotNull();
-        _commandBus = commandBus.NotNull();
-        _currentProfile = currentProfile.NotNull();
         _dialogCoordinator = dialogCoordinator.NotNull();
-        _eventBus = eventBus.NotNull();
         _fileService = fileService.NotNull();
-        _logCodecContainer = logCodecContainer.NotNull();
-        _settingsQuery = settingsQuery.NotNull();
         _ui = ui.NotNull();
         _mainViewModel = mainViewModel.NotNull();
-        _logger = logger.NotNull();
-    }
-
-    public async Task AutoLoadProfileAsync()
-    {
-        await Loaded;
-
-        if (_anonymousProfileToBeLoaded)
-        {
-            return;
-        }
-
-        var settings = _settingsQuery.Get();
-        if (settings.AutoLoadPreviouslyOpenedProfile && settings.AutoLoadProfile is not null)
-        {
-            var tab = GetProfilesTab();
-            var profile = tab.Profiles.FirstOrDefault(x => x.Id == settings.AutoLoadProfile);
-            profile?.LoadProfileCommand.Execute(null);
-        }
-    }
-
-    public async Task LoadProfileSettingsAsync(ProfileSettingsBase profileSettings)
-    {
-        _anonymousProfileToBeLoaded = true;
-        await Loaded;
-
-        SetBusy(true);
-
-        await Task.Delay(10); // TODO: Helps to let the UI to show a 'busy' overlay, find a better way around.
-        await Task.Run(async() =>
-        {
-            var profile = await _commandBus.SendAsync(new ProfileLoadAnonymousCommand(profileSettings));
-            await _currentProfile.LoadProfileAsync(profile).ConfigureAwait(false);
-            ShowLogsTab();
-        })
-        .ContinueWith(_ => SetBusy(false), TaskContinuationOptions.None)
-        .ConfigureAwait(false);
-    }
-
-    public async Task LoadProfileAsync(Profile profile)
-    {
-        Guard.NotNull(profile);
-
-        SetBusy(true);
-
-        await Task.Delay(10); // TODO: Helps to let the UI to show a 'busy' overlay, find a better way around.
-        await Task.Run(async() =>
-        {
-            await _currentProfile.LoadProfileAsync(profile).ConfigureAwait(false);
-
-            if (_currentProfile.Profile is not null)
-            {
-                await _commandBus.SendAsync(new SettingsUpdateAutoLoadingProfileCommand(profile.Id));
-                ShowLogsTab();
-            }
-        })
-        .ContinueWith(faultedTask =>
-        {
-            _logger.LogError(faultedTask.Exception, faultedTask.Exception!.Message);
-            _eventBus.Publish(new ProfileLoadingErrorEvent(profile, "Couldn't load profile due to errors. Check log files for details."));
-        }, TaskContinuationOptions.OnlyOnFaulted)
-        .ContinueWith(_ => SetBusy(false), TaskContinuationOptions.None)
-        .ConfigureAwait(false);
     }
 
     public void NotifyMainWindowIsLoaded()
@@ -231,23 +122,7 @@ internal sealed class MainController : IMainController
         await _dialogCoordinator.ShowMetroDialogAsync(_mainViewModel.Value, customDialog);
     }
 
-    // TODO: Cover with unit tests
-    public async Task ShowAnonymousProfileLoadSettingsViewAsync(string path)
-    {
-        var customDialog = new CustomDialog { Title = "Set up logs" };
-        // TODO: Fix injection of `IViewModelFactory` here.
-        var viewModelFactory = App.ServiceProvider.GetRequiredService<IViewModelFactory>(); // Cannot initialize it from ctor due to circular dependency.
-        var viewModel = new AnonymousProfileLoadSettingsViewModel(
-            _logCodecContainer,
-            viewModelFactory,
-            path,
-            new ActionCommand(async _ => await _dialogCoordinator.HideMetroDialogAsync(_mainViewModel.Value, customDialog)),
-            new ActionCommand<ProfileSettingsBase>(LoadProfileSettingsAsync));
-        customDialog.Content = new AnonymousProfileLoadSettingsView { DataContext = viewModel };
-        await _dialogCoordinator.ShowMetroDialogAsync(_mainViewModel.Value, customDialog);
-    }
-
-    private IProfilesViewModel GetProfilesTab()
+    public IProfilesViewModel GetProfilesTab()
         => _mainViewModel.Value.Tabs.OfType<IProfilesViewModel>().First();
 
     public Task Loaded => Task.WhenAll(_mainWindowIsLoaded.Task, _profilesAreLoaded.Task);

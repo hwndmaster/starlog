@@ -5,7 +5,7 @@ using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Views;
 using Genius.Starlog.UI.Views.ProfileSettings;
 
-namespace Genius.Starlog.UI.Tests.Controllers;
+namespace Genius.Starlog.UI.Tests.Views;
 
 public sealed class AnonymousProfileLoadSettingsViewModelTests
 {

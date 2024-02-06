@@ -10,7 +10,7 @@ public sealed class ProfileHarness
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly Mock<IProfileRepository> _profileRepoMock = new();
     private readonly Mock<IProfileQueryService> _profileQueryMock = new();
-    private readonly Mock<ICurrentProfile> _currentProfileMock = new();
+    private readonly TestCurrentProfile _currentProfile = new();
     private readonly Mock<IEventBus> _eventBusMock = new();
 
     public Profile CreateProfile(bool setAsCurrent = false)
@@ -20,7 +20,7 @@ public sealed class ProfileHarness
             .ReturnsAsync(profile);
         if (setAsCurrent)
         {
-            _currentProfileMock.SetupGet(x => x.Profile).Returns(profile);
+            _currentProfile.LoadProfileAsync(profile).GetAwaiter().GetResult();
         }
         return profile;
     }
@@ -32,7 +32,7 @@ public sealed class ProfileHarness
     }
 
     public IFixture Fixture => _fixture;
-    public ICurrentProfile CurrentProfile => _currentProfileMock.Object;
+    public ICurrentProfile CurrentProfile => _currentProfile;
     public IProfileRepository ProfileRepo => _profileRepoMock.Object;
     public IProfileQueryService ProfileQuery => _profileQueryMock.Object;
     public IEventBus EventBus => _eventBusMock.Object;
