@@ -4,12 +4,13 @@ using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.Infrastructure.Io;
 using Genius.Atom.Infrastructure.Tasks;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Genius.Starlog.Core.LogFlow;
+namespace Genius.Starlog.Core.ProfileLoading;
 
 // TODO: Cover with unit tests
 internal sealed class FileBasedProfileLoader : IProfileLoader
@@ -20,7 +21,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
     private readonly IEventBus _eventBus;
     private readonly IFileService _fileService;
     private readonly IFileSystemWatcherFactory _fileSystemWatcherFactory;
-    private readonly ILogCodecContainer _logCodecContainer;
+    private readonly ILogCodecContainerInternal _logCodecContainer;
     private readonly ISynchronousScheduler _scheduler;
     private readonly ILogger<FileBasedProfileLoader> _logger;
 
@@ -29,7 +30,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         IEventBus eventBus,
         IFileService fileService,
         IFileSystemWatcherFactory fileSystemWatcherFactory,
-        ILogCodecContainer logCodecContainer,
+        ILogCodecContainerInternal logCodecContainer,
         ILogger<FileBasedProfileLoader> logger,
         ISynchronousScheduler scheduler)
     {
@@ -148,7 +149,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         var logCodecProcessor = _logCodecContainer.FindLogCodecProcessor(profile.Settings);
 
         var settings = new LogReadingSettings(
-            ReadFileArtifacts: fileRecord.LastReadOffset == 0 && logCodecProcessor.MayContainSourceArtifacts(profile.Settings)
+            ReadSourceArtifacts: fileRecord.LastReadOffset == 0 && logCodecProcessor.MayContainSourceArtifacts(profile.Settings)
         );
         var logRecordResult = await logCodecProcessor.ReadAsync(profile, fileRecord, stream, settings);
 
@@ -163,7 +164,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
 
         fileRecord.LastReadOffset = stream.Length;
 
-        if (settings.ReadFileArtifacts)
+        if (settings.ReadSourceArtifacts)
         {
             fileRecord.Artifacts = logRecordResult.FileArtifacts;
         }

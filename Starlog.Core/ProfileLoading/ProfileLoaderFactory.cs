@@ -1,11 +1,11 @@
 using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.Infrastructure.Io;
 using Genius.Atom.Infrastructure.Tasks;
-using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Genius.Starlog.Core.LogFlow;
+namespace Genius.Starlog.Core.ProfileLoading;
 
 internal interface IProfileLoaderFactory
 {
@@ -18,7 +18,7 @@ internal sealed class ProfileLoaderFactory : IProfileLoaderFactory
     private readonly IEventBus _eventBus;
     private readonly IFileService _fileService;
     private readonly IFileSystemWatcherFactory _fileSystemWatcherFactory;
-    private readonly ILogCodecContainer _logCodecContainer;
+    private readonly ILogCodecContainerInternal _logCodecContainer;
     private readonly ILogger<FileBasedProfileLoader> _fileBasedLogger;
     private readonly ISynchronousScheduler _scheduler;
 
@@ -27,7 +27,7 @@ internal sealed class ProfileLoaderFactory : IProfileLoaderFactory
         IEventBus eventBus,
         IFileService fileService,
         IFileSystemWatcherFactory fileSystemWatcherFactory,
-        ILogCodecContainer logCodecContainer,
+        ILogCodecContainerInternal logCodecContainer,
         ILogger<FileBasedProfileLoader> fileBasedLogger,
         ISynchronousScheduler scheduler)
     {

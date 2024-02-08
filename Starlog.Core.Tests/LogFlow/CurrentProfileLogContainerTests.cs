@@ -7,13 +7,15 @@ using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.ProfileLoading;
 using Genius.Starlog.Core.TestingUtil;
 using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.Tests.LogFlow;
 
+// This test is not fully 'unit' due to the use of `ProfileLoaderFactory`
 [Trait(TestCategory.Trait, TestCategory.Integration)]
-public sealed class CurrentProfileLogContainerTests
+public sealed class CurrentProfileLogContainerTests : IDisposable
 {
     private record FileWithContentRecord(string FullPath, byte[] Content, LogReadingResult Result);
 
@@ -26,7 +28,7 @@ public sealed class CurrentProfileLogContainerTests
     private readonly TestEventBus _eventBus = new();
     private readonly TestSynchronousScheduler _scheduler = new();
     private readonly TestLogger<LogContainer> _logger = new();
-    private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
+    private readonly Mock<ILogCodecContainerInternal> _logCodecContainerMock = new();
 
     private readonly CurrentProfileLogContainer _sut;
 
@@ -341,6 +343,31 @@ public sealed class CurrentProfileLogContainerTests
     }
 
     [Fact]
+    public async Task FileWatcher_Removed_ThenRemovedFromLocalCollections()
+    {
+        // Arrange
+        var files = SampleFiles(_sampleProfile);
+        await _sut.LoadProfileAsync(_sampleProfile);
+        var fileRemoved = files[1];
+        string? sourceRemoved = null;
+        _sut.SourceRemoved.Subscribe(x => sourceRemoved = x.Name);
+
+        // Act
+        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
+        _fileWatcherFactory.RecentlyCreatedInstance.OnDeleted(_sampleProfile.Settings.Source, Path.GetFileName(fileRemoved.FullPath));
+
+        // Verify
+        Assert.NotNull(sourceRemoved);
+        Assert.Equal(fileRemoved.FullPath, sourceRemoved);
+        var actualFiles = _sut.GetSources();
+        Assert.DoesNotContain(actualFiles, x => x.Name.Equals(fileRemoved.FullPath));
+        var expectedFiles = new FileWithContentRecord[] { files[0] }.Concat(files[2..]).ToArray();
+        Assert.Equal(actualFiles.Select(x => x.Name).Order(), expectedFiles.Select(x => x.FullPath).Order());
+        var actualLogs = _sut.GetLogs();
+        Assert.DoesNotContain(actualLogs, x => x.Source.Name.Equals(fileRemoved.FullPath));
+    }
+
+    [Fact]
     public async Task FileWatcher_Error_ThenHandledWithLogger()
     {
         // Arrange
@@ -435,12 +462,12 @@ public sealed class CurrentProfileLogContainerTests
             []);
     }
 
-    private void SetupProcessorRead(Profile profile, FileWithContentRecord record, bool? readFileArtifacts, int? verifyLastReadOffset = null)
+    private void SetupProcessorRead(Profile profile, FileWithContentRecord record, bool? readSourceArtifacts, int? verifyLastReadOffset = null)
     {
         _logCodecProcessorMock.Setup(x => x.ReadAsync(profile,
                 It.Is<FileRecord>(fr => fr.FullPath.Equals(record.FullPath, StringComparison.OrdinalIgnoreCase)),
                 It.IsAny<Stream>(),
-                It.Is<LogReadingSettings>(s => !readFileArtifacts.HasValue || s.ReadFileArtifacts == readFileArtifacts)))
+                It.Is<LogReadingSettings>(s => !readSourceArtifacts.HasValue || s.ReadSourceArtifacts == readSourceArtifacts)))
             .ReturnsAsync((Profile _, FileRecord fileRecord, Stream stream, LogReadingSettings _) =>
             {
                 if (verifyLastReadOffset is not null)
@@ -455,5 +482,10 @@ public sealed class CurrentProfileLogContainerTests
                         .ToImmutableArray()
                 };
             });
+    }
+
+    public void Dispose()
+    {
+        _sut.Dispose();
     }
 }

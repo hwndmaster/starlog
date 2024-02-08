@@ -1,6 +1,6 @@
 using Genius.Starlog.Core.Models;
 
-namespace Genius.Starlog.Core.LogFlow;
+namespace Genius.Starlog.Core.ProfileLoading;
 
 internal abstract class ProfileStateBase
 {

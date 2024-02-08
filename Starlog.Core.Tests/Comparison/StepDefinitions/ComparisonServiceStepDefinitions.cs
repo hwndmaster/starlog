@@ -1,11 +1,13 @@
 using System.Collections.Immutable;
 using Genius.Atom.Infrastructure.TestingUtil;
+using Genius.Starlog.Core.Comparison;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.ProfileLoading;
 using Genius.Starlog.Core.TestingUtil;
 using TechTalk.SpecFlow;
 
-namespace Genius.Starlog.Core.Tests.LogFlow;
+namespace Genius.Starlog.Core.Tests.Comparison;
 
 [Binding]
 public sealed class ComparisonServiceStepDefinitions

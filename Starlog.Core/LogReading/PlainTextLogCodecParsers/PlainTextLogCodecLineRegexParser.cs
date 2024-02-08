@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace Genius.Starlog.Core.LogReading.PlainTextLogCodecParsers;
 
-internal class PlainTextLogCodecLineRegexParser : IPlainTextLogCodecLineParser
+internal sealed class PlainTextLogCodecLineRegexParser : IPlainTextLogCodecLineParser
 {
     private const string DEFAULT_LEVEL = "INFO";
 

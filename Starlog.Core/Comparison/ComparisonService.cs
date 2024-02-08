@@ -1,8 +1,10 @@
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.ProfileLoading;
 
-namespace Genius.Starlog.Core.LogFlow;
+namespace Genius.Starlog.Core.Comparison;
 
 public interface IComparisonService
 {

@@ -1,3 +1,4 @@
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Views.ProfileSettings;

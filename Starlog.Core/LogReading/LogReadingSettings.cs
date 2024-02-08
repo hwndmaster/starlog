@@ -1,3 +1,3 @@
 namespace Genius.Starlog.Core.LogReading;
 
-public readonly record struct LogReadingSettings(bool ReadFileArtifacts);
+internal readonly record struct LogReadingSettings(bool ReadSourceArtifacts);

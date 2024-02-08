@@ -1,4 +1,5 @@
 using Genius.Atom.Infrastructure.TestingUtil;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
@@ -34,10 +35,10 @@ public sealed class ConsoleControllerTests
         var codec = new LogCodec(Guid.NewGuid(), options.Codec!);
         var profileSettings = _fixture.Create<ProfileSettingsBase>();
         var allCodecs = _fixture.CreateMany<LogCodec>().Append(codec);
-        var processor = Mock.Of<ILogCodecProcessor>(x => x.ReadFromCommandLineArguments(profileSettings, It.Is<string[]>(arg => arg.SequenceEqual(options.CodecSettings))) == true);
+        var processor = Mock.Of<ILogCodecSettingsReader>(x => x.ReadFromCommandLineArguments(profileSettings, It.Is<string[]>(arg => arg.SequenceEqual(options.CodecSettings))) == true);
         _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns(allCodecs);
         _logCodecContainerMock.Setup(x => x.CreateProfileSettings(codec)).Returns(profileSettings);
-        _logCodecContainerMock.Setup(x => x.FindLogCodecProcessor(profileSettings)).Returns(processor);
+        _logCodecContainerMock.Setup(x => x.FindLogCodecSettingsReader(profileSettings)).Returns(processor);
 
         // Act
         await _sut.LoadPathAsync(options);
@@ -72,11 +73,11 @@ public sealed class ConsoleControllerTests
         var codec = new LogCodec(Guid.NewGuid(), options.Codec!);
         var profileCodec = _fixture.Create<ProfileSettingsBase>();
         var allCodecs = _fixture.CreateMany<LogCodec>().Append(codec);
-        var processor = Mock.Of<ILogCodecProcessor>(x =>
+        var processor = Mock.Of<ILogCodecSettingsReader>(x =>
             x.ReadFromCommandLineArguments(profileCodec, It.Is<string[]>(arg => arg.SequenceEqual(options.CodecSettings))) == false);
         _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns(allCodecs);
         _logCodecContainerMock.Setup(x => x.CreateProfileSettings(codec)).Returns(profileCodec);
-        _logCodecContainerMock.Setup(x => x.FindLogCodecProcessor(profileCodec)).Returns(processor);
+        _logCodecContainerMock.Setup(x => x.FindLogCodecSettingsReader(profileCodec)).Returns(processor);
 
         // Act
         await _sut.LoadPathAsync(options);

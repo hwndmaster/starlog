@@ -1,19 +1,25 @@
 using Genius.Atom.Infrastructure.Entities;
+using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 
-namespace Genius.Starlog.Core.LogReading;
+namespace Genius.Starlog.Core.LogFlow;
 
-public interface ILogCodecContainer
+internal interface ILogCodecContainerInternal : ILogCodecContainer
 {
-    ProfileSettingsBase CreateProfileSettings(LogCodec logCodec);
     ILogCodecProcessor FindLogCodecProcessor(ProfileSettingsBase profileSettings);
-    IEnumerable<LogCodec> GetLogCodecs();
     void RegisterLogCodec<TProfileSettings, TLogCodec>(LogCodec logCodec)
         where TProfileSettings : ProfileSettingsBase
         where TLogCodec : class, ILogCodecProcessor;
 }
 
-internal sealed class LogCodecContainer : ILogCodecContainer, IQueryService<LogCodec>
+public interface ILogCodecContainer
+{
+    ILogCodecSettingsReader FindLogCodecSettingsReader(ProfileSettingsBase profileSettings);
+    ProfileSettingsBase CreateProfileSettings(LogCodec logCodec);
+    IEnumerable<LogCodec> GetLogCodecs();
+}
+
+internal sealed class LogCodecContainer : ILogCodecContainerInternal, IQueryService<LogCodec>
 {
     private readonly record struct LogCodecRecord(LogCodec Codec, Type ProfileSettingsType, Type ProcessorType);
 
@@ -34,6 +40,16 @@ internal sealed class LogCodecContainer : ILogCodecContainer, IQueryService<LogC
         }
 
         return (ProfileSettingsBase)Activator.CreateInstance(value.ProfileSettingsType, logCodec).NotNull();
+    }
+
+    public ILogCodecSettingsReader FindLogCodecSettingsReader(ProfileSettingsBase profileSettings)
+    {
+        if (!_registeredLogCodecs.TryGetValue(profileSettings.LogCodec.Id, out var value))
+        {
+            throw new InvalidOperationException("The log codec '" + profileSettings.LogCodec.Id + "' doesn't exists.");
+        }
+
+        return _processors.Value.First(x => x.GetType() == value.ProcessorType);
     }
 
     public ILogCodecProcessor FindLogCodecProcessor(ProfileSettingsBase profileSettings)

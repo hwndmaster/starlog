@@ -38,7 +38,7 @@ public sealed class PlainTextLogCodecProcessorTests
             """));
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadFileArtifacts: true));
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: true));
 
         // Verify
         Assert.NotNull(result.FileArtifacts);
@@ -76,7 +76,7 @@ public sealed class PlainTextLogCodecProcessorTests
         ((PlainTextProfileSettings)profile.Settings).FileArtifactLinesCount = 0;
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadFileArtifacts: true));
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: true));
 
         // Verify
         Assert.NotNull(result.FileArtifacts);
@@ -95,7 +95,7 @@ public sealed class PlainTextLogCodecProcessorTests
 
         // Act
         var result = await _sut.ReadAsync(profile, _fixture.Create<FileRecord>(), stream,
-            new LogReadingSettings(ReadFileArtifacts: true));
+            new LogReadingSettings(ReadSourceArtifacts: true));
 
         // Verify
         Assert.Equal(LogReadingResult.Empty, result);
@@ -113,7 +113,7 @@ public sealed class PlainTextLogCodecProcessorTests
             """));
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadFileArtifacts: false));
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: false));
 
         // Verify
         Assert.Null(result.FileArtifacts);
@@ -139,7 +139,7 @@ public sealed class PlainTextLogCodecProcessorTests
             """));
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadFileArtifacts: false));
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: false));
 
         // Verify
         Assert.Equal(LogReadingResult.Empty, result);
@@ -155,7 +155,7 @@ public sealed class PlainTextLogCodecProcessorTests
 
         // Act & Verify
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _sut.ReadAsync(profile, _fixture.Create<FileRecord>(), stream, new LogReadingSettings(ReadFileArtifacts: false)));
+            _sut.ReadAsync(profile, _fixture.Create<FileRecord>(), stream, new LogReadingSettings(ReadSourceArtifacts: false)));
     }
 
     [Fact]
@@ -166,7 +166,7 @@ public sealed class PlainTextLogCodecProcessorTests
 
         // Act
         var result = await _sut.ReadAsync(CreateSampleProfile(), _fixture.Create<FileRecord>(), stream,
-            new LogReadingSettings(ReadFileArtifacts: false));
+            new LogReadingSettings(ReadSourceArtifacts: false));
 
         // Verify
         Assert.Equal(LogReadingResult.Empty, result);

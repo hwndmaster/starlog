@@ -1,4 +1,4 @@
-using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Console;
@@ -72,8 +72,8 @@ internal sealed class ConsoleController : IConsoleController
             }
             if (options.CodecSettings is not null)
             {
-                var processor = _logCodecContainer.FindLogCodecProcessor(settings);
-                if (!processor.ReadFromCommandLineArguments(settings, options.CodecSettings.ToArray()))
+                var logCodecSettingsReader = _logCodecContainer.FindLogCodecSettingsReader(settings);
+                if (!logCodecSettingsReader.ReadFromCommandLineArguments(settings, options.CodecSettings.ToArray()))
                 {
                     // Couldn't read arguments, terminating...
                     _logger.LogWarning("Couldn't load a profile from '{path}' with codec '{codec}' and the following settings: {settings}", options.Path, codecName, string.Join(',', options.CodecSettings));
