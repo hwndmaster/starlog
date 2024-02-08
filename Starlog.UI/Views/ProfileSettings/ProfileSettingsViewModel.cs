@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using Genius.Atom.Infrastructure.Events;
-using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;

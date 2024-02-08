@@ -3,7 +3,7 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.Core.LogReading;
 
-public sealed class XmlLogCodecProcessor : ILogCodecProcessor
+internal sealed class XmlLogCodecProcessor : ILogCodecProcessor, ILogCodecSettingsReader
 {
     public bool MayContainSourceArtifacts(ProfileSettingsBase profileSettings)
     {

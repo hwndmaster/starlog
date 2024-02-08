@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.LogReading.PlainTextLogCodecParsers;
 
-internal class PlainTextLogCodecLineMaskPatternParser : IPlainTextLogCodecLineParser
+internal sealed class PlainTextLogCodecLineMaskPatternParser : IPlainTextLogCodecLineParser
 {
     private readonly ILogger<PlainTextLogCodecLineMaskPatternParser> _logger;
     private readonly PlainTextLogCodecLineRegexParser? _regexParser = null;

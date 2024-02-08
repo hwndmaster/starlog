@@ -1,5 +1,5 @@
-using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.ProfileLoading;
 
 namespace Genius.Starlog.Core.TestingUtil;
 

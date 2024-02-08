@@ -1,6 +1,6 @@
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Atom.UI.Forms;
-using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Views;
 using Genius.Starlog.UI.Views.ProfileSettings;

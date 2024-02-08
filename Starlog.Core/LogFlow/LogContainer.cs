@@ -23,7 +23,6 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
 
     public LogContainer()
     {
-        // TODO: Cover with unit tests
         _sourceAdded
             .Concat(_sourceRemoved)
             .Subscribe(_ => _sourcesCountChanged.OnNext(SourcesCount));
@@ -93,7 +92,6 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
         return _sources.TryGetValue(name, out var source) ? source : null;
     }
 
-    // TODO: Cover with unit tests
     public void RemoveSource(string name)
     {
         if (_sources.TryRemove(name, out var record))

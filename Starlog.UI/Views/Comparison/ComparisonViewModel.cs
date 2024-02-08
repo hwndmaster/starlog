@@ -1,5 +1,5 @@
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
-using Genius.Starlog.Core.LogFlow;
+using Genius.Starlog.Core.Comparison;
 using Genius.Starlog.UI.AutoGridBuilders;
 
 namespace Genius.Starlog.UI.Views.Comparison;

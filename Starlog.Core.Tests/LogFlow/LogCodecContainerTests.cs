@@ -2,7 +2,7 @@ using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
 
-namespace Genius.Starlog.Core.Tests.LogReading;
+namespace Genius.Starlog.Core.Tests.LogFlow;
 
 public sealed class LogCodecContainerTests
 {

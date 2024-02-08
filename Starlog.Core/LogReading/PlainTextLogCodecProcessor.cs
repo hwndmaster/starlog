@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.LogReading;
 
-internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
+internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor, ILogCodecSettingsReader
 {
     private readonly ISettingsQueryService _settingsQuery;
     private readonly ILogger<PlainTextLogCodecLineMaskPatternParser> _plainTextLogCodecLineMaskPatternParserLogger;
@@ -23,7 +23,7 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
         var profileSettings = (PlainTextProfileSettings)profile.Settings;
 
         using var reader = new StreamReader(stream, leaveOpen: true);
-        var fileArtifacts = settings.ReadFileArtifacts ? await ReadFileArtifactsAsync(profileSettings, reader) : null;
+        var fileArtifacts = settings.ReadSourceArtifacts ? await ReadFileArtifactsAsync(profileSettings, reader) : null;
 
         if (reader.EndOfStream)
         {

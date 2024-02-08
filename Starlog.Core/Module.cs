@@ -17,6 +17,8 @@ using Microsoft.Extensions.Configuration;
 using Genius.Starlog.Core.Configuration;
 using Genius.Starlog.Core.Models.VersionUpgraders;
 using Genius.Starlog.Core.Serialization;
+using Genius.Starlog.Core.Comparison;
+using Genius.Starlog.Core.ProfileLoading;
 
 namespace Genius.Starlog.Core;
 
@@ -32,17 +34,20 @@ public static class Module
         services.AddSingleton<ISettingsQueryService>(sp => sp.GetRequiredService<SettingsRepository>());
         services.AddSingleton<ISettingsRepository>(sp => sp.GetRequiredService<SettingsRepository>());
 
-        // LogFlow and LogFiltering components
+        // Log flow components
         services.AddSingleton<CurrentProfileLogContainer>();
         services.AddSingleton<ICurrentProfile>(x => x.GetRequiredService<CurrentProfileLogContainer>());
         services.AddSingleton<ILogContainer>(x => x.GetRequiredService<CurrentProfileLogContainer>());
-        services.AddSingleton<ILogFilterContainer, LogFilterContainer>();
-        services.AddSingleton<IComparisonService, ComparisonService>();
-
+        services.AddTransient<ILogCodecProcessor, PlainTextLogCodecProcessor>();
+        services.AddTransient<ILogCodecProcessor, XmlLogCodecProcessor>();
+        services.AddTransient<ILogCodecProcessor, WindowsEventLogCodecProcessor>();
         services.AddSingleton<LogCodecContainer>();
         services.AddSingleton<ILogCodecContainer>(sp => sp.GetRequiredService<LogCodecContainer>());
+        services.AddSingleton<ILogCodecContainerInternal>(sp => sp.GetRequiredService<LogCodecContainer>());
         services.AddSingleton<IQueryService<LogCodec>>(sp => sp.GetRequiredService<LogCodecContainer>());
 
+        // Log filtering components
+        services.AddSingleton<ILogFilterContainer, LogFilterContainer>();
         services.AddTransient<IFilterProcessor, FilesFilterProcessor>();
         services.AddTransient<IFilterProcessor, MessageFilterProcessor>();
         services.AddTransient<IFilterProcessor, LoggersFilterProcessor>();
@@ -50,15 +55,14 @@ public static class Module
         services.AddTransient<IFilterProcessor, ThreadsFilterProcessor>();
         services.AddTransient<IFilterProcessor, TimeAgoFilterProcessor>();
         services.AddTransient<IFilterProcessor, TimeRangeFilterProcessor>();
-        services.AddTransient<ILogCodecProcessor, PlainTextLogCodecProcessor>();
-        services.AddTransient<ILogCodecProcessor, XmlLogCodecProcessor>();
-        services.AddTransient<ILogCodecProcessor, WindowsEventLogCodecProcessor>();
         services.AddTransient<ILogRecordMatcher, LogRecordMatcher>();
         services.AddTransient<IQuickFilterProvider, QuickFilterProvider>();
 
-        // JSON Converters
+        // Serialization and JSON Converters
         services.AddSingleton<IJsonConverter, LogCodecJsonConverter>();
         services.AddSingleton<IJsonConverter, LogFilterJsonConverter>();
+        services.AddSingleton<PlainTextProfileLogCodecVer1To2Upgrader>();
+        services.AddSingleton<ProfileSettingsLegacyUpgrader>();
 
         // Command Handlers
         services.AddScoped<ICommandHandler<MessageParsingCreateOrUpdateCommand, MessageParsingCreateOrUpdateCommandResult>, MessageParsingCreateOrUpdateCommandHandler>();
@@ -75,9 +79,8 @@ public static class Module
         // Other components
         services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();
         services.AddTransient<IMessageParsingHandler, MessageParsingHandler>();
-        services.AddSingleton<PlainTextProfileLogCodecVer1To2Upgrader>();
-        services.AddSingleton<ProfileSettingsLegacyUpgrader>();
         services.AddSingleton<IProfileLoaderFactory, ProfileLoaderFactory>();
+        services.AddSingleton<IComparisonService, ComparisonService>();
 
         // Configurations
         services.Configure<LogLevelMappingConfiguration>(config.GetSection("LogLevelMapping"));
@@ -111,7 +114,7 @@ public static class Module
 
     private static void RegisterLogCodecs(IServiceProvider serviceProvider)
     {
-        var logCodecContainer = serviceProvider.GetRequiredService<ILogCodecContainer>();
+        var logCodecContainer = serviceProvider.GetRequiredService<ILogCodecContainerInternal>();
         logCodecContainer.RegisterLogCodec<PlainTextProfileSettings, PlainTextLogCodecProcessor>(
             new LogCodec(new Guid("a38a40b6-c07f-49d5-a143-5c9f9f42149b"), PlainTextProfileSettings.CodecName));
         logCodecContainer.RegisterLogCodec<XmlProfileSettings, XmlLogCodecProcessor>(

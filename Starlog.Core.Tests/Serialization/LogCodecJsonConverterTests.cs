@@ -1,7 +1,7 @@
 using System.Buffers;
 using System.Text;
 using System.Text.Json;
-using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Serialization;
 

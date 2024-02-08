@@ -3,6 +3,7 @@ using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Events;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
+using Genius.Starlog.Core.ProfileLoading;
 
 namespace Genius.Starlog.Core.LogFlow;
 
