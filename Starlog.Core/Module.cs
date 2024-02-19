@@ -50,9 +50,8 @@ public static class Module
         services.AddSingleton<ILogFilterContainer, LogFilterContainer>();
         services.AddTransient<IFilterProcessor, FilesFilterProcessor>();
         services.AddTransient<IFilterProcessor, MessageFilterProcessor>();
-        services.AddTransient<IFilterProcessor, LoggersFilterProcessor>();
+        services.AddTransient<IFilterProcessor, FieldFilterProcessor>();
         services.AddTransient<IFilterProcessor, LogLevelsFilterProcessor>();
-        services.AddTransient<IFilterProcessor, ThreadsFilterProcessor>();
         services.AddTransient<IFilterProcessor, TimeAgoFilterProcessor>();
         services.AddTransient<IFilterProcessor, TimeRangeFilterProcessor>();
         services.AddTransient<ILogRecordMatcher, LogRecordMatcher>();
@@ -61,6 +60,7 @@ public static class Module
         // Serialization and JSON Converters
         services.AddSingleton<IJsonConverter, LogCodecJsonConverter>();
         services.AddSingleton<IJsonConverter, LogFilterJsonConverter>();
+        services.AddSingleton<FieldProfileFilterFromLoggersAndThreadsUpgrader>();
         services.AddSingleton<PlainTextProfileLogCodecVer1To2Upgrader>();
         services.AddSingleton<ProfileSettingsLegacyUpgrader>();
 
@@ -96,20 +96,25 @@ public static class Module
     private static void RegisterLogFilters(IServiceProvider serviceProvider)
     {
         var logFilterContainer = serviceProvider.GetRequiredService<ILogFilterContainer>();
+        logFilterContainer.RegisterLogFilter<FieldProfileFilter, FieldFilterProcessor>(
+            new LogFilter(FieldProfileFilter.LogFilterId, "Field filter"));
         logFilterContainer.RegisterLogFilter<FilesProfileFilter, FilesFilterProcessor>(
             new LogFilter(new Guid("836b05dc-8f94-40b2-9606-67452f86ace0"), "File filter"));
         logFilterContainer.RegisterLogFilter<MessageProfileFilter, MessageFilterProcessor>(
             new LogFilter(new Guid("c78616c5-fe0d-4f9b-b46b-38a4b26727e6"), "Message filter"));
-        logFilterContainer.RegisterLogFilter<LoggersProfileFilter, LoggersFilterProcessor>(
-            new LogFilter(new Guid("ad1398bc-a17e-4584-b7fa-d82fa547b5fe"), "Logger filter"));
         logFilterContainer.RegisterLogFilter<LogLevelsProfileFilter, LogLevelsFilterProcessor>(
             new LogFilter(new Guid("bd1ffa05-8534-4555-ab17-92fd3f53fe13"), "Level filter"));
-        logFilterContainer.RegisterLogFilter<ThreadsProfileFilter, ThreadsFilterProcessor>(
-            new LogFilter(new Guid("11235ba9-cf84-413c-b094-d2c2c6672f4f"), "Thread filter"));
         logFilterContainer.RegisterLogFilter<TimeAgoProfileFilter, TimeAgoFilterProcessor>(
             new LogFilter(new Guid("8f5c5e27-5f4d-489f-8534-5fbaa8ee8571"), "Time ago filter"));
         logFilterContainer.RegisterLogFilter<TimeRangeProfileFilter, TimeRangeFilterProcessor>(
             new LogFilter(new Guid("4ba18116-122b-4580-afc9-97211c0a53af"), "Time range filter"));
+
+#pragma warning disable CS0618 // Type or member is obsolete
+        logFilterContainer.RegisterLogFilter<LoggersProfileFilter, ObsoleteFilterProcessor>(
+            new LogFilter(new Guid("ad1398bc-a17e-4584-b7fa-d82fa547b5fe"), string.Empty));
+        logFilterContainer.RegisterLogFilter<ThreadsProfileFilter, ObsoleteFilterProcessor>(
+            new LogFilter(new Guid("11235ba9-cf84-413c-b094-d2c2c6672f4f"), string.Empty));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     private static void RegisterLogCodecs(IServiceProvider serviceProvider)
@@ -130,11 +135,18 @@ public static class Module
         // Filters
         typeDiscriminators.AddMapping<FilesProfileFilter>("files-profile-filter");
         typeDiscriminators.AddMapping<MessageProfileFilter>("msg-profile-filter");
-        typeDiscriminators.AddMapping<LoggersProfileFilter>("loggers-profile-filter");
+        typeDiscriminators.AddMapping<FieldProfileFilter>("field-profile-filter");
         typeDiscriminators.AddMapping<LogLevelsProfileFilter>("loglevels-profile-filter");
-        typeDiscriminators.AddMapping<ThreadsProfileFilter>("threads-profile-filter");
         typeDiscriminators.AddMapping<TimeAgoProfileFilter>("timeago-profile-filter");
         typeDiscriminators.AddMapping<TimeRangeProfileFilter>("timerange-profile-filter");
+
+        // Obsolete:
+#pragma warning disable CS0618 // Type or member is obsolete
+        typeDiscriminators.AddMapping<LoggersProfileFilter>("loggers-profile-filter");
+        typeDiscriminators.AddMapping<ThreadsProfileFilter>("threads-profile-filter");
+        typeDiscriminators.AddVersionUpgrader<FieldProfileFilter, LoggersProfileFilter, FieldProfileFilterFromLoggersAndThreadsUpgrader>();
+        typeDiscriminators.AddVersionUpgrader<FieldProfileFilter, ThreadsProfileFilter, FieldProfileFilterFromLoggersAndThreadsUpgrader>();
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Codecs
 #pragma warning disable CS0618 // Type or member is obsolete

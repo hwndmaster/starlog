@@ -10,7 +10,7 @@ internal sealed class XmlLogCodecProcessor : ILogCodecProcessor, ILogCodecSettin
         throw new NotImplementedException();
     }
 
-    public Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings)
+    public Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings, ILogFieldsContainer fields)
     {
         throw new NotImplementedException();
     }

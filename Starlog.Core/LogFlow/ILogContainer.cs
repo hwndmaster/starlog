@@ -8,14 +8,14 @@ namespace Genius.Starlog.Core.LogFlow;
 public interface ILogContainer
 {
     /// <summary>
+    ///  Returns a container of the fields.
+    /// </summary>
+    ILogFieldsContainerReadonly GetFields();
+
+    /// <summary>
     ///   Returns all the logs, read so far for the selected profile.
     /// </summary>
     ImmutableArray<LogRecord> GetLogs();
-
-    /// <summary>
-    ///   Returns all unique loggers, read so far for the selected profile.
-    /// </summary>
-    ImmutableArray<LoggerRecord> GetLoggers();
 
     /// <summary>
     ///   Returns all unique log levels, read so far for the selected profile.
@@ -32,11 +32,6 @@ public interface ILogContainer
     ///   Returns all the log sources, read so far for the selected profile.
     /// </summary>
     ImmutableArray<LogSourceBase> GetSources();
-
-    /// <summary>
-    ///   Returns all unique threads, read so far for the selected profile.
-    /// </summary>
-    ImmutableArray<string> GetThreads();
 
     /// <summary>
     ///   An observable to handle an event when a new source is read.

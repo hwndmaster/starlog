@@ -18,7 +18,7 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor, ILogCodec
         _plainTextLogCodecLineMaskPatternParserLogger = plainTextLogCodecLineMaskPatternParserLogger.NotNull();
     }
 
-    public async Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings)
+    public async Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings, ILogFieldsContainer fields)
     {
         var profileSettings = (PlainTextProfileSettings)profile.Settings;
 
@@ -44,13 +44,12 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor, ILogCodec
             _ => throw new NotSupportedException($"Pattern type '{patternValue.Type}' is not supported.")
         };
 
-        Dictionary<int, LoggerRecord> loggers = new();
-        Dictionary<int, LogLevelRecord> logLevels = new();
-        List<LogRecord> records = new();
+        Dictionary<int, LogLevelRecord> logLevels = [];
+        List<LogRecord> records = [];
 
         LogRecord? lastRecord = null;
-        List<string> lastRecordArtifacts = new();
-        List<string> errors = new();
+        List<string> lastRecordArtifacts = [];
+        List<string> errors = [];
 
         while (true)
         {
@@ -88,16 +87,17 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor, ILogCodec
                 errors.Add("Could not parse datetime: " + match.Value.DateTime);
                 continue;
             }
-            var thread = match.Value.Thread;
-            var logger = match.Value.Logger;
             var message = match.Value.Message;
 
-            var loggerHash = logger.GetHashCode();
-            if (!loggers.TryGetValue(loggerHash, out var loggerRecord))
+            var fieldValueIndices = new int[fields.GetFieldCount() + match.Value.Fields.Length];
+            for (var i = 0; i < match.Value.Fields.Length; i++)
             {
-                loggerRecord = new LoggerRecord(loggerHash, logger);
-                loggers.Add(loggerHash, loggerRecord);
+                var parsedField = match.Value.Fields[i];
+                var fieldId = fields.GetOrAddFieldId(parsedField.FieldName);
+                fieldValueIndices[fieldId] = fields.AddFieldValue(fieldId, parsedField.Value);
             }
+
+            fieldValueIndices = fieldValueIndices[0..fields.GetFieldCount()];
 
             var logLevelHash = level.GetHashCode();
             if (!logLevels.TryGetValue(logLevelHash, out var logLevelRecord))
@@ -106,10 +106,10 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor, ILogCodec
                 logLevels.Add(logLevelHash, logLevelRecord);
             }
 
-            lastRecord = new LogRecord(dateTime, logLevelRecord, thread, source, loggerRecord, message, null);
+            lastRecord = new LogRecord(dateTime, logLevelRecord, source, fieldValueIndices.ToImmutableArray(), message, null);
         }
 
-        return new LogReadingResult(fileArtifacts, records.ToImmutableArray(), loggers.Values, logLevels.Values, errors);
+        return new LogReadingResult(fileArtifacts, records.ToImmutableArray(), fields, logLevels.Values, errors);
 
         void FlushRecentRecord()
         {

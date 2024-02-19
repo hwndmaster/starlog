@@ -151,13 +151,13 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         var settings = new LogReadingSettings(
             ReadSourceArtifacts: fileRecord.LastReadOffset == 0 && logCodecProcessor.MayContainSourceArtifacts(profile.Settings)
         );
-        var logRecordResult = await logCodecProcessor.ReadAsync(profile, fileRecord, stream, settings);
+        var logRecordResult = await logCodecProcessor.ReadAsync(profile, fileRecord, stream, settings, logContainer.GetFieldsContainer());
 
         _logger.LogDebug("File {FileName} read {RecordsCount} logs", fileRecord.FileName, logRecordResult.Records.Length);
 
         if (logRecordResult.Errors.Count > 0)
         {
-            var reason = string.Join("\r\n", logRecordResult.Errors);
+            var reason = string.Join(Environment.NewLine, logRecordResult.Errors);
             _eventBus.Publish(new ProfileLoadingErrorEvent(profile, reason));
             _logger.LogDebug("File {FileName} found {RecordsCount} errors\r\n{Reason}", fileRecord.FileName, logRecordResult.Errors.Count, reason);
         }
@@ -169,19 +169,9 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
             fileRecord.Artifacts = logRecordResult.FileArtifacts;
         }
 
-        foreach (var logger in logRecordResult.Loggers)
-        {
-            logContainer.AddLogger(logger);
-        }
-
         foreach (var logLevel in logRecordResult.LogLevels)
         {
             logContainer.AddLogLevel(logLevel);
-        }
-
-        foreach (var thread in logRecordResult.Records.Select(x => x.Thread))
-        {
-            logContainer.AddThread(thread);
         }
 
         logContainer.AddLogs(logRecordResult.Records);

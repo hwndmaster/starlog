@@ -19,8 +19,10 @@ public sealed class PlainTextLogCodecLineRegexParserTests
         Assert.NotNull(result);
         Assert.Equal("%datetime%", result.Value.DateTime);
         Assert.Equal("%level%", result.Value.Level);
-        Assert.Equal("%thread%", result.Value.Thread);
-        Assert.Equal("%logger%", result.Value.Logger);
+        Assert.Equal("thread", result.Value.Fields[0].FieldName);
+        Assert.Equal("%thread%", result.Value.Fields[0].Value);
+        Assert.Equal("logger", result.Value.Fields[1].FieldName);
+        Assert.Equal("%logger%", result.Value.Fields[1].Value);
         Assert.Equal("%msg%", result.Value.Message);
     }
 
@@ -55,7 +57,7 @@ public sealed class PlainTextLogCodecLineRegexParserTests
     }
 
     [Fact]
-    public void Parse_LevelOrThreadOrLoggerAreMissing_DefaultAreUsed()
+    public void Parse_LevelIsMissing_DefaultAreUsed()
     {
         // Arrange
         var pattern = @"(?<datetime>%datetime%)\s(?<message>%msg%)";
@@ -69,8 +71,7 @@ public sealed class PlainTextLogCodecLineRegexParserTests
         Assert.NotNull(result);
         Assert.Equal("%datetime%", result.Value.DateTime);
         Assert.Equal("INFO", result.Value.Level);
-        Assert.Equal(string.Empty, result.Value.Thread);
-        Assert.Equal(string.Empty, result.Value.Logger);
+        Assert.Empty(result.Value.Fields);
         Assert.Equal("%msg%", result.Value.Message);
     }
 }

@@ -17,14 +17,11 @@
         <DataTemplate DataType="{x:Type local:MessageProfileFilterSettingsViewModel}">
             <local:MessageProfileFilterView DataContext="{Binding .}" />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type local:LoggersProfileFilterSettingsViewModel}">
-            <local:LoggersProfileFilterView DataContext="{Binding .}" />
+        <DataTemplate DataType="{x:Type local:FieldProfileFilterSettingsViewModel}">
+            <local:FieldProfileFilterView DataContext="{Binding .}" />
         </DataTemplate>
         <DataTemplate DataType="{x:Type local:LogLevelsProfileFilterSettingsViewModel}">
             <local:LogLevelsProfileFilterView DataContext="{Binding .}" />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type local:ThreadProfileFilterSettingsViewModel}">
-            <local:ThreadProfileFilterView DataContext="{Binding .}" />
         </DataTemplate>
         <DataTemplate DataType="{x:Type local:TimeAgoProfileFilterSettingsViewModel}">
             <local:TimeAgoProfileFilterView DataContext="{Binding .}" />

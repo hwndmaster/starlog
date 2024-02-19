@@ -17,6 +17,7 @@ public interface ILogFilterContainer
     TLogProfileFilter CreateProfileFilter<TLogProfileFilter>(string name, Guid predefinedId)
         where TLogProfileFilter : ProfileFilterBase;
 
+    LogFilter GetLogFilter(Guid logFilterId);
     IEnumerable<LogFilter> GetLogFilters();
     IFilterProcessor GetFilterProcessor(ProfileFilterBase profileFilter);
     void RegisterLogFilter<TProfileFilter, TFilterProcessor>(LogFilter logFilter)
@@ -50,6 +51,11 @@ internal sealed class LogFilterContainer : ILogFilterContainer
     public ProfileFilterBase CreateProfileFilter(LogFilter logFilter)
     {
         return CreateProfileFilterInternal(logFilter, null);
+    }
+
+    public LogFilter GetLogFilter(Guid logFilterId)
+    {
+        return _registeredFilters[logFilterId].LogFilter;
     }
 
     public IEnumerable<LogFilter> GetLogFilters()

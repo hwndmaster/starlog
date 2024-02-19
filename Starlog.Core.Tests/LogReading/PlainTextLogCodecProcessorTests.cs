@@ -24,6 +24,7 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
+        var fields = new LogFieldsContainer();
         var fileRecord = new FileRecord(_fixture.Create<string>(), 0);
         using var stream = new MemoryStream(Encoding.Default.GetBytes(
             """
@@ -38,29 +39,28 @@ public sealed class PlainTextLogCodecProcessorTests
             """));
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: true));
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: true), fields);
 
         // Verify
+        Assert.Equal(new [] { (0, "thread"), (1, "logger") },
+            result.UpdatedFields.GetFields().Select(x => (x.FieldId, x.FieldName)));
         Assert.NotNull(result.FileArtifacts);
         Assert.Equal(2, result.FileArtifacts.Artifacts.Length);
         Assert.Equal("FileArtifact 1", result.FileArtifacts.Artifacts[0]);
         Assert.Equal("FileArtifact 2", result.FileArtifacts.Artifacts[1]);
-        Assert.Equal(2, result.Loggers.Count);
-        Assert.Equal("Logger1", result.Loggers.ElementAt(0).Name);
-        Assert.Equal("Logger2", result.Loggers.ElementAt(1).Name);
         Assert.Equal(2, result.LogLevels.Count);
         Assert.Equal("LEVEL1", result.LogLevels.ElementAt(0).Name);
         Assert.Equal("LEVEL2", result.LogLevels.ElementAt(1).Name);
         Assert.Equal(3, result.Records.Length);
-        AssertLogRecord(result.Records[0],
+        AssertLogRecord(result.UpdatedFields, result.Records[0],
             new DateTimeOffset(1900, 1, 1, 10, 11, 12, 444, TimeSpan.Zero),
-            "LEVEL1", "1", "Logger1", "Some test message", null);
-        AssertLogRecord(result.Records[1],
+            "LEVEL1", "Some test message", ["1", "Logger1"], null);
+        AssertLogRecord(result.UpdatedFields, result.Records[1],
             new DateTimeOffset(1900, 1, 1, 10, 11, 12, 555, TimeSpan.Zero),
-            "LEVEL2", "2", "Logger2", "Another test message", "Log artifact");
-        AssertLogRecord(result.Records[2],
+            "LEVEL2", "Another test message", ["2", "Logger2"], "Log artifact");
+        AssertLogRecord(result.UpdatedFields, result.Records[2],
             new DateTimeOffset(1900, 1, 1, 10, 11, 12, 666, TimeSpan.Zero),
-            "LEVEL1", "2", "Logger2", "Yet another test message", "Log artifact 1\r\nLog artifact 2");
+            "LEVEL1", "Yet another test message", ["2", "Logger2"], "Log artifact 1\r\nLog artifact 2");
     }
 
     [Fact]
@@ -68,6 +68,7 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
+        var fields = Mock.Of<ILogFieldsContainer>();
         var fileRecord = new FileRecord(_fixture.Create<string>(), 0);
         using var stream = new MemoryStream(Encoding.Default.GetBytes(
             """
@@ -76,7 +77,7 @@ public sealed class PlainTextLogCodecProcessorTests
         ((PlainTextProfileSettings)profile.Settings).FileArtifactLinesCount = 0;
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: true));
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: true), fields);
 
         // Verify
         Assert.NotNull(result.FileArtifacts);
@@ -88,6 +89,7 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
+        var fields = Mock.Of<ILogFieldsContainer>();
         using var stream = new MemoryStream(Encoding.Default.GetBytes(
             """
             Expected two file artifact lines, but here only single one
@@ -95,7 +97,7 @@ public sealed class PlainTextLogCodecProcessorTests
 
         // Act
         var result = await _sut.ReadAsync(profile, _fixture.Create<FileRecord>(), stream,
-            new LogReadingSettings(ReadSourceArtifacts: true));
+            new LogReadingSettings(ReadSourceArtifacts: true), fields);
 
         // Verify
         Assert.Equal(LogReadingResult.Empty, result);
@@ -106,6 +108,7 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
+        var fields = new LogFieldsContainer();
         var fileRecord = new FileRecord(_fixture.Create<string>(), 0);
         using var stream = new MemoryStream(Encoding.Default.GetBytes(
             """
@@ -113,18 +116,16 @@ public sealed class PlainTextLogCodecProcessorTests
             """));
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: false));
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: false), fields);
 
         // Verify
         Assert.Null(result.FileArtifacts);
-        Assert.Single(result.Loggers);
-        Assert.Equal("Logger1", result.Loggers.ElementAt(0).Name);
         Assert.Single(result.LogLevels);
         Assert.Equal("LEVEL1", result.LogLevels.ElementAt(0).Name);
         Assert.Single(result.Records);
-        AssertLogRecord(result.Records[0],
+        AssertLogRecord(result.UpdatedFields, result.Records[0],
             new DateTimeOffset(1900, 1, 1, 10, 11, 12, 444, TimeSpan.Zero),
-            "LEVEL1", "1", "Logger1", "Some test message", null);
+            "LEVEL1", "Some test message", ["1", "Logger1"], null);
     }
 
     [Fact]
@@ -132,6 +133,7 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
+        var fields = Mock.Of<ILogFieldsContainer>();
         var fileRecord = new FileRecord(_fixture.Create<string>(), 0);
         using var stream = new MemoryStream(Encoding.Default.GetBytes(
             """
@@ -139,7 +141,7 @@ public sealed class PlainTextLogCodecProcessorTests
             """));
 
         // Act
-        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: false));
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: false), fields);
 
         // Verify
         Assert.Equal(LogReadingResult.Empty, result);
@@ -150,23 +152,25 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
+        var fields = Mock.Of<ILogFieldsContainer>();
         using var stream = new MemoryStream(Encoding.Default.GetBytes(_fixture.Create<string>()));
         ((PlainTextProfileSettings)profile.Settings).LinePatternId = Guid.NewGuid();
 
         // Act & Verify
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _sut.ReadAsync(profile, _fixture.Create<FileRecord>(), stream, new LogReadingSettings(ReadSourceArtifacts: false)));
+            _sut.ReadAsync(profile, _fixture.Create<FileRecord>(), stream, new LogReadingSettings(ReadSourceArtifacts: false), fields));
     }
 
     [Fact]
     public async Task ReadAsync_WhenEmptyStream_ReturnsNoResult()
     {
         // Arrange
+        var fields = Mock.Of<ILogFieldsContainer>();
         using var stream = new MemoryStream(Array.Empty<byte>());
 
         // Act
         var result = await _sut.ReadAsync(CreateSampleProfile(), _fixture.Create<FileRecord>(), stream,
-            new LogReadingSettings(ReadSourceArtifacts: false));
+            new LogReadingSettings(ReadSourceArtifacts: false), fields);
 
         // Verify
         Assert.Equal(LogReadingResult.Empty, result);
@@ -250,15 +254,21 @@ public sealed class PlainTextLogCodecProcessorTests
         Assert.False(result);
     }
 
-    private static void AssertLogRecord(LogRecord logRecord, DateTimeOffset dt, string level, string thread,
-        string logger, string msg, string? artifacts)
+    private static void AssertLogRecord(ILogFieldsContainer fields, LogRecord logRecord,
+        DateTimeOffset dt, string level,
+        string msg, string[] fieldValues, string? artifacts)
     {
         Assert.Equal(dt, logRecord.DateTime);
         Assert.Equal(level, logRecord.Level.Name);
-        Assert.Equal(thread, logRecord.Thread);
-        Assert.Equal(logger, logRecord.Logger.Name);
         Assert.Equal(msg, logRecord.Message);
         Assert.Equal(artifacts, logRecord.LogArtifacts);
+
+        Assert.Equal(fieldValues.Length, logRecord.FieldValueIndices.Length);
+        for (var fieldId = 0; fieldId < fieldValues.Length; fieldId++)
+        {
+            var fieldValue = fields.GetFieldValue(fieldId, logRecord.FieldValueIndices[fieldId]);
+            Assert.Equal(fieldValues[fieldId], fieldValue);
+        }
     }
 
     private Profile CreateSampleProfile()

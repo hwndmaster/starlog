@@ -129,7 +129,7 @@ internal sealed partial class ComparisonService : IComparisonService
         return HashCode.Combine(
             fileName,
             logRecord.Level.Id,
-            logRecord.Logger.Id,
+            // TODO: logRecord.Logger.Id,
             messageTrimmed
         );
     }

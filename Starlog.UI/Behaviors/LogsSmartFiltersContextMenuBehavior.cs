@@ -1,6 +1,7 @@
 using System.Windows.Controls;
 using Genius.Atom.UI.Forms.Wpf;
 using Genius.Starlog.Core.LogFiltering;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
@@ -11,19 +12,22 @@ namespace Genius.Starlog.UI.Behaviors;
 
 public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
 {
-    private readonly ILogFilterContainer _logFilterContainer;
+    private record FieldMenuItem(MenuItem MenuItem, int FieldId, string FieldName);
 
+    private readonly ILogFieldsContainerReadonly _fieldsContainer;
     private readonly MenuItem _menuItemCreateFilter;
     private readonly MenuItem _menuItemTimeRange;
-    private readonly MenuItem _menuItemThreads;
-    private readonly MenuItem _menuItemLoggers;
+    private readonly FieldMenuItem[] _menuItemsFields;
     private readonly MenuItem _menuItemLevels;
     private readonly MenuItem _menuItemFiles;
     private readonly MenuItem _menuItemContainsMsg;
 
     public LogsSmartFiltersContextMenuBehavior()
     {
-        _logFilterContainer = App.ServiceProvider.GetRequiredService<ILogFilterContainer>();
+        var logContainer = App.ServiceProvider.GetRequiredService<ILogContainer>();
+        var logFilterContainer = App.ServiceProvider.GetRequiredService<ILogFilterContainer>();
+        _fieldsContainer = logContainer.GetFields();
+
         _menuItemTimeRange = new MenuItem { Header = "Time: In the selected range", Command = new ActionCommand(_ =>
         {
             var vm = (ILogsViewModel)AssociatedObject.DataContext;
@@ -32,42 +36,47 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
             var maxItem = vm.SelectedLogItems.MaxBy(x => x.Record.DateTime).NotNull();
 
             var name = LogFilterHelpers.ProposeNameForTimeRange(minItem.Record.DateTime, maxItem.Record.DateTime);
-            var filter = _logFilterContainer.CreateProfileFilter<TimeRangeProfileFilter>(name);
+            var filter = logFilterContainer.CreateProfileFilter<TimeRangeProfileFilter>(name);
             filter.SetTimeFromToExtended(minItem.Record.DateTime, maxItem.Record.DateTime);
 
             vm.Filtering.ShowFlyoutForAddingNewFilter(filter);
         }) };
-        _menuItemThreads = new MenuItem { Header = "Thread(s): {..., ...}", Command = new ActionCommand(_ =>
+
+        var fieldsContainer = logContainer.GetFields();
+        var fields = fieldsContainer.GetFields();
+        _menuItemsFields = new FieldMenuItem[fields.Length];
+
+        for (var i = 0; i < _menuItemsFields.Length; i++)
         {
-            var vm = (ILogsViewModel)AssociatedObject.DataContext;
-            var threads = vm.SelectedLogItems.Select(x => x.Record.Thread).Distinct().ToArray();
+            var fieldId = i;
+            var name = fields[i].FieldName;
+            name = char.ToUpperInvariant(name[0]) + name[1..];
 
-            var name = LogFilterHelpers.ProposeNameForStringList("Threads", threads, false);
-            var filter = _logFilterContainer.CreateProfileFilter<ThreadsProfileFilter>(name);
-            filter.Exclude = false;
-            filter.Threads = threads;
+            _menuItemsFields[i] = new FieldMenuItem(
+                new MenuItem { Header = "{field_name}: {..., ...}", Command = new ActionCommand(_ =>
+                {
+                    var vm = (ILogsViewModel)AssociatedObject.DataContext;
+                    var fieldValueIds = vm.SelectedLogItems.Select(x => x.Record.FieldValueIndices[fieldId]).Distinct().ToArray();
+                    string[] fieldValues = fieldValueIds.Select(fieldValueId => _fieldsContainer.GetFieldValue(fieldId, fieldValueId)).ToArray();
 
-            vm.Filtering.ShowFlyoutForAddingNewFilter(filter);
-        }) };
-        _menuItemLoggers = new MenuItem { Header = "Logger(s): {..., ...}", Command = new ActionCommand(_ =>
-        {
-            var vm = (ILogsViewModel)AssociatedObject.DataContext;
-            var loggers = vm.SelectedLogItems.Select(x => x.Record.Logger.Name).Distinct().ToArray();
+                    name = LogFilterHelpers.ProposeNameForStringList(name, fieldValues, false);
+                    var filter = logFilterContainer.CreateProfileFilter<FieldProfileFilter>(name);
+                    filter.FieldId = fieldId;
+                    filter.Exclude = false;
+                    filter.Values = fieldValues;
 
-            var name = LogFilterHelpers.ProposeNameForStringList("Loggers", loggers, false);
-            var filter = _logFilterContainer.CreateProfileFilter<LoggersProfileFilter>(name);
-            filter.Exclude = false;
-            filter.LoggerNames = loggers;
-
-            vm.Filtering.ShowFlyoutForAddingNewFilter(filter);
-        }) };
+                    vm.Filtering.ShowFlyoutForAddingNewFilter(filter);
+                }) },
+                fieldId,
+                name);
+        }
         _menuItemLevels = new MenuItem { Header = "Level(s): {..., ...}", Command = new ActionCommand(_ =>
         {
             var vm = (ILogsViewModel)AssociatedObject.DataContext;
             var levels = vm.SelectedLogItems.Select(x => x.Record.Level.Name).Distinct().ToArray();
 
             var name = LogFilterHelpers.ProposeNameForStringList("Levels", levels, false);
-            var filter = _logFilterContainer.CreateProfileFilter<LogLevelsProfileFilter>(name);
+            var filter = logFilterContainer.CreateProfileFilter<LogLevelsProfileFilter>(name);
             filter.Exclude = false;
             filter.LogLevels = levels;
 
@@ -79,7 +88,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
             var files = vm.SelectedLogItems.Select(x => x.Record.Source.DisplayName).Distinct().ToArray();
 
             var name = LogFilterHelpers.ProposeNameForStringList("Files", files, false);
-            var filter = _logFilterContainer.CreateProfileFilter<FilesProfileFilter>(name);
+            var filter = logFilterContainer.CreateProfileFilter<FilesProfileFilter>(name);
             filter.Exclude = false;
             filter.FileNames = files;
 
@@ -92,7 +101,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
             var msg = vm.SelectedLogItems[0].Record.Message;
 
             var name = LogFilterHelpers.LimitNameLength("Contains: '" + msg + "'");
-            var filter = _logFilterContainer.CreateProfileFilter<MessageProfileFilter>(name);
+            var filter = logFilterContainer.CreateProfileFilter<MessageProfileFilter>(name);
             filter.IsRegex = false;
             filter.MatchCasing = false;
             filter.IncludeArtifacts = false;
@@ -104,13 +113,15 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
             Header = "Create filter",
             Items = {
                 _menuItemTimeRange,
-                _menuItemThreads,
-                _menuItemLoggers,
                 _menuItemLevels,
                 _menuItemFiles,
                 _menuItemContainsMsg
             }
         };
+        foreach (var menuItem in _menuItemsFields)
+        {
+            _menuItemCreateFilter.Items.Add(menuItem);
+        }
         _menuItemCreateFilter.SubmenuOpened += OnSubmenuOpened;
     }
 
@@ -143,11 +154,13 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
     {
         var vm = (ILogsViewModel)AssociatedObject.DataContext;
 
-        var threads = string.Join(", ", vm.SelectedLogItems.Select(x => x.Record.Thread).Distinct());
-        _menuItemThreads.Header = LogFilterHelpers.LimitNameLength("Thread(s): " + threads);
+        foreach (var fieldMenuItem in _menuItemsFields)
+        {
+            var fieldValueIds = vm.SelectedLogItems.Select(x => x.Record.FieldValueIndices[fieldMenuItem.FieldId]).Distinct();
+            string fieldValues = string.Join(", ", fieldValueIds.Select(fieldValueId => _fieldsContainer.GetFieldValue(fieldMenuItem.FieldId, fieldValueId)));
 
-        var loggers = string.Join(", ", vm.SelectedLogItems.Select(x => x.Record.Logger.Name).Distinct());
-        _menuItemLoggers.Header = LogFilterHelpers.LimitNameLength("Logger(s): " + loggers);
+            fieldMenuItem.MenuItem.Header = LogFilterHelpers.LimitNameLength(fieldMenuItem.FieldName + "(s): " + fieldValueIds);
+        }
 
         var levels = string.Join(", ", vm.SelectedLogItems.Select(x => x.Record.Level.Name).Distinct());
         _menuItemLevels.Header = LogFilterHelpers.LimitNameLength("Level(s): " + levels);

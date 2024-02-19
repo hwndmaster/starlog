@@ -28,7 +28,7 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         ICurrentProfile currentProfile,
         ILogFilterContainer logFilterContainer,
         IUserInteraction ui,
-        IViewModelFactory vmFactory)
+        IProfileFilterViewModelFactory vmFactory)
     {
         // Dependencies:
         _commandBus = commandBus.NotNull();

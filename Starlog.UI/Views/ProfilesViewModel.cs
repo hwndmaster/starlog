@@ -68,7 +68,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                 {
                     if (dropObj is string[] fileDrop)
                     {
-                        profileLoadingController.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0], viewModelFactory);
+                        profileLoadingController.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0]);
                     }
                 })
         };

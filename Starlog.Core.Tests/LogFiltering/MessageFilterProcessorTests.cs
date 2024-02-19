@@ -7,7 +7,7 @@ namespace Genius.Starlog.Core.Tests.LogFiltering;
 
 public sealed class MessageFilterProcessorTests
 {
-    private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
 
     [Theory]
     [InlineData(false, false, false, "test", "message TeSt with content.", "", true)]

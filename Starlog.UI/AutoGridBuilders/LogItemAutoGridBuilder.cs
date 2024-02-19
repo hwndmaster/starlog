@@ -26,9 +26,8 @@ public sealed class LogItemAutoGridBuilder : IAutoGridBuilder
                         .WithStyle(new StylingRecord(Padding: new Thickness(2))))
                     .AddText(x => x.DateTime, opts => opts.WithDisplayFormat("yyyy-MM-dd HH:mm:ss.fff"))
                     .AddText(x => x.Level)
-                    .AddText(x => x.Thread)
-                    .AddText(x => x.DisplayName, opts => opts.WithVisibility(x => x.IsFileColumnVisible))
-                    .AddText(x => x.Logger, opts => opts.WithToolTipPath(x => x.Logger))
+                    .AddDynamic(x => x.FieldColumns, x => x.FieldEntries)
+                    .AddText(x => x.Source, opts => opts.WithVisibility(x => x.IsFileColumnVisible))
                     .AddText(x => x.Message, opts => opts
                         .WithToolTipPath(x => x.Message)
                         .WithIconSource(new IconSourceRecord<LogItemViewModel>(x => x.ArtifactsIcon))

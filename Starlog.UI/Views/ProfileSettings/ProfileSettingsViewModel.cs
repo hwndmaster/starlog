@@ -30,7 +30,7 @@ public sealed class ProfileSettingsViewModel : ViewModelBase, IProfileSettingsVi
         IEventBus eventBus,
         IProfileSettingsTemplateQueryService templatesQuery,
         ILogCodecContainer logCodecContainer,
-        IViewModelFactory vmFactory,
+        IProfileSettingsViewModelFactory vmFactory,
         IUiDispatcher dispatcher,
         IUserInteraction ui)
     {

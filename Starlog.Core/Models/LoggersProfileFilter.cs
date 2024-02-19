@@ -3,8 +3,9 @@ using System.Text.Json.Serialization;
 namespace Genius.Starlog.Core.Models;
 
 /// <summary>
-///   The profile filter settings for the filter which filters out log records with specified logger.
+///   Used for backwards compatibility only
 /// </summary>
+[Obsolete("Used for backwards compatibility only. To be removed in the next major version.")]
 public sealed class LoggersProfileFilter : ProfileFilterBase
 {
     [JsonConstructor]
@@ -19,14 +20,6 @@ public sealed class LoggersProfileFilter : ProfileFilterBase
         Id = predefinedId;
     }
 
-    /// <summary>
-    ///   Indicates whether the selected <see cref="LoggerNames" /> should be included or
-    ///   not when matching a log record.
-    /// </summary>
     public bool Exclude { get; set; }
-
-    /// <summary>
-    ///   A list of logger names to be considered in the filter.
-    /// </summary>
     public string[] LoggerNames { get; set; } = Array.Empty<string>();
 }

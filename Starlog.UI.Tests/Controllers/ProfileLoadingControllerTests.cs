@@ -24,6 +24,7 @@ public sealed class ProfileLoadingControllerTests
     private readonly TestEventBus _eventBus = new();
     private readonly Mock<IMainController> _mainControllerMock = new();
     private readonly Mock<IMainViewModel> _mainViewModelMock = new();
+    private readonly Mock<IProfileSettingsViewModelFactory> _profileSettingsViewModelFactoryMock = new();
     private readonly Mock<ISettingsQueryService> _settingsQueryMock = new();
     private readonly TestLogger<ProfileLoadingController> _logger = new();
 
@@ -39,10 +40,11 @@ public sealed class ProfileLoadingControllerTests
             _currentProfileMock.Object,
             _dialogCoordinatorMock.Object,
             _eventBus,
+            _logger,
             _mainControllerMock.Object,
-            _settingsQueryMock.Object,
             new Lazy<IMainViewModel>(() => _mainViewModelMock.Object),
-            _logger);
+            _settingsQueryMock.Object,
+            _profileSettingsViewModelFactoryMock.Object);
     }
 
     [Fact]

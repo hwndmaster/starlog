@@ -31,15 +31,15 @@ public sealed class AnonymousProfileLoadSettingsViewModelTests
         _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns([logCodec]);
         _logCodecContainerMock.Setup(x => x.CreateProfileSettings(logCodec)).Returns(profileSettings);
 
-        var viewModelFactoryMock = new Mock<IViewModelFactory>();
-        viewModelFactoryMock.Setup(x => x.CreateProfileSettings(profileSettings)).Returns(profileSettingsVm.Object);
+        var vmFactoryMock = new Mock<IProfileSettingsViewModelFactory>();
+        vmFactoryMock.Setup(x => x.CreateProfileSettings(profileSettings)).Returns(profileSettingsVm.Object);
 
         var closeCommand = new ActionCommand(_ => _closedHandled = true);
         var confirmCommand = new ActionCommand<ProfileSettingsBase>(arg => _profileSettingsConfirmed = arg);
 
         _sut = new AnonymousProfileLoadSettingsViewModel(
             _logCodecContainerMock.Object,
-            viewModelFactoryMock.Object,
+            vmFactoryMock.Object,
             _fixture.Create<string>(),
             closeCommand,
             confirmCommand);

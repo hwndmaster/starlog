@@ -6,6 +6,7 @@ using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Views;
+using Genius.Starlog.UI.Views.ProfileSettings;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Extensions.Logging;
 
@@ -33,7 +34,7 @@ public interface IProfileLoadingController
     /// <returns>A task for awaiting the operation completion.</returns>
     Task LoadProfileAsync(Profile profile);
 
-    Task ShowAnonymousProfileLoadSettingsViewAsync(string path, IViewModelFactory viewModelFactory);
+    Task ShowAnonymousProfileLoadSettingsViewAsync(string path);
 }
 
 internal sealed class ProfileLoadingController : IProfileLoadingController
@@ -43,9 +44,10 @@ internal sealed class ProfileLoadingController : IProfileLoadingController
     private readonly IDialogCoordinator _dialogCoordinator;
     private readonly IEventBus _eventBus;
     private readonly IMainController _mainController;
-    private readonly ISettingsQueryService _settingsQuery;
     private readonly Lazy<IMainViewModel> _mainViewModel;
     private readonly ILogger<ProfileLoadingController> _logger;
+    private readonly ISettingsQueryService _settingsQuery;
+    private readonly IProfileSettingsViewModelFactory _profileSettingsViewModelFactory;
 
     private bool _anonymousProfileToBeLoaded;
 
@@ -54,19 +56,21 @@ internal sealed class ProfileLoadingController : IProfileLoadingController
         ICurrentProfile currentProfile,
         IDialogCoordinator dialogCoordinator,
         IEventBus eventBus,
+        ILogger<ProfileLoadingController> logger,
         IMainController mainController,
-        ISettingsQueryService settingsQuery,
         Lazy<IMainViewModel> mainViewModel,
-        ILogger<ProfileLoadingController> logger)
+        ISettingsQueryService settingsQuery,
+        IProfileSettingsViewModelFactory profileSettingsViewModelFactory)
     {
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
         _dialogCoordinator = dialogCoordinator.NotNull();
         _eventBus = eventBus.NotNull();
-        _mainController = mainController.NotNull();
-        _settingsQuery = settingsQuery.NotNull();
-        _mainViewModel = mainViewModel.NotNull();
         _logger = logger.NotNull();
+        _mainController = mainController.NotNull();
+        _mainViewModel = mainViewModel.NotNull();
+        _settingsQuery = settingsQuery.NotNull();
+        _profileSettingsViewModelFactory = profileSettingsViewModelFactory.NotNull();
     }
 
     public async Task AutoLoadProfileAsync()
@@ -131,10 +135,10 @@ internal sealed class ProfileLoadingController : IProfileLoadingController
         .ConfigureAwait(false);
     }
 
-    public async Task ShowAnonymousProfileLoadSettingsViewAsync(string path, IViewModelFactory viewModelFactory)
+    public async Task ShowAnonymousProfileLoadSettingsViewAsync(string path)
     {
         var customDialog = new CustomDialog { Title = "Set up logs" };
-        var viewModel = viewModelFactory.CreateAnonymousProfileLoadSettings(
+        var viewModel = _profileSettingsViewModelFactory.CreateAnonymousProfileLoadSettings(
             path,
             new ActionCommand(async _ => await _dialogCoordinator.HideMetroDialogAsync(_mainViewModel.Value, customDialog)),
             new ActionCommand<ProfileSettingsBase>(LoadProfileSettingsAsync));
