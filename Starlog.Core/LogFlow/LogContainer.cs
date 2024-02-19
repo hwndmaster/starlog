@@ -7,12 +7,11 @@ namespace Genius.Starlog.Core.LogFlow;
 
 internal class LogContainer : ILogContainer, ILogContainerWriter
 {
-    private readonly ReaderWriterLockSlim _lock = new();
+    private readonly ReaderWriterLockSlim _logsAccessingLock = new();
     private readonly ConcurrentDictionary<string, LogSourceBase> _sources = new();
     private readonly List<LogRecord> _logs = new();
-    private readonly ConcurrentDictionary<int, LoggerRecord> _loggers = new();
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
-    private readonly ConcurrentDictionary<string, byte> _logThreads = new();
+    private readonly LogFieldsContainer _fields = new();
 
     private readonly Subject<LogSourceBase> _sourceAdded = new();
     private readonly Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)> _sourceRenamed = new();
@@ -34,104 +33,86 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
         _sourceAdded.OnNext(sourceRecord);
     }
 
-    public void AddLogger(LoggerRecord logger)
-    {
-        _loggers.TryAdd(logger.Id, logger);
-    }
-
     public void AddLogLevel(LogLevelRecord logLevel)
     {
         _logLevels.Add(logLevel);
     }
 
-    public void AddThread(string thread)
-    {
-        _logThreads.TryAdd(thread, 0);
-    }
-
     public void AddLogs(ImmutableArray<LogRecord> logRecords)
     {
-        _lock.EnterWriteLock();
+        _logsAccessingLock.EnterWriteLock();
         _logs.AddRange(logRecords);
-        _lock.ExitWriteLock();
+        _logsAccessingLock.ExitWriteLock();
 
         _logsAdded.OnNext(logRecords);
     }
 
     public ImmutableArray<LogSourceBase> GetSources()
-    {
-        return _sources.Values.ToImmutableArray();
-    }
+        => _sources.Values.ToImmutableArray();
 
     public ImmutableArray<LogRecord> GetLogs()
     {
-        _lock.EnterReadLock();
+        _logsAccessingLock.EnterReadLock();
         var result = _logs.ToImmutableArray();
-        _lock.ExitReadLock();
+        _logsAccessingLock.ExitReadLock();
 
         return result;
     }
 
-    public ImmutableArray<LoggerRecord> GetLoggers()
-    {
-        return _loggers.Values.ToImmutableArray();
-    }
-
+    public ILogFieldsContainerReadonly GetFields()
+        => _fields;
+    public ILogFieldsContainer GetFieldsContainer()
+        => _fields;
     public ImmutableArray<LogLevelRecord> GetLogLevels()
-    {
-        return _logLevels.ToImmutableArray();
-    }
-
-    public ImmutableArray<string> GetThreads()
-    {
-        return _logThreads.Keys.ToImmutableArray();
-    }
-
+        => _logLevels.ToImmutableArray();
     public LogSourceBase? GetSource(string name)
-    {
-        return _sources.TryGetValue(name, out var source) ? source : null;
-    }
+        => _sources.TryGetValue(name, out var source) ? source : null;
 
     public void RemoveSource(string name)
     {
         if (_sources.TryRemove(name, out var record))
         {
-            List<LogRecord> logsRemoved = new();
-            HashSet<int> loggersAffected = new();
-            HashSet<string> logThreadsAffected = new();
+            List<LogRecord> logsRemoved = [];
+            List<HashSet<int>> fieldValuesAffected = [];
 
-            // Step 1: Remove logs
+            while (fieldValuesAffected.Count < _fields.GetFieldCount() + 1)
+                fieldValuesAffected.Add([]);
+
+            // Step 1: Remove logs attached to the removing source
             _logs.RemoveAll(x =>
             {
                 if (x.Source.Name.Equals(record.Name, StringComparison.InvariantCulture))
                 {
                     logsRemoved.Add(x);
-                    loggersAffected.Add(x.Logger.Id);
-                    logThreadsAffected.Add(x.Thread);
+                    for (var i = 0; i < x.FieldValueIndices.Length; i++)
+                        fieldValuesAffected[i].Add(x.FieldValueIndices[i]);
                     return true;
                 }
                 return false;
             });
 
-            // Step 2: Check the validity of the affected sub records
-            var loggersLookup = _logs.ToLookup(x => x.Logger.Id);
-            foreach (var loggerId in loggersAffected)
+            // Step 2: Check field values from remaining log items
+            HashSet<int>[] remainingFieldValues = new HashSet<int>[_fields.GetFieldCount()];
+            for (var i = 0; i < remainingFieldValues.Length; i++)
+                remainingFieldValues[i] = [];
+            for (var logIndex = 0; logIndex < _logs.Count; logIndex++)
+                for (var fieldIndex = 0; fieldIndex < _logs[logIndex].FieldValueIndices.Length; fieldIndex++)
+                    remainingFieldValues[fieldIndex].Add(_logs[logIndex].FieldValueIndices[fieldIndex]);
+
+            // Step 3: Check the validity of the affected sub records
+            for (var fieldId = 0; fieldId < remainingFieldValues.Length; fieldId++)
             {
-                if (!loggersLookup[loggerId].Any())
+                for (var fieldValueIndex = 0; fieldValueIndex < fieldValuesAffected[fieldId].Count; fieldValueIndex++)
                 {
-                    _loggers.TryRemove(loggerId, out var _);
-                }
-            }
-            var threadsLookup = _logs.ToLookup(x => x.Thread);
-            foreach (var thread in logThreadsAffected)
-            {
-                if (!threadsLookup[thread].Any())
-                {
-                    _logThreads.TryRemove(thread, out var _);
+                    var fieldValueId = fieldValuesAffected[fieldId].ElementAt(fieldValueIndex);
+                    if (!remainingFieldValues[fieldId].Contains(fieldValueId))
+                    {
+                        _fields.RemoveFieldValue(fieldId, fieldValueId);
+                    }
                 }
             }
 
-            // Step 3: Raise events
+            // Step 4: Raise events
             _logsRemoved.OnNext(logsRemoved.ToImmutableArray());
             _sourceRemoved.OnNext(record);
         }
@@ -140,7 +121,7 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
     public void RenameSource(string oldName, string newName)
     {
         LogSourceBase newSource;
-        _lock.EnterWriteLock();
+        _logsAccessingLock.EnterWriteLock();
 
         if (!_sources.TryRemove(oldName, out var previousSource))
         {
@@ -162,7 +143,7 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
         }
         finally
         {
-            _lock.ExitWriteLock();
+            _logsAccessingLock.ExitWriteLock();
         }
 
         _sourceRenamed.OnNext((previousSource, newSource));
@@ -170,10 +151,9 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
 
     protected void Clear()
     {
+        _fields.Clear();
         _sources.Clear();
-        _loggers.Clear();
         _logLevels.Clear();
-        _logThreads.Clear();
         _logs.Clear();
     }
 

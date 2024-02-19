@@ -69,9 +69,9 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Pattern)));
         AddValidationRule(new IsRegexValidationRule(nameof(Pattern)), shouldValidatePropertyName: nameof(IsRegex));
         Filters = quickFilterProvider.GetQuickFilters()
-            .Concat(_currentProfile.Profile.Filters)
+            .Concat(_currentProfile.Profile?.Filters ?? [])
             .Select(x => new ReferenceDto(x.Id, x.Name)).ToList();
-        SelectedFilters = new ObservableCollection<ReferenceDto>();
+        SelectedFilters = [];
 
         InitializeProperties(() =>
         {

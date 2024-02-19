@@ -28,7 +28,6 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     private readonly ICommandBus _commandBus;
     private readonly IProfileQueryService _profileQuery;
     private readonly IMainController _controller;
-    private readonly IViewModelFactory _vmFactory;
     private readonly IUserInteraction _ui;
 
     private Profile? _profile;
@@ -39,21 +38,21 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         IMainController controller,
         IProfileLoadingController profileLoadingController,
         IProfileQueryService profileQuery,
-        IViewModelFactory vmFactory,
+        IProfileSettingsViewModelFactory vmFactory,
         IUserInteraction ui)
     {
         Guard.NotNull(profileLoadingController);
+        Guard.NotNull(vmFactory);
 
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _controller = controller.NotNull();
         _profileQuery = profileQuery.NotNull();
-        _vmFactory = vmFactory.NotNull();
         _ui = ui.NotNull();
 
         // Members initialization:
         _profile = profile;
-        ProfileSettings = _vmFactory.CreateProfileSettings(_profile?.Settings);
+        ProfileSettings = vmFactory.CreateProfileSettings(_profile?.Settings);
 
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Name)));
 

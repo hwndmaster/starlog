@@ -98,7 +98,7 @@ public sealed class LogCodecContainerTests
 
     private class DummyLogReadProcessor : ILogCodecProcessor
     {
-        public Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings)
+        public Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings, ILogFieldsContainer fields)
             => throw new NotImplementedException();
 
         public bool ReadFromCommandLineArguments(ProfileSettingsBase profileSettings, string[]? codecSettings)

@@ -4,7 +4,6 @@ using System.Reactive.Linq;
 using System.Windows.Data;
 using System.Windows.Documents;
 using DynamicData;
-using Genius.Atom.UI.Forms.Controls;
 using Genius.Atom.UI.Forms.Controls.AutoGrid;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
@@ -30,6 +29,9 @@ public interface ILogsViewModel : ITabViewModel, IDisposable
 // TODO: Cover with unit tests
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 {
+    public record ColorizeByRecord(string Title, bool ForField, int? FieldId);
+    public record GroupByRecord(string Title, string? PropertyName, bool ForField, int? FieldId);
+
     private readonly ICurrentProfile _currentProfile;
     private readonly ILogContainer _logContainer;
     private readonly ILogRecordMatcher _logRecordMatcher;
@@ -70,6 +72,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         // Members initialization:
         LogItemsView.Source = LogItems;
         LogItemsView.Filter += OnLogItemsViewFilter;
+        ColorizeByOptions.Add(new ColorizeByRecord("Colorize by Level", false, null));
+        ColorizeBy = ColorizeByOptions[0];
+        GroupByOptions.Add(new GroupByRecord("No grouping", null, false, null));
+        GroupByOptions.Add(new GroupByRecord("Group by messages", nameof(ILogItemViewModel.Message), false, null));
+        ResetGrouping();
 
         // Actions:
         ShareCommand = new ActionCommand(async _ =>
@@ -102,9 +109,25 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                 {
                     if (profile is null) return;
 
+                    var fieldsContainer = _logContainer.GetFields();
+                    var fields = fieldsContainer.GetFields();
+                    var fieldNames = fields.Select(x => x.FieldName).ToArray();
+
                     _uiDispatcher.BeginInvoke(() =>
                     {
                         AddLogs(_logContainer.GetLogs());
+                        FieldColumns = new DynamicColumnsViewModel(fieldNames);
+
+                        while (ColorizeByOptions.Count > 1)
+                            ColorizeByOptions.RemoveAt(1);
+                        foreach (var field in fields)
+                            ColorizeByOptions.Add(new ColorizeByRecord("Colorize by " + field.FieldName, true, field.FieldId));
+
+                        while (GroupByOptions.Count > 1)
+                            GroupByOptions.RemoveAt(1);
+                        foreach (var field in fields)
+                            GroupByOptions.Add(new GroupByRecord("Group by " + field.FieldName, nameof(ILogItemViewModel.GroupedFieldValue), true, field.FieldId));
+
                         IsProfileReady = true;
                         _suspendUpdate = false;
                     });
@@ -138,31 +161,26 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                 .Subscribe(_ => RefreshFilteredItems()),
             this.WhenChanged(x => x.ColorizeBy).Subscribe(_ =>
             {
-                var colorizeByThread = ColorizeBy.Equals("T", StringComparison.Ordinal);
                 foreach (var logItem in LogItems)
                 {
-                    logItem.ColorizeByThread = colorizeByThread;
+                    logItem.ColorizeByFieldId = ColorizeBy.ForField ? ColorizeBy.FieldId : null;
+                    logItem.ColorizeByField = ColorizeBy.ForField;
                 }
             }),
             this.WhenChanged(x => x.GroupBy).Subscribe(_ =>
             {
                 LogItemsView.GroupDescriptions.Clear();
 
-                if (string.IsNullOrEmpty(GroupBy))
-                {
+                if (GroupBy.PropertyName is null)
                     return;
+
+                if (GroupBy.ForField) // Group by field
+                {
+                    foreach (var logItemVm in LogItems)
+                        logItemVm.GroupedFieldId = GroupBy.FieldId;
                 }
 
-                var propertyName = GroupBy switch
-                {
-                    "M" => nameof(ILogItemViewModel.Message),
-                    // TODO: Implement fuzzy grouping
-                    "MF" => nameof(ILogItemViewModel.Message),
-                    "L" => nameof(ILogItemViewModel.Logger),
-                    _ => throw new NotSupportedException($"Field ID '{GroupBy}' is unknown.")
-                };
-
-                LogItemsView.GroupDescriptions.Add(new PropertyGroupDescription(propertyName));
+                LogItemsView.GroupDescriptions.Add(new PropertyGroupDescription(GroupBy.PropertyName));
             }),
             SelectedLogItems.WhenCollectionChanged()
                 .Subscribe(_ => SelectedLogItem = SelectedLogItems.FirstOrDefault()),
@@ -173,7 +191,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     public void ResetGrouping()
     {
-        GroupBy = string.Empty;
+        GroupBy = GroupByOptions[0];
     }
 
     public void UnBookmarkAll()
@@ -200,11 +218,29 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
         Search.Reconcile(LogItems.Count, logs);
 
+        var fields = _logContainer.GetFields();
+        var hasFields = fields.GetFieldCount() > 0;
+
         using (var suppressed = LogItems.DelayNotifications())
         {
             foreach (var log in logs.OrderBy(x => x.DateTime))
             {
-                suppressed.Add(new LogItemViewModel(log, _artifactsFormatter));
+                var logItemVm = new LogItemViewModel(_logContainer, log, _artifactsFormatter);
+
+                if (hasFields)
+                {
+                    logItemVm.FieldEntries = new DynamicColumnEntriesViewModel(() =>
+                    {
+                        string[] fieldValues = new string[log.FieldValueIndices.Length];
+                        for (var fieldId = 0; fieldId < log.FieldValueIndices.Length; fieldId++)
+                        {
+                            fieldValues[fieldId] = fields.GetFieldValue(fieldId, log.FieldValueIndices[fieldId]);
+                        }
+                        return fieldValues;
+                    });
+                }
+
+                suppressed.Add(logItemVm);
             }
         }
 
@@ -321,17 +357,21 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     public ILogsSearchViewModel Search { get; }
 
-    public string ColorizeBy
+    public ColorizeByRecord ColorizeBy
     {
-        get => GetOrDefault("L");
+        get => GetOrDefault<ColorizeByRecord>();
         set => RaiseAndSetIfChanged(value);
     }
 
-    public string GroupBy
+    public ObservableCollection<ColorizeByRecord> ColorizeByOptions { get; } = new();
+
+    public GroupByRecord GroupBy
     {
-        get => GetOrDefault(string.Empty);
+        get => GetOrDefault<GroupByRecord>();
         set => RaiseAndSetIfChanged(value);
     }
+
+    public ObservableCollection<GroupByRecord> GroupByOptions { get; } = new();
 
     public IAutoGridBuilder AutoGridBuilder { get; }
 
@@ -387,6 +427,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public bool SearchUseRegex
     {
         get => GetOrDefault<bool>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public DynamicColumnsViewModel? FieldColumns
+    {
+        get => GetOrDefault<DynamicColumnsViewModel?>();
         set => RaiseAndSetIfChanged(value);
     }
 

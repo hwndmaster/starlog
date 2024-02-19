@@ -30,6 +30,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
     private readonly ILogContainer _logContainer;
+    private readonly IProfileFilterViewModelFactory _logFilterViewModelFactory;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IUserInteraction _ui;
     private readonly IViewModelFactory _vmFactory;
@@ -47,6 +48,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
         ILogContainer logContainer,
+        IProfileFilterViewModelFactory logFilterViewModelFactory,
         IQuickFilterProvider quickFilterProvider,
         IUiDispatcher uiDispatcher,
         IUserInteraction ui,
@@ -58,6 +60,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
+        _logFilterViewModelFactory = logFilterViewModelFactory.NotNull();
         _uiDispatcher = uiDispatcher.NotNull();
         _ui = ui.NotNull();
         _vmFactory = vmFactory.NotNull();
@@ -201,7 +204,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         IsAddEditProfileFilterVisible = !IsAddEditProfileFilterVisible;
         if (IsAddEditProfileFilterVisible)
         {
-            EditingProfileFilter = _vmFactory.CreateProfileFilter(profileFilter);
+            EditingProfileFilter = _logFilterViewModelFactory.CreateProfileFilter(profileFilter);
             EditingProfileFilter.CommitFilterCommand
                 .OnOneTimeExecutedBooleanAction()
                 .Subscribe(commandResult => {
@@ -255,7 +258,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
             var vm = new LogFilterViewModel(x, isUserDefined: true);
             vm.ModifyCommand.Executed.Subscribe(_ =>
             {
-                EditingProfileFilter = _vmFactory.CreateProfileFilter(vm.Filter);
+                EditingProfileFilter = _logFilterViewModelFactory.CreateProfileFilter(vm.Filter);
                 EditingProfileFilter?.CommitFilterCommand
                     .OnOneTimeExecutedBooleanAction()
                     .Subscribe(_ =>

@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.Helpers;
@@ -14,6 +15,13 @@ public interface IClipboardHelper
 // TODO: Cover with unit tests
 internal sealed class ClipboardHelper : IClipboardHelper
 {
+    private readonly ILogContainer _logContainer;
+
+    public ClipboardHelper(ILogContainer logContainer)
+    {
+        _logContainer = logContainer.NotNull();
+    }
+
     public string CreateLogMessagesStringForClipboard(IEnumerable<ILogItemViewModel> items)
     {
         return string.Join(Environment.NewLine, items.Select(x => x.Record.Message).Distinct());
@@ -21,6 +29,9 @@ internal sealed class ClipboardHelper : IClipboardHelper
 
     public string CreateLogsStringForClipboard(IEnumerable<ILogItemViewModel> items)
     {
+        var fields = _logContainer.GetFields();
+        var fieldsDict = fields.GetFields().ToDictionary(x => x.FieldId, x => x.FieldName);
+
         var itemGroups = items.GroupBy(x => x.Record.Source.DisplayName, x => x.Record);
         StringBuilder sb = new();
         foreach (var itemGroup in itemGroups)
@@ -46,7 +57,13 @@ internal sealed class ClipboardHelper : IClipboardHelper
                     sb.AppendLine();
                 }
                 var d = item.DateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                sb.AppendLine($"{d}\t\t{item.Level.Name}\t{item.Logger.Name}\tThread {item.Thread}\t{item.Message}");
+                sb.Append($"{d}\t\t{item.Level.Name}");
+                for (var fieldId = 0; fieldId < item.FieldValueIndices.Length; fieldId++)
+                {
+                    var value = fields.GetFieldValue(fieldId, item.FieldValueIndices[fieldId]);
+                    sb.Append($"\t{fieldsDict[fieldId]} {value}");
+                }
+                sb.AppendLine($"\t{item.Message}");
 
                 if (!string.IsNullOrEmpty(item.LogArtifacts))
                 {

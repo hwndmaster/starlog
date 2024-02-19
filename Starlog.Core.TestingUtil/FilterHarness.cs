@@ -7,7 +7,7 @@ namespace Genius.Starlog.Core.TestingUtil;
 
 public sealed class FilterHarness
 {
-    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
     private readonly Mock<ILogFilterContainer> _logFilterContainerMock = new();
 
     private readonly List<(ProfileFilterBase, LogRecord)> _matchingCheckedFor = new();

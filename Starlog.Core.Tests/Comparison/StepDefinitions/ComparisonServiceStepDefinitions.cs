@@ -37,9 +37,10 @@ public sealed class ComparisonServiceStepDefinitions
         var records = table.Rows.Select(row => new LogRecord(
             DateTimeOffset.Parse(row[0]),
             new LogLevelRecord(row[1].GetHashCode(), row[0]),
-            row[2],
+            // TODO: row[2],
             new FileRecord(_fixture.Create<string>() + @"\" + row[3], _fixture.Create<long>()),
-            new LoggerRecord(row[4].GetHashCode(), row[4]),
+            new ImmutableArray<int>(), // TODO: fields go here
+            // TODO: new LoggerRecord(row[4].GetHashCode(), row[4]),
             row[5],
             null)).ToImmutableArray();
 

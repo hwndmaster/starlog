@@ -17,9 +17,8 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
         {
             FilesProfileFilter _ => "LogFile32",
             MessageProfileFilter _ => "Message32",
-            LoggersProfileFilter _ => "Logger32",
+            FieldProfileFilter field => FindBestMatchingIcon(field),
             LogLevelsProfileFilter _ => "LogLevel32",
-            ThreadsProfileFilter _ => "Thread32",
             TimeAgoProfileFilter _ => "MinusOneHour32",
             TimeRangeProfileFilter _ => "TimeRange32",
             _ => "FolderFavs32"
@@ -45,6 +44,21 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
     internal void Reconcile()
     {
         OnPropertyChanged(nameof(Title));
+    }
+
+    private string FindBestMatchingIcon(FieldProfileFilter field)
+    {
+        if (field.Name.StartsWith("logger", StringComparison.InvariantCultureIgnoreCase)
+            || field.Name.StartsWith("component", StringComparison.InvariantCultureIgnoreCase))
+        {
+            return "Logger32";
+        }
+        if (field.Name.StartsWith("thread", StringComparison.InvariantCultureIgnoreCase))
+        {
+            return "Thread32";
+        }
+
+        return "FolderFavs32";
     }
 
     public ProfileFilterBase Filter { get; }

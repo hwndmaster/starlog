@@ -9,51 +9,51 @@ using Genius.Starlog.UI.Helpers;
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
 // TODO: Cover with unit tests
-public sealed class ThreadProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<ThreadsProfileFilter>
+public sealed class FieldProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<FieldProfileFilter>
 {
-    public ThreadProfileFilterSettingsViewModel(ThreadsProfileFilter profileFilter, ILogContainer logContainer)
+    public FieldProfileFilterSettingsViewModel(FieldProfileFilter profileFilter, ILogContainer logContainer)
         : base(profileFilter)
     {
         Guard.NotNull(logContainer);
 
         // Members initialization:
-        Threads = logContainer.GetThreads()
-            .Union(profileFilter.Threads)
+        Values = logContainer.GetFields().GetFieldValues(profileFilter.FieldId)
+            .Union(profileFilter.Values)
             .Order()
             .ToImmutableArray();
-        SelectedThreads = new ObservableCollection<string>(profileFilter.Threads);
+        SelectedValues = new ObservableCollection<string>(profileFilter.Values);
 
         // Subscriptions:
-        SelectedThreads.WhenCollectionChanged()
+        SelectedValues.WhenCollectionChanged()
             .Select(_ => Unit.Default)
             .Merge(this.WhenChanged(x => x.Exclude).Select(_ => Unit.Default))
             .Subscribe(_ =>
             {
-                Name = SelectedThreads.Any()
-                    ? LogFilterHelpers.ProposeNameForStringList("Threads", SelectedThreads, Exclude)
+                Name = SelectedValues.Any()
+                    ? LogFilterHelpers.ProposeNameForStringList(logContainer.GetFields().GetFieldName(profileFilter.FieldId), SelectedValues, Exclude)
                     : profileFilter.LogFilter.Name;
             });
     }
 
     protected override void CommitChangesInternal()
     {
-        _profileFilter.Threads = SelectedThreads.ToArray();
+        _profileFilter.Values = SelectedValues.ToArray();
         _profileFilter.Exclude = Exclude;
     }
 
     protected override void ResetChangesInternal()
     {
-        SelectedThreads.Clear();
-        foreach (var thread in _profileFilter.Threads)
+        SelectedValues.Clear();
+        foreach (var thread in _profileFilter.Values)
         {
-            SelectedThreads.Add(thread);
+            SelectedValues.Add(thread);
         }
 
         Exclude = _profileFilter.Exclude;
     }
 
-    public ImmutableArray<string> Threads { get; }
-    public ObservableCollection<string> SelectedThreads { get; }
+    public ImmutableArray<string> Values { get; }
+    public ObservableCollection<string> SelectedValues { get; }
 
     public bool Exclude
     {

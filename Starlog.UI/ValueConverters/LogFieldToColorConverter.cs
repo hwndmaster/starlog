@@ -6,11 +6,10 @@ using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.ValueConverters;
 
-public sealed class LogThreadToColorConverter : IValueConverter
+public sealed class LogFieldToColorConverter : IValueConverter
 {
     private static readonly Lazy<Color[]> ColorTable = new(() => DefineColors());
-
-    private readonly Dictionary<int, Color> _cachedColors = new();
+    private readonly Dictionary<int, Color> _cachedColors = [];
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -18,15 +17,18 @@ public sealed class LogThreadToColorConverter : IValueConverter
         {
             throw new InvalidOperationException("Expected a view model of LogItemViewModel type.");
         }
+        if (vm.ColorizeByFieldId is null || vm.ColorizeByFieldId.Value >= vm.Record.FieldValueIndices.Length)
+        {
+            throw new InvalidOperationException($"ColorizeByFieldId {vm.ColorizeByFieldId} is out of range (0..{vm.Record.FieldValueIndices.Length - 1}).");
+        }
 
-        var threadHash = vm.Record.Thread.GetHashCode();
-
+        var fieldValueId = vm.Record.FieldValueIndices[vm.ColorizeByFieldId.Value];
         var colorTable = ColorTable.Value;
 
-        if (!_cachedColors.TryGetValue(threadHash, out var color))
+        if (!_cachedColors.TryGetValue(fieldValueId, out var color))
         {
             color = colorTable[_cachedColors.Count % colorTable.Length];
-            _cachedColors.Add(threadHash, color);
+            _cachedColors.Add(fieldValueId, color);
         }
 
         return new SolidColorBrush(color);

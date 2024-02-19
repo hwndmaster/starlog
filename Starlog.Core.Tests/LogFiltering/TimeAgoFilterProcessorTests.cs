@@ -8,7 +8,7 @@ namespace Genius.Starlog.Core.Tests.LogFiltering;
 
 public sealed class TimeAgoFilterProcessorTests
 {
-    private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
     private readonly TestDateTime _dateTime = new();
     private readonly TimeAgoFilterProcessor _sut;
 

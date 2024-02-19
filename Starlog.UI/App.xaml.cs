@@ -14,6 +14,7 @@ using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using Genius.Starlog.UI.Views.Comparison;
 using Genius.Starlog.UI.Views.LogSearchAndFiltering;
+using Genius.Starlog.UI.Views.ProfileFilters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -100,6 +101,7 @@ public partial class App : Application
         // Views, View models, View model factories
         services.AddSingleton<MainWindow>();
         services.AddSingleton<IViewModelFactory, ViewModelFactory>();
+        services.AddSingleton<IProfileFilterViewModelFactory, ProfileFilterViewModelFactory>();
         services.AddSingleton<IMainViewModel, MainViewModel>();
         services.AddSingleton<IErrorsViewModel, ErrorsViewModel>();
         services.AddSingleton<IProfilesViewModel, ProfilesViewModel>();

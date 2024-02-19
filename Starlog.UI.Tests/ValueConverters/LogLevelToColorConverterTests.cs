@@ -16,7 +16,7 @@ namespace Genius.Starlog.UI.Tests.ValueConverters;
 public sealed class LogLevelToColorConverterTests
 {
     private static readonly Color _standardColor = Colors.LightGoldenrodYellow;
-    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
 
     public LogLevelToColorConverterTests()
     {

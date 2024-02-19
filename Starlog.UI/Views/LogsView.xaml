@@ -45,21 +45,14 @@
             </Button>
 
             <ComboBox Margin="{StaticResource TopBarMargin}" Grid.Column="1"
-                      SelectedValue="{Binding ColorizeBy}" SelectedValuePath="Tag">
-                <ComboBoxItem Tag="L">Colorize by Level</ComboBoxItem>
-                <ComboBoxItem Tag="T">Colorize by Thread</ComboBoxItem>
-            </ComboBox>
+                      ItemsSource="{Binding ColorizeByOptions}"
+                      DisplayMemberPath="Title"
+                      SelectedValue="{Binding ColorizeBy}" />
 
             <ComboBox Margin="{StaticResource TopBarMargin}" Grid.Column="2"
-                      SelectedValue="{Binding GroupBy}" SelectedValuePath="Tag">
-                <ComboBoxItem Tag="">No grouping</ComboBoxItem>
-                <ComboBoxItem Tag="M">Group by messages</ComboBoxItem>
-                <!--
-                    TODO: To be implemented
-                    <ComboBoxItem Tag="MF">Group by messages (fuzzy)</ComboBoxItem>
-                -->
-                <ComboBoxItem Tag="L">Group by loggers</ComboBoxItem>
-            </ComboBox>
+                      ItemsSource="{Binding GroupByOptions}"
+                      DisplayMemberPath="Title"
+                      SelectedValue="{Binding GroupBy}" />
 
             <mah:ToggleSwitch Grid.Column="3"
                               Margin="{StaticResource TopBarMargin}"

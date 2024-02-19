@@ -25,8 +25,10 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
         Assert.NotNull(result);
         Assert.Equal("12-34-56 11:22:33.444", result.Value.DateTime);
         Assert.Equal("INFO", result.Value.Level);
-        Assert.Equal("888", result.Value.Thread);
-        Assert.Equal("Component1", result.Value.Logger);
+        Assert.Equal("thread", result.Value.Fields[0].FieldName);
+        Assert.Equal("888", result.Value.Fields[0].Value);
+        Assert.Equal("logger", result.Value.Fields[1].FieldName);
+        Assert.Equal("Component1", result.Value.Fields[1].Value);
         Assert.Equal("Some Message with 123 numbers, 50% percents + $[y]mb\\ols!", result.Value.Message);
     }
 

@@ -1,15 +1,13 @@
 using Genius.Starlog.Core.LogFlow;
-using Genius.Starlog.Core.LogReading;
 using Genius.Starlog.Core.Models;
-using Genius.Starlog.UI.Views.ProfileSettings;
 
-namespace Genius.Starlog.UI.Views;
+namespace Genius.Starlog.UI.Views.ProfileSettings;
 
 public sealed class AnonymousProfileLoadSettingsViewModel : ViewModelBase
 {
     public AnonymousProfileLoadSettingsViewModel(
         ILogCodecContainer logCodecContainer,
-        IViewModelFactory vmFactory,
+        IProfileSettingsViewModelFactory vmFactory,
         string path,
         IActionCommand closeCommand,
         IActionCommand<ProfileSettingsBase> confirmCommand)

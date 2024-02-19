@@ -7,7 +7,7 @@ namespace Genius.Starlog.Core.Tests.LogFiltering;
 
 public sealed class LogFilterContainerTests
 {
-    private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
 
     [Fact]
     public void CreateProfileFilter_ForProfileFilterType_CreatesInstance()

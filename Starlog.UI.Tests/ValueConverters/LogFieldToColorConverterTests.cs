@@ -5,16 +5,18 @@ using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.Tests.ValueConverters;
 
-public sealed class LogThreadToColorConverterTests
+public sealed class LogFieldToColorConverterTests
 {
     [Fact]
-    public void Convert_ForSeveralThreads_ReturnsUniqueColors()
+    public void Convert_ForSeveralValues_ReturnsUniqueColors()
     {
         // Arrange
-        var sut = new LogThreadToColorConverter();
+        var sut = new LogFieldToColorConverter();
         var records = Enumerable.Range(1, 25)
-            .Select(x => new LogRecord() with { Thread = x.ToString() });
-        var vms = records.Select(record => Mock.Of<ILogItemViewModel>(x => x.Record == record)).ToList();
+            .Select(x => new LogRecord() with { FieldValueIndices = [x] });
+        var vms = records.Select(record => Mock.Of<ILogItemViewModel>(x =>
+            x.Record == record
+            && x.ColorizeByFieldId == 0)).ToList();
 
         // Act
         var results = vms.Select(vm => sut.Convert(vm, typeof(object), null!, null!));
@@ -26,18 +28,20 @@ public sealed class LogThreadToColorConverterTests
     }
 
     [Fact]
-    public void Convert_ForSameThreads_ReturnsMatchingColors()
+    public void Convert_ForSameValues_ReturnsMatchingColors()
     {
         // Arrange
-        var sut = new LogThreadToColorConverter();
+        var sut = new LogFieldToColorConverter();
         var records = new []
         {
-            new LogRecord() with { Thread = "1" },
-            new LogRecord() with { Thread = "2" },
-            new LogRecord() with { Thread = "2" },
-            new LogRecord() with { Thread = "3" }
+            new LogRecord() with { FieldValueIndices = [1, 1] },
+            new LogRecord() with { FieldValueIndices = [1, 2] },
+            new LogRecord() with { FieldValueIndices = [1, 2] },
+            new LogRecord() with { FieldValueIndices = [1, 3] }
         };
-        var vms = records.Select(record => Mock.Of<ILogItemViewModel>(x => x.Record == record)).ToList();
+        var vms = records.Select(record => Mock.Of<ILogItemViewModel>(x =>
+            x.Record == record
+            && x.ColorizeByFieldId == 1)).ToList();
 
         // Act
         var results = vms.Select(vm => sut.Convert(vm, typeof(object), null!, null!));
@@ -54,7 +58,7 @@ public sealed class LogThreadToColorConverterTests
     public void Convert_WhenViewModelIsOfIncorrectType_ThrowsException()
     {
         // Arrange
-        var sut = new LogThreadToColorConverter();
+        var sut = new LogFieldToColorConverter();
 
         // Act & Verify
         Assert.Throws<InvalidOperationException>(() => sut.Convert(new object(), typeof(object), null!, null!));

@@ -5,5 +5,5 @@ namespace Genius.Starlog.Core.LogReading;
 
 internal interface ILogCodecProcessor : ILogCodecSettingsReader
 {
-    Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings);
+    Task<LogReadingResult> ReadAsync(Profile profile, LogSourceBase source, Stream stream, LogReadingSettings settings, ILogFieldsContainer fields);
 }
