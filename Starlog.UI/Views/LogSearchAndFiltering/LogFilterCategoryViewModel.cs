@@ -38,6 +38,15 @@ public class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase, ILogFi
         CategoryItemsView.View.Refresh();
     }
 
+    internal void RemoveAll()
+    {
+        while (CategoryItems.Count > 0)
+        {
+            CategoryItems.RemoveAt(0);
+        }
+        CategoryItemsView.View.Refresh();
+    }
+
     internal void RemoveItem(TChildViewModel item)
     {
         CategoryItems.Remove(item);

@@ -18,9 +18,9 @@ public interface ILogFilterContainer
         where TLogProfileFilter : ProfileFilterBase;
 
     LogFilter GetLogFilter(Guid logFilterId);
-    IEnumerable<LogFilter> GetLogFilters();
+    IEnumerable<LogFilter> GetLogFilters(bool includingObsolete = false);
     IFilterProcessor GetFilterProcessor(ProfileFilterBase profileFilter);
-    void RegisterLogFilter<TProfileFilter, TFilterProcessor>(LogFilter logFilter)
+    void RegisterLogFilter<TProfileFilter, TFilterProcessor>(LogFilter logFilter, bool isObsolete = false)
         where TProfileFilter : ProfileFilterBase
         where TFilterProcessor : class, IFilterProcessor;
 }
@@ -58,9 +58,11 @@ internal sealed class LogFilterContainer : ILogFilterContainer
         return _registeredFilters[logFilterId].LogFilter;
     }
 
-    public IEnumerable<LogFilter> GetLogFilters()
+    public IEnumerable<LogFilter> GetLogFilters(bool includingObsolete = false)
     {
-        return _registeredFilters.Select(x => x.Value.LogFilter);
+        return _registeredFilters
+            .Where(x => includingObsolete || !x.Value.IsObsolete)
+            .Select(x => x.Value.LogFilter);
     }
 
     public IFilterProcessor GetFilterProcessor(ProfileFilterBase profileFilter)
@@ -73,7 +75,7 @@ internal sealed class LogFilterContainer : ILogFilterContainer
         return _filterProcessors.First(x => x.GetType() == value.FilterProcessorType);
     }
 
-    public void RegisterLogFilter<TProfileFilter, TFilterProcessor>(LogFilter logFilter)
+    public void RegisterLogFilter<TProfileFilter, TFilterProcessor>(LogFilter logFilter, bool isObsolete = false)
         where TProfileFilter : ProfileFilterBase
         where TFilterProcessor : class, IFilterProcessor
     {
@@ -82,7 +84,7 @@ internal sealed class LogFilterContainer : ILogFilterContainer
             throw new InvalidOperationException("The log filter '" + logFilter.Id + "' already exists.");
         }
 
-        _registeredFilters.Add(logFilter.Id, new LogFilterRecord(logFilter, typeof(TProfileFilter), typeof(TFilterProcessor)));
+        _registeredFilters.Add(logFilter.Id, new LogFilterRecord(logFilter, typeof(TProfileFilter), typeof(TFilterProcessor), isObsolete));
     }
 
     private TLogProfileFilter CreateProfileFilterInternal<TLogProfileFilter>(string? name, Guid? predefinedId)
@@ -115,5 +117,5 @@ internal sealed class LogFilterContainer : ILogFilterContainer
         return (ProfileFilterBase)Activator.CreateInstance(value.ProfileFilterType, parameters).NotNull();
     }
 
-    private readonly record struct LogFilterRecord(LogFilter LogFilter, Type ProfileFilterType, Type FilterProcessorType);
+    private readonly record struct LogFilterRecord(LogFilter LogFilter, Type ProfileFilterType, Type FilterProcessorType, bool IsObsolete);
 }

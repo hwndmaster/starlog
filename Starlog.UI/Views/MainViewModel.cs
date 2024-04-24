@@ -54,6 +54,8 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
 
         Errors.WhenChanged(x => x.IsErrorsFlyoutVisible)
             .Subscribe(value => IsErrorsFlyoutVisible = value);
+        Errors.WhenChanged(x => x.HasAnyError)
+            .Subscribe(value => ShowRecentErrorsButton = value);
         this.WhenChanged(x => x.IsErrorsFlyoutVisible)
             .Subscribe(value => Errors.IsErrorsFlyoutVisible = value);
     }
@@ -90,6 +92,12 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
     }
 
     public bool IsErrorsFlyoutVisible
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool ShowRecentErrorsButton
     {
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);

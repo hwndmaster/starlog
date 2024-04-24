@@ -43,7 +43,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         _scheduler = scheduler.NotNull();
     }
 
-    public async Task<ProfileStateBase?> LoadProfileAsync(Profile profile, ILogContainerWriter logContainer)
+    public async Task<ProfileStateBase> LoadProfileAsync(Profile profile, ILogContainerWriter logContainer)
     {
         Guard.NotNull(profile);
         Guard.NotNull(logContainer);
@@ -51,10 +51,10 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         _logger.LogDebug("Loading profile: {profileId}", profile.Id);
 
         if (profile.Settings is not IFileBasedProfileSettings fileBasedProfileSettings)
-            return null;
+            throw new InvalidOperationException("Profile is not file based as expected in this routine");
 
         if (!_fileService.PathExists(fileBasedProfileSettings.Path))
-            return null;
+            throw new InvalidOperationException($"The path '{fileBasedProfileSettings.Path}' couldn't be found.");
 
         var isFileBasedProfile = !_fileService.IsDirectory(fileBasedProfileSettings.Path);
 

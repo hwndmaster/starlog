@@ -21,7 +21,8 @@
             <Button Command="{Binding OpenLogs}"
                     ToolTip="Show recent errors"
                     Width="32"
-                    Height="32">
+                    Height="32"
+                    Visibility="{Binding ShowRecentErrorsButton, Converter={atom:BooleanToVisibilityConverter}}">
                 <Image Source="{StaticResource Warning32}" />
             </Button>
         </mah:WindowCommands>

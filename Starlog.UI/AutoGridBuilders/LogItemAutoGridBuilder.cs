@@ -18,6 +18,7 @@ public sealed class LogItemAutoGridBuilder : IAutoGridBuilder
     public IAutoGridContextBuilder Build()
     {
         return _contextBuilder
+            .WithOptionalGrouping(parentVm => parentVm.DoGrouping, x => x.GroupableField)
             .WithColumns(columns =>
                 columns
                     .AddToggleButton(x => x.IsBookmarked, x => x

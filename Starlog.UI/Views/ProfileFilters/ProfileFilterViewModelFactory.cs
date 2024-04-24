@@ -36,7 +36,7 @@ internal sealed class ProfileFilterViewModelFactory : IProfileFilterViewModelFac
 
     public IProfileFilterViewModel CreateProfileFilter(ProfileFilterBase? profileFilter)
     {
-        return new ProfileFilterViewModel(profileFilter, _commandBus, _currentProfile, _logFilterContainer, _ui, this);
+        return new ProfileFilterViewModel(profileFilter, _commandBus, _currentProfile, _logContainer, _logFilterContainer, _ui, this);
     }
 
     public IProfileFilterSettingsViewModel CreateProfileFilterSettings(LogFilter logFilter, ProfileFilterBase? profileFilter)

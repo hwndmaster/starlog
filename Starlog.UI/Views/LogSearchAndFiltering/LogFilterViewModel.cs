@@ -1,28 +1,31 @@
+using System.Reactive.Linq;
 using System.Windows.Data;
+using Genius.Atom.Infrastructure.Events;
+using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 
 // TODO: Cover with unit tests
-public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
+public sealed class LogFilterViewModel : DisposableViewModelBase, ILogFilterNodeViewModel,
     IHasModifyCommand, IHasDeleteCommand, ISelectable
 {
-    public LogFilterViewModel(ProfileFilterBase profileFilter, bool isUserDefined)
+    public LogFilterViewModel(ProfileFilterBase profileFilter, bool isUserDefined, IEventBus eventBus)
     {
+        Guard.NotNull(eventBus);
+
         // Members initialization:
         Filter = profileFilter.NotNull();
         IsUserDefined = isUserDefined;
+        RefreshIcon();
 
-        Icon = profileFilter switch
-        {
-            FilesProfileFilter _ => "LogFile32",
-            MessageProfileFilter _ => "Message32",
-            FieldProfileFilter field => FindBestMatchingIcon(field),
-            LogLevelsProfileFilter _ => "LogLevel32",
-            TimeAgoProfileFilter _ => "MinusOneHour32",
-            TimeRangeProfileFilter _ => "TimeRange32",
-            _ => "FolderFavs32"
-        };
+        // Subscriptions:
+        Disposer.Add(eventBus.WhenFired<ProfileFilterUpdatedEvent>()
+                .Where(eventArgs => eventArgs.ProfileFilterId == profileFilter.Id)
+                .Subscribe(_ =>
+                {
+                    RefreshIcon();
+                }));
 
         // Actions:
         AddChildCommand = new ActionCommand(_ => throw new NotSupportedException());
@@ -61,9 +64,27 @@ public sealed class LogFilterViewModel : ViewModelBase, ILogFilterNodeViewModel,
         return "FolderFavs32";
     }
 
+    private void RefreshIcon()
+    {
+        Icon = Filter switch
+        {
+            FilesProfileFilter _ => "LogFile32",
+            MessageProfileFilter _ => "Message32",
+            FieldProfileFilter field => FindBestMatchingIcon(field),
+            LogLevelsProfileFilter _ => "LogLevel32",
+            TimeAgoProfileFilter _ => "MinusOneHour32",
+            TimeRangeProfileFilter _ => "TimeRange32",
+            _ => "FolderFavs32"
+        };
+    }
+
     public ProfileFilterBase Filter { get; }
     public string Title => Filter.Name;
-    public string Icon { get; }
+    public string Icon
+    {
+        get => GetOrDefault<string>();
+        set => RaiseAndSetIfChanged(value);
+    }
     public bool IsUserDefined { get; }
     public bool CanAddChildren => false;
     public bool CanModifyOrDelete => IsUserDefined;

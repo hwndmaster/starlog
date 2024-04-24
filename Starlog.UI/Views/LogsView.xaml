@@ -171,44 +171,13 @@
 
             <DataGrid Grid.Row="0" Grid.Column="2"
                     autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
-                    autogrid:Properties.ItemsSource="{Binding LogItemsView.View}"
+                    autogrid:Properties.ItemsSource="{Binding LogItemsView}"
                     IsReadOnly="True"
                     VirtualizingPanel.IsVirtualizing="True"
                     VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                     EnableRowVirtualization="True"
                     EnableColumnVirtualization="False"
                     ScrollViewer.CanContentScroll="True">
-                <DataGrid.GroupStyle>
-                    <GroupStyle>
-                        <!-- <GroupStyle.Panel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel Orientation="Vertical" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Standard"/>
-                            </ItemsPanelTemplate>
-                        </GroupStyle.Panel> -->
-                        <GroupStyle.ContainerStyle>
-                            <Style TargetType="GroupItem">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="{x:Type GroupItem}">
-                                            <Expander IsExpanded="True">
-                                                <Expander.Header>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock FontWeight="Bold" FontSize="16"
-                                                            Text="{Binding Name}" Margin="0,0,0,3"/>
-                                                        <TextBlock Text=" ("/>
-                                                        <TextBlock Text="{Binding Path=ItemCount}"/>
-                                                        <TextBlock Text=")"/>
-                                                    </StackPanel>
-                                                </Expander.Header>
-                                                <ItemsPresenter />
-                                            </Expander>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </GroupStyle.ContainerStyle>
-                    </GroupStyle>
-                </DataGrid.GroupStyle>
                 <i:Interaction.Behaviors>
                     <autogrid:AttachingBehavior />
                     <atom:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />

@@ -5,6 +5,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Atom.Infrastructure.Events;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFiltering;
@@ -29,6 +30,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 {
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
+    private readonly IEventBus _eventBus;
     private readonly ILogContainer _logContainer;
     private readonly IProfileFilterViewModelFactory _logFilterViewModelFactory;
     private readonly IUiDispatcher _uiDispatcher;
@@ -47,6 +49,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
     public LogsFilteringViewModel(
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
+        IEventBus eventBus,
         ILogContainer logContainer,
         IProfileFilterViewModelFactory logFilterViewModelFactory,
         IQuickFilterProvider quickFilterProvider,
@@ -59,6 +62,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
+        _eventBus = eventBus.NotNull();
         _logContainer = logContainer.NotNull();
         _logFilterViewModelFactory = logFilterViewModelFactory.NotNull();
         _uiDispatcher = uiDispatcher.NotNull();
@@ -66,11 +70,6 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         _vmFactory = vmFactory.NotNull();
 
         // Members initialization:
-        _quickFiltersCategory.AddItems(quickFilterProvider.GetQuickFilters()
-            .Select(x => new LogFilterViewModel(x, isUserDefined: false)));
-
-        SubscribeToPinningEvents(_quickFiltersCategory.CategoryItems, () => _filterChanged.OnNext(Unit.Default));
-
         FilterCategories.Add(_sourcesCategory);
         FilterCategories.Add(_quickFiltersCategory);
         FilterCategories.Add(_userFiltersCategory);
@@ -89,6 +88,8 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                         IsAddEditProfileFilterVisible = false;
                         _sourcesCategory.CategoryItems.Clear();
                         _sourcesCategory.CategoryItemsView.View.Refresh();
+                        foreach (var item in _userFiltersCategory.CategoryItems)
+                            item.Dispose();
                         _userFiltersCategory.CategoryItems.Clear();
                         _messageParsingCategory.CategoryItems.Clear();
                     });
@@ -103,6 +104,10 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
                     _uiDispatcher.BeginInvoke(() =>
                     {
+                        _quickFiltersCategory.RemoveAll();
+                        _quickFiltersCategory.AddItems(quickFilterProvider.GetQuickFilters()
+                            .Select(x => new LogFilterViewModel(x, isUserDefined: false, _eventBus)));
+                        SubscribeToPinningEvents(_quickFiltersCategory.CategoryItems, () => _filterChanged.OnNext(Unit.Default));
                         AddSources(_logContainer.GetSources());
                         AddUserFilters(profile.Filters);
                         AddMessageParsings(profile.MessageParsings);
@@ -210,7 +215,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                 .Subscribe(commandResult => {
                     if (!commandResult || EditingProfileFilter.ProfileFilter is null)
                         return;
-                    var vm = AddUserFilters(new [] { EditingProfileFilter.ProfileFilter }).First();
+                    var vm = AddUserFilters([EditingProfileFilter.ProfileFilter]).First();
                     IsAddEditProfileFilterVisible = false;
                     SelectedFilters.Clear();
                     SelectedFilters.Add(vm);
@@ -253,9 +258,9 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
     private IEnumerable<LogFilterViewModel> AddUserFilters(IEnumerable<ProfileFilterBase> userFilters)
     {
-        var vms = userFilters.Select(x =>
+        var vms = userFilters.Select(profileFilter =>
         {
-            var vm = new LogFilterViewModel(x, isUserDefined: true);
+            var vm = new LogFilterViewModel(profileFilter, isUserDefined: true, _eventBus);
             vm.ModifyCommand.Executed.Subscribe(_ =>
             {
                 EditingProfileFilter = _logFilterViewModelFactory.CreateProfileFilter(vm.Filter);
@@ -275,6 +280,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                 if (_ui.AskForConfirmation($"You're about to delete a filter named '{vm.Filter.Name}'. Proceed?", "Deletion confirmation"))
                 {
                     await _commandBus.SendAsync(new ProfileFilterDeleteCommand(_currentProfile.Profile.NotNull().Id, vm.Filter.Id));
+                    vm.Dispose();
                     _userFiltersCategory.RemoveItem(vm);
                 }
             });

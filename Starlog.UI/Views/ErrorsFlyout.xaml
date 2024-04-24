@@ -20,7 +20,7 @@
                             <ScrollViewer.RenderTransform>
                                 <ScaleTransform ScaleY="-1"/>
                             </ScrollViewer.RenderTransform>
-                            <TextBox Text="{TemplateBinding Text}" RenderTransformOrigin="0.5,0.5">
+                            <TextBox Text="{TemplateBinding Text}" RenderTransformOrigin="0.5,0.5" TextWrapping="Wrap">
                                 <TextBox.RenderTransform>
                                     <ScaleTransform ScaleY="-1"/>
                                 </TextBox.RenderTransform>

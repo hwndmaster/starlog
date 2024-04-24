@@ -56,19 +56,19 @@
 
     <ItemGroup>
       <Reference Include="Genius.$(Name)" Condition="'$(ProjectExists)' == 'true'">
-        <HintPath>$(Path)\bin\Debug\net8.0-windows\Genius.$(Name).dll</HintPath>
+        <HintPath>$(Path)\bin\Debug\$(UiTargetFramework)\Genius.$(Name).dll</HintPath>
       </Reference>
       <PackageReference Include="Genius.$(Name)" Condition="'$(ProjectExists)' != 'true'" />
 
       <!-- 3rd-party dependencies from Atom.UI.Forms -->
-      <_AtomUiFormsThirdPartyDependencies Include="$(Path)\bin\Debug\net8.0-windows\*.dll" />
+      <_AtomUiFormsThirdPartyDependencies Include="$(Path)\bin\Debug\$(UiTargetFramework)\*.dll" />
     </ItemGroup>
 
     <Copy SourceFiles="@(_AtomUiFormsThirdPartyDependencies)" DestinationFolder="$(TargetDir)\" />
 
     <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
       <Reference Include="Genius.$(Name).TestingUtil" Condition="'$(ProjectExists)' == 'true'">
-        <HintPath>$(Path).TestingUtil\bin\Debug\net8.0-windows\Genius.$(Name).TestingUtil.dll</HintPath>
+        <HintPath>$(Path).TestingUtil\bin\Debug\$(UiTargetFramework)\Genius.$(Name).TestingUtil.dll</HintPath>
       </Reference>
       <PackageReference Include="Genius.$(Name).TestingUtil" Condition="'$(ProjectExists)' != 'true'" />
     </ItemGroup>

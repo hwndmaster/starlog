@@ -25,8 +25,8 @@ internal sealed class ProfileFilterCreateOrUpdateCommandHandler: ICommandHandler
         var profile = await _profileQuery.FindByIdAsync(command.ProfileId);
         Guard.NotNull(profile);
 
-        List<Guid> filtersAdded = new();
-        List<Guid> filtersUpdated = new();
+        List<Guid> filtersAdded = [];
+        List<Guid> filtersUpdated = [];
         var filterIndex = profile.Filters.ToList().FindIndex(x => x.Id == command.ProfileFilter.Id);
         if (filterIndex == -1)
         {
@@ -40,6 +40,10 @@ internal sealed class ProfileFilterCreateOrUpdateCommandHandler: ICommandHandler
         }
         await _profileRepo.StoreAsync(profile);
 
+        if (filterIndex != -1)
+        {
+            _eventBus.Publish(new ProfileFilterUpdatedEvent(command.ProfileFilter.Id));
+        }
         _eventBus.Publish(new ProfilesAffectedEvent());
 
         return new ProfileFilterCreateOrUpdateCommandResult(filtersAdded.ToImmutableArray(), filtersUpdated.ToImmutableArray());

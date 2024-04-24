@@ -7,6 +7,7 @@ namespace Genius.Starlog.UI.Views;
 
 public interface IErrorsViewModel : IViewModel
 {
+    bool HasAnyError { get; }
     bool IsErrorsFlyoutVisible { get; set; }
 }
 
@@ -36,11 +37,19 @@ public sealed class ErrorsViewModel : ViewModelBase, IErrorsViewModel
 
                 Errors += (Errors.Length > 0 ? Environment.NewLine : string.Empty) + args.Reason;
             });
+        this.WhenChanged(x => x.Errors)
+            .Subscribe(_ => HasAnyError = !string.IsNullOrEmpty(Errors));
     }
 
     public string Errors
     {
         get => GetOrDefault(string.Empty);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool HasAnyError
+    {
+        get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
 

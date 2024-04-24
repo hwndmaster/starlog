@@ -30,7 +30,7 @@ public interface ILogsViewModel : ITabViewModel, IDisposable
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 {
     public record ColorizeByRecord(string Title, bool ForField, int? FieldId);
-    public record GroupByRecord(string Title, string? PropertyName, bool ForField, int? FieldId);
+    public record GroupByRecord(string Title, LogItemGroupingOptions GroupingOption, int? FieldId);
 
     private readonly ICurrentProfile _currentProfile;
     private readonly ILogContainer _logContainer;
@@ -39,6 +39,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private readonly IMessageParsingHandler _messageParsingHandler;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly CompositeDisposable _subscriptions;
+    private readonly int _predefinedGroupByOptionsCount;
     private LogRecordMatcherContext? _filterContext;
     private bool _suspendUpdate = false;
 
@@ -74,8 +75,10 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         LogItemsView.Filter += OnLogItemsViewFilter;
         ColorizeByOptions.Add(new ColorizeByRecord("Colorize by Level", false, null));
         ColorizeBy = ColorizeByOptions[0];
-        GroupByOptions.Add(new GroupByRecord("No grouping", null, false, null));
-        GroupByOptions.Add(new GroupByRecord("Group by messages", nameof(ILogItemViewModel.Message), false, null));
+        GroupByOptions.Add(new GroupByRecord("No grouping", LogItemGroupingOptions.NoGrouping, null));
+        GroupByOptions.Add(new GroupByRecord("Group by messages", LogItemGroupingOptions.ByMessage, null));
+        GroupByOptions.Add(new GroupByRecord("Group by messages (omit digits)", LogItemGroupingOptions.ByMessageTrimmed, null));
+        _predefinedGroupByOptionsCount = GroupByOptions.Count;
         ResetGrouping();
 
         // Actions:
@@ -123,10 +126,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                         foreach (var field in fields)
                             ColorizeByOptions.Add(new ColorizeByRecord("Colorize by " + field.FieldName, true, field.FieldId));
 
-                        while (GroupByOptions.Count > 1)
-                            GroupByOptions.RemoveAt(1);
+                        ResetGrouping();
+                        while (GroupByOptions.Count > _predefinedGroupByOptionsCount)
+                            GroupByOptions.RemoveAt(_predefinedGroupByOptionsCount);
                         foreach (var field in fields)
-                            GroupByOptions.Add(new GroupByRecord("Group by " + field.FieldName, nameof(ILogItemViewModel.GroupedFieldValue), true, field.FieldId));
+                            GroupByOptions.Add(new GroupByRecord("Group by " + field.FieldName, LogItemGroupingOptions.ByField, field.FieldId));
 
                         IsProfileReady = true;
                         _suspendUpdate = false;
@@ -169,18 +173,28 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             }),
             this.WhenChanged(x => x.GroupBy).Subscribe(_ =>
             {
-                LogItemsView.GroupDescriptions.Clear();
-
-                if (GroupBy.PropertyName is null)
-                    return;
-
-                if (GroupBy.ForField) // Group by field
+                var doGrouping = GroupBy.GroupingOption != LogItemGroupingOptions.NoGrouping;
+                if (doGrouping)
                 {
-                    foreach (var logItemVm in LogItems)
-                        logItemVm.GroupedFieldId = GroupBy.FieldId;
+                    var groups = LogItems.GroupBy(x => x.GetGroupValueId(GroupBy.GroupingOption, GroupBy.FieldId));
+                    foreach (var group in groups)
+                    {
+                        var groupableVm = group.First().CreateGrouping(GroupBy.GroupingOption, GroupBy.FieldId);
+                        foreach (var item in group)
+                        {
+                            item.GroupableField = groupableVm;
+                        }
+                    }
                 }
 
-                LogItemsView.GroupDescriptions.Add(new PropertyGroupDescription(GroupBy.PropertyName));
+                if (DoGrouping == doGrouping)
+                {
+                    OnPropertyChanged(nameof(DoGrouping));
+                }
+                else
+                {
+                    DoGrouping = doGrouping;
+                }
             }),
             SelectedLogItems.WhenCollectionChanged()
                 .Subscribe(_ => SelectedLogItem = SelectedLogItems.FirstOrDefault()),
@@ -364,6 +378,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     }
 
     public ObservableCollection<ColorizeByRecord> ColorizeByOptions { get; } = new();
+
+    public bool DoGrouping
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
 
     public GroupByRecord GroupBy
     {

@@ -111,9 +111,9 @@ public static class Module
 
 #pragma warning disable CS0618 // Type or member is obsolete
         logFilterContainer.RegisterLogFilter<LoggersProfileFilter, ObsoleteFilterProcessor>(
-            new LogFilter(new Guid("ad1398bc-a17e-4584-b7fa-d82fa547b5fe"), string.Empty));
+            new LogFilter(new Guid("ad1398bc-a17e-4584-b7fa-d82fa547b5fe"), string.Empty), isObsolete: true);
         logFilterContainer.RegisterLogFilter<ThreadsProfileFilter, ObsoleteFilterProcessor>(
-            new LogFilter(new Guid("11235ba9-cf84-413c-b094-d2c2c6672f4f"), string.Empty));
+            new LogFilter(new Guid("11235ba9-cf84-413c-b094-d2c2c6672f4f"), string.Empty), isObsolete: true);
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 

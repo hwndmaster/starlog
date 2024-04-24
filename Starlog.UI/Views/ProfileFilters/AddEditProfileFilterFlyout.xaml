@@ -37,7 +37,8 @@
             <ComboBox ItemsSource="{Binding FilterTypes}"
                       SelectedItem="{Binding FilterSettings}"
                       DisplayMemberPath="ProfileFilter.LogFilter.Name"
-                      Validation.ErrorTemplate="{x:Null}">
+                      Validation.ErrorTemplate="{x:Null}"
+                      IsEnabled="{Binding FilterTypeCanBeChanged}">
             </ComboBox>
         </DockPanel>
         <DockPanel>

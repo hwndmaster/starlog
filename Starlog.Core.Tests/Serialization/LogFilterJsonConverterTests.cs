@@ -23,7 +23,7 @@ public sealed class LogFilterJsonConverterTests
     {
         // Arrange
         var value = _fixture.Create<LogFilter>();
-        _logFilterContainerMock.Setup(x => x.GetLogFilters()).Returns(new [] { value });
+        _logFilterContainerMock.Setup(x => x.GetLogFilters(It.IsAny<bool>())).Returns([value]);
         var input = Encoding.Default.GetBytes($"\"{value.Id}\"");
         var reader = new Utf8JsonReader(input, true, new JsonReaderState());
         reader.Read();

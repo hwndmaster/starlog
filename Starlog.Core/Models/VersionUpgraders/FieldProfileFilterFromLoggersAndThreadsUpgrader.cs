@@ -21,7 +21,7 @@ public class FieldProfileFilterFromLoggersAndThreadsUpgrader
 
     public FieldProfileFilter Upgrade(LoggersProfileFilter value)
     {
-        var profileFilter = _filterContainer.CreateProfileFilter<FieldProfileFilter>();
+        var profileFilter = _filterContainer.CreateProfileFilter<FieldProfileFilter>(value.Name);
         profileFilter.FieldId = 1;
         profileFilter.Exclude = value.Exclude;
         profileFilter.Values = value.LoggerNames;
@@ -30,7 +30,7 @@ public class FieldProfileFilterFromLoggersAndThreadsUpgrader
 
     public FieldProfileFilter Upgrade(ThreadsProfileFilter value)
     {
-        var profileFilter = _filterContainer.CreateProfileFilter<FieldProfileFilter>();
+        var profileFilter = _filterContainer.CreateProfileFilter<FieldProfileFilter>(value.Name);
         profileFilter.FieldId = 0;
         profileFilter.Exclude = value.Exclude;
         profileFilter.Values = value.Threads;

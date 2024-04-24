@@ -102,6 +102,7 @@ public partial class App : Application
         services.AddSingleton<MainWindow>();
         services.AddSingleton<IViewModelFactory, ViewModelFactory>();
         services.AddSingleton<IProfileFilterViewModelFactory, ProfileFilterViewModelFactory>();
+        services.AddSingleton<IProfileSettingsViewModelFactory, ProfileSettingsViewModelFactory>();
         services.AddSingleton<IMainViewModel, MainViewModel>();
         services.AddSingleton<IErrorsViewModel, ErrorsViewModel>();
         services.AddSingleton<IProfilesViewModel, ProfilesViewModel>();

@@ -10,6 +10,14 @@
     <Grid>
         <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
             <DockPanel>
+                <Label>Field:</Label>
+                <ListBox ItemsSource="{Binding Fields}"
+                         SelectedItem="{Binding SelectedField}"
+                         DisplayMemberPath="Name"
+                         Validation.ErrorTemplate="{x:Null}"
+                         MaxHeight="100" />
+            </DockPanel>
+            <DockPanel>
                 <Label>Exclude selected:</Label>
                 <CheckBox IsChecked="{Binding Exclude}" Content="If checked on, the selected values will be excluded from the output." />
             </DockPanel>

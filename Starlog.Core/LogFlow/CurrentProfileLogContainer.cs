@@ -35,19 +35,16 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
             return;
         }
 
-        var profileState = await profileLoader.LoadProfileAsync(profile, this).ConfigureAwait(false);
-
-        if (profileState is not null)
+        try
         {
+            var profileState = await profileLoader.LoadProfileAsync(profile, this).ConfigureAwait(false);
             Profile = profile.NotNull();
-
             _profileDisposable = profileLoader.StartProfileMonitoring(profileState, this, _unknownChangesDetected);
-
             _profileChanged.OnNext(Profile);
         }
-        else
+        catch (Exception ex)
         {
-            _eventBus.Publish(new ProfileLoadingErrorEvent(profile, $"Couldn't load profile."));
+            _eventBus.Publish(new ProfileLoadingErrorEvent(profile, $"Couldn't load profile: " + ex.Message));
         }
     }
 

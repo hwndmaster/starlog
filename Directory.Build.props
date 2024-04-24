@@ -16,13 +16,14 @@
 
     <IsTestProject>False</IsTestProject>
     <IsTestProject Condition="$(MSBuildProjectName.EndsWith('.Tests'))">True</IsTestProject>
+    <UiTargetFramework>net8.0-windows10.0.19041</UiTargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.UI')) == false">
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.UI'))">
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

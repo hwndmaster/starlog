@@ -3,6 +3,7 @@ using Genius.Atom.Infrastructure.Commands;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFiltering;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
@@ -26,10 +27,13 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         ProfileFilterBase? profileFilter,
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
+        ILogContainer logContainer,
         ILogFilterContainer logFilterContainer,
         IUserInteraction ui,
         IProfileFilterViewModelFactory vmFactory)
     {
+        Guard.NotNull(logContainer);
+
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
@@ -38,9 +42,14 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
 
         // Members initialization:
         _profileFilter = profileFilter;
+        FilterTypeCanBeChanged = _profileFilter is null;
 
         foreach (var logFilter in _logFilterContainer.GetLogFilters())
         {
+            if (logFilter.Id == FieldProfileFilter.LogFilterId && logContainer.GetFields().GetThreadFieldIfAny() is null)
+            {
+                continue;
+            }
             FilterTypes.Add(vmFactory.CreateProfileFilterSettings(logFilter, _profileFilter));
         }
 
@@ -91,6 +100,8 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
             _profileFilter = _currentProfile.Profile.Filters.First(x => x.Id == commandResult.ProfileFiltersAdded[0]);
         }
 
+        FilterTypeCanBeChanged = false;
+
         return true;
     }
 
@@ -103,6 +114,12 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
     public IProfileFilterSettingsViewModel FilterSettings
     {
         get => GetOrDefault(FilterTypes[0]);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool FilterTypeCanBeChanged
+    {
+        get => GetOrDefault(true);
         set => RaiseAndSetIfChanged(value);
     }
 
