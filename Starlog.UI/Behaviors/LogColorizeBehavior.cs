@@ -23,6 +23,7 @@ public sealed class LogColorizeBehavior : Behavior<DataGrid>
 
     protected override void OnDetaching()
     {
+        AssociatedObject.Columns.CollectionChanged -= OnColumnsCollectionChanged;
 
         base.OnDetaching();
     }
@@ -41,18 +42,20 @@ public sealed class LogColorizeBehavior : Behavior<DataGrid>
         };
         var trigger1 = CreateDummyTrigger(false, bindingForLogLevel);
 
-        var bindingForLogThread = new Binding(".")
+        var bindingForField = new MultiBinding()
         {
             Converter = _logFieldToColorConverter
         };
-        var trigger2 = CreateDummyTrigger(true, bindingForLogThread);
+        bindingForField.Bindings.Add(new Binding("."));
+        bindingForField.Bindings.Add(new Binding(nameof(ILogItemViewModel.ColorizeByFieldId)));
+        var trigger2 = CreateDummyTrigger(true, bindingForField);
 
         var cellStyle = new Style(column.CellStyle.TargetType, column.CellStyle);
         cellStyle.Triggers.Add(trigger1);
         cellStyle.Triggers.Add(trigger2);
         column.CellStyle = cellStyle;
 
-        static DataTrigger CreateDummyTrigger(bool forValue, Binding binding)
+        static DataTrigger CreateDummyTrigger(bool forValue, BindingBase binding)
         {
             var trigger = new DataTrigger()
             {

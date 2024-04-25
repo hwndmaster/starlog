@@ -19,7 +19,7 @@ public sealed class LogFieldToColorConverterTests
             && x.ColorizeByFieldId == 0)).ToList();
 
         // Act
-        var results = vms.Select(vm => sut.Convert(vm, typeof(object), null!, null!));
+        var results = vms.Select(vm => sut.Convert([vm], typeof(object), null!, null!));
 
         // Verify
         var distinctColors = results.Cast<SolidColorBrush>().Select(x => x.Color.ToString()).Distinct();
@@ -44,7 +44,7 @@ public sealed class LogFieldToColorConverterTests
             && x.ColorizeByFieldId == 1)).ToList();
 
         // Act
-        var results = vms.Select(vm => sut.Convert(vm, typeof(object), null!, null!));
+        var results = vms.Select(vm => sut.Convert([vm], typeof(object), null!, null!));
 
         // Verify
         var castedResults = results.Cast<SolidColorBrush>().ToList();
@@ -61,6 +61,6 @@ public sealed class LogFieldToColorConverterTests
         var sut = new LogFieldToColorConverter();
 
         // Act & Verify
-        Assert.Throws<InvalidOperationException>(() => sut.Convert(new object(), typeof(object), null!, null!));
+        Assert.Throws<InvalidOperationException>(() => sut.Convert([new object()], typeof(object), null!, null!));
     }
 }

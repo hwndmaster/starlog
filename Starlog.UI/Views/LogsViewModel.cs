@@ -121,6 +121,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                         AddLogs(_logContainer.GetLogs());
                         FieldColumns = new DynamicColumnsViewModel(fieldNames);
 
+                        ColorizeBy = ColorizeByOptions[0];
                         while (ColorizeByOptions.Count > 1)
                             ColorizeByOptions.RemoveAt(1);
                         foreach (var field in fields)
@@ -129,8 +130,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                         ResetGrouping();
                         while (GroupByOptions.Count > _predefinedGroupByOptionsCount)
                             GroupByOptions.RemoveAt(_predefinedGroupByOptionsCount);
-                        foreach (var field in fields)
-                            GroupByOptions.Add(new GroupByRecord("Group by " + field.FieldName, LogItemGroupingOptions.ByField, field.FieldId));
+                        foreach (var (fieldId, fieldName) in fields)
+                            GroupByOptions.Add(new GroupByRecord("Group by " + fieldName, LogItemGroupingOptions.ByField, fieldId));
 
                         IsProfileReady = true;
                         _suspendUpdate = false;

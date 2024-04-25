@@ -6,24 +6,22 @@ using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.ValueConverters;
 
-public sealed class LogFieldToColorConverter : IValueConverter
+public sealed class LogFieldToColorConverter : IMultiValueConverter
 {
-    private static readonly Lazy<Color[]> ColorTable = new(() => DefineColors());
+    private static readonly Lazy<Color[]> _colorTable = new(() => DefineColors());
     private readonly Dictionary<int, Color> _cachedColors = [];
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is not ILogItemViewModel vm)
-        {
+        if (values.Length == 0)
+            return null;
+        if (values[0] is not ILogItemViewModel vm)
             throw new InvalidOperationException("Expected a view model of LogItemViewModel type.");
-        }
         if (vm.ColorizeByFieldId is null || vm.ColorizeByFieldId.Value >= vm.Record.FieldValueIndices.Length)
-        {
-            throw new InvalidOperationException($"ColorizeByFieldId {vm.ColorizeByFieldId} is out of range (0..{vm.Record.FieldValueIndices.Length - 1}).");
-        }
+            return null;
 
         var fieldValueId = vm.Record.FieldValueIndices[vm.ColorizeByFieldId.Value];
-        var colorTable = ColorTable.Value;
+        var colorTable = _colorTable.Value;
 
         if (!_cachedColors.TryGetValue(fieldValueId, out var color))
         {
@@ -34,7 +32,7 @@ public sealed class LogFieldToColorConverter : IValueConverter
         return new SolidColorBrush(color);
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
         throw new NotImplementedException("This converter cannot be used in two-way binding.");
     }
