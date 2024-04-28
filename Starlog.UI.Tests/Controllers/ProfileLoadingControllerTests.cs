@@ -8,7 +8,6 @@ using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Controllers;
-using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Extensions.Logging;

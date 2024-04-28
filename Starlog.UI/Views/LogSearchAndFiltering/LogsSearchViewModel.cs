@@ -4,6 +4,7 @@ using System.Reactive.Subjects;
 using System.Text.RegularExpressions;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
+using MahApps.Metro.Controls;
 
 namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 
@@ -16,7 +17,7 @@ public interface ILogsSearchViewModel : IViewModel
 {
     LogRecordSearchContext CreateContext();
     void DropAllSearches();
-    void Reconcile(int existingLogsCount, ICollection<LogRecord> logs);
+    void Reconcile(int existingLogsCount, ICollection<LogRecord> addedLogs);
 
     IObservable<Unit> SearchChanged { get; }
     string Text { get; set; }
@@ -33,7 +34,7 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
     static readonly long OneMinuteTicks = TimeSpan.FromMinutes(1).Ticks;
     static readonly long FiveSecondTicks = TimeSpan.FromSeconds(5).Ticks;
 
-    private readonly ISubject<Unit> _searchChanged = new Subject<Unit>();
+    private readonly Subject<Unit> _searchChanged = new();
 
     public LogsSearchViewModel()
     {
@@ -81,8 +82,8 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
 
         DateTimeOffset? dateFrom = null;
         DateTimeOffset? dateTo = null;
-        if (MinDateTimeTicks != SelectedDateTimeFromTicks
-            || MaxDateTimeTicks != SelectedDateTimeToTicks)
+        if (!MinDateTimeTicks.Equals(SelectedDateTimeFromTicks)
+            || !MaxDateTimeTicks.Equals(SelectedDateTimeToTicks))
         {
             dateFrom = new DateTimeOffset((long)SelectedDateTimeFromTicks, TimeSpan.Zero);
             dateTo = new DateTimeOffset((long)SelectedDateTimeToTicks, TimeSpan.Zero);
@@ -101,10 +102,10 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
 
     public void Reconcile(int existingLogsCount, ICollection<LogRecord> addedLogs)
     {
-        var wasMinTime = MinDateTimeTicks == SelectedDateTimeFromTicks;
-        var wasMaxTime = MaxDateTimeTicks == SelectedDateTimeToTicks;
+        var wasMinTime = MinDateTimeTicks.Equals(SelectedDateTimeFromTicks);
+        var wasMaxTime = MaxDateTimeTicks.Equals(SelectedDateTimeToTicks);
         var wasRange = SelectedDateTimeToTicks - SelectedDateTimeFromTicks;
-        MinDateTimeTicks = Math.Min(MinDateTimeTicks == 0d ? long.MaxValue : MinDateTimeTicks, addedLogs.Min(x => x.DateTime).UtcTicks);
+        MinDateTimeTicks = Math.Min(MinDateTimeTicks.IsZero() ? long.MaxValue : MinDateTimeTicks, addedLogs.Min(x => x.DateTime).UtcTicks);
         MaxDateTimeTicks = Math.Max(MaxDateTimeTicks, addedLogs.Max(x => x.DateTime).UtcTicks);
 
         if (existingLogsCount == 0)

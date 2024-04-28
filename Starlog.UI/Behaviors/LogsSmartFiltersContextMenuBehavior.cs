@@ -12,11 +12,10 @@ namespace Genius.Starlog.UI.Behaviors;
 
 public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
 {
-    private record FieldMenuItem(MenuItem MenuItem, int FieldId, string FieldName);
+    private sealed record FieldMenuItem(MenuItem MenuItem, int FieldId, string FieldName);
 
     private readonly ILogFieldsContainerReadonly _fieldsContainer;
     private readonly MenuItem _menuItemCreateFilter;
-    private readonly MenuItem _menuItemTimeRange;
     private readonly FieldMenuItem[] _menuItemsFields;
     private readonly MenuItem _menuItemLevels;
     private readonly MenuItem _menuItemFiles;
@@ -28,7 +27,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
         var logFilterContainer = App.ServiceProvider.GetRequiredService<ILogFilterContainer>();
         _fieldsContainer = logContainer.GetFields();
 
-        _menuItemTimeRange = new MenuItem { Header = "Time: In the selected range", Command = new ActionCommand(_ =>
+        var menuItemTimeRange = new MenuItem { Header = "Time: In the selected range", Command = new ActionCommand(_ =>
         {
             var vm = (ILogsViewModel)AssociatedObject.DataContext;
 
@@ -112,7 +111,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
         _menuItemCreateFilter = new MenuItem {
             Header = "Create filter",
             Items = {
-                _menuItemTimeRange,
+                menuItemTimeRange,
                 _menuItemLevels,
                 _menuItemFiles,
                 _menuItemContainsMsg
@@ -159,7 +158,7 @@ public sealed class LogsSmartFiltersContextMenuBehavior : Behavior<DataGrid>
             var fieldValueIds = vm.SelectedLogItems.Select(x => x.Record.FieldValueIndices[fieldMenuItem.FieldId]).Distinct();
             string fieldValues = string.Join(", ", fieldValueIds.Select(fieldValueId => _fieldsContainer.GetFieldValue(fieldMenuItem.FieldId, fieldValueId)));
 
-            fieldMenuItem.MenuItem.Header = LogFilterHelpers.LimitNameLength(fieldMenuItem.FieldName + "(s): " + fieldValueIds);
+            fieldMenuItem.MenuItem.Header = LogFilterHelpers.LimitNameLength(fieldMenuItem.FieldName + "(s): " + fieldValues);
         }
 
         var levels = string.Join(", ", vm.SelectedLogItems.Select(x => x.Record.Level.Name).Distinct());

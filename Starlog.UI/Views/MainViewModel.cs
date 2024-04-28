@@ -13,7 +13,7 @@ public interface IMainViewModel : IViewModel
 }
 
 // TODO: Cover with unit tests
-internal sealed class MainViewModel : ViewModelBase, IMainViewModel
+internal sealed class MainViewModel : DisposableViewModelBase, IMainViewModel
 {
     public MainViewModel(
         IProfilesViewModel profiles,
@@ -43,21 +43,25 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
 
         // Subscriptions:
         currentProfile.ProfileClosed.Subscribe(_ =>
-            CurrentProfileName = "N/A");
+            CurrentProfileName = "N/A")
+            .DisposeWith(Disposer);
 
         currentProfile.ProfileChanged.Subscribe(profile =>
         {
             CurrentProfileName = profile is null
                 ? "N/A"
                 : $"{profile.Name} ({profile.Settings.Source})";
-        });
+        }).DisposeWith(Disposer);
 
         Errors.WhenChanged(x => x.IsErrorsFlyoutVisible)
-            .Subscribe(value => IsErrorsFlyoutVisible = value);
+            .Subscribe(value => IsErrorsFlyoutVisible = value)
+            .DisposeWith(Disposer);
         Errors.WhenChanged(x => x.HasAnyError)
-            .Subscribe(value => ShowRecentErrorsButton = value);
+            .Subscribe(value => ShowRecentErrorsButton = value)
+            .DisposeWith(Disposer);
         this.WhenChanged(x => x.IsErrorsFlyoutVisible)
-            .Subscribe(value => Errors.IsErrorsFlyoutVisible = value);
+            .Subscribe(value => Errors.IsErrorsFlyoutVisible = value)
+            .DisposeWith(Disposer);
     }
 
     public ImmutableArray<ITabViewModel> Tabs { get; }

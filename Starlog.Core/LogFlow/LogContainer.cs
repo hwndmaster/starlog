@@ -2,15 +2,16 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Genius.Atom.Infrastructure.Threading;
 
 namespace Genius.Starlog.Core.LogFlow;
 
-internal class LogContainer : ILogContainer, ILogContainerWriter
+internal class LogContainer : ILogContainer, ILogContainerWriter, IDisposable
 {
     private readonly ReaderWriterLockSlim _logsAccessingLock = new();
     private readonly ConcurrentDictionary<string, LogSourceBase> _sources = new();
-    private readonly List<LogRecord> _logs = new();
-    private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
+    private readonly List<LogRecord> _logs = [];
+    private readonly ConcurrentBag<LogLevelRecord> _logLevels = [];
     private readonly LogFieldsContainer _fields = new();
 
     private readonly Subject<LogSourceBase> _sourceAdded = new();
@@ -40,9 +41,10 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
 
     public void AddLogs(ImmutableArray<LogRecord> logRecords)
     {
-        _logsAccessingLock.EnterWriteLock();
-        _logs.AddRange(logRecords);
-        _logsAccessingLock.ExitWriteLock();
+        using (_logsAccessingLock.BeginWriteLock())
+        {
+            _logs.AddRange(logRecords);
+        }
 
         _logsAdded.OnNext(logRecords);
     }
@@ -121,32 +123,47 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
     public void RenameSource(string oldName, string newName)
     {
         LogSourceBase newSource;
-        _logsAccessingLock.EnterWriteLock();
+        LogSourceBase? previousSource;
 
-        if (!_sources.TryRemove(oldName, out var previousSource))
+        using (_logsAccessingLock.BeginWriteLock())
         {
-            return;
-        }
-
-        try
-        {
-            newSource = previousSource.WithNewName(newName);
-            _sources.TryAdd(previousSource.Name, newSource);
-
-            for (var i = 0; i < _logs.Count; i++)
+            if (!_sources.TryRemove(oldName, out previousSource))
             {
-                if (_logs[i].Source == previousSource)
+                _logsAccessingLock.ExitWriteLock();
+                return;
+            }
+
+            try
+            {
+                newSource = previousSource.WithNewName(newName);
+                _sources.TryAdd(previousSource.Name, newSource);
+
+                for (var i = 0; i < _logs.Count; i++)
                 {
-                    _logs[i] = _logs[i] with { Source = newSource };
+                    if (_logs[i].Source == previousSource)
+                    {
+                        _logs[i] = _logs[i] with { Source = newSource };
+                    }
                 }
             }
-        }
-        finally
-        {
-            _logsAccessingLock.ExitWriteLock();
+            finally
+            {
+                _logsAccessingLock.ExitWriteLock();
+            }
         }
 
         _sourceRenamed.OnNext((previousSource, newSource));
+    }
+
+    public void Dispose()
+    {
+        _logsAccessingLock.Dispose();
+        _logsAdded.Dispose();
+        _logsRemoved.Dispose();
+        _sourceAdded.Dispose();
+        _sourceRemoved.Dispose();
+        _sourceRenamed.Dispose();
+        _sourcesCountChanged.Dispose();
     }
 
     protected void Clear()

@@ -40,6 +40,22 @@
 
   <Import Project="./Atom.targets"/>
 
+  <ItemGroup Label="Analyzers">
+     <PackageReference Include="IDisposableAnalyzers" PrivateAssets="all"/>
+     <PackageReference Include="DotNetProjectFile.Analyzers" PrivateAssets="all"/>
+     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all"/>
+     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all"/>
+     <PackageReference Include="SonarAnalyzer.CSharp" PrivateAssets="all"/>
+  </ItemGroup>
+
+  <!-- Include global suppression files -->
+  <ItemGroup>
+    <Compile Include="../GlobalSuppressions.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$(IsTestProject)">
+    <Compile Include="../TestsGlobalSuppressions.cs" />
+  </ItemGroup>
+
   <!-- Automated Testing components -->
   <ItemGroup Condition="$(IsTestProject) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
     <Using Include="AutoFixture" />

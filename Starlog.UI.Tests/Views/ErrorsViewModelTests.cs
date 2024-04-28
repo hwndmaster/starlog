@@ -38,7 +38,7 @@ public sealed class ErrorsViewModelTests
     {
         // Arrange
         bool clearHandled = false;
-        _sut.ClearCommand.Executed.Subscribe(_ => clearHandled = true);
+        using var _ = _sut.ClearCommand.Executed.Subscribe(_ => clearHandled = true);
         _profileHarness.CreateProfile(setAsCurrent: true);
 
         // Act

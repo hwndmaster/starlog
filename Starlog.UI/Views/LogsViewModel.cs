@@ -38,7 +38,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private readonly ILogArtifactsFormatter _artifactsFormatter;
     private readonly IMessageParsingHandler _messageParsingHandler;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly CompositeDisposable _subscriptions;
+    private readonly CompositeDisposable _subscriptions = new();
     private readonly int _predefinedGroupByOptionsCount;
     private LogRecordMatcherContext? _filterContext;
     private bool _suspendUpdate = false;
@@ -92,116 +92,120 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             });
 
         // Subscriptions:
-        _subscriptions = new(
-            _currentProfile.ProfileClosed
-                .Subscribe(_ =>
-                {
-                    _suspendUpdate = true;
-                    _uiDispatcher.BeginInvoke(() =>
-                    {
-                        IsProfileReady = false;
-                        IsRefreshVisible = false;
-                        LogItems.Clear();
-                        SelectedLogItems.Clear();
-                        SelectedLogItem = null;
-                        Search.DropAllSearches();
-                    });
-                }),
-            _currentProfile.ProfileChanged
-                .Subscribe(profile =>
-                {
-                    if (profile is null) return;
-
-                    var fieldsContainer = _logContainer.GetFields();
-                    var fields = fieldsContainer.GetFields();
-                    var fieldNames = fields.Select(x => x.FieldName).ToArray();
-
-                    _uiDispatcher.BeginInvoke(() =>
-                    {
-                        AddLogs(_logContainer.GetLogs());
-                        FieldColumns = new DynamicColumnsViewModel(fieldNames);
-
-                        ColorizeBy = ColorizeByOptions[0];
-                        while (ColorizeByOptions.Count > 1)
-                            ColorizeByOptions.RemoveAt(1);
-                        foreach (var field in fields)
-                            ColorizeByOptions.Add(new ColorizeByRecord("Colorize by " + field.FieldName, true, field.FieldId));
-
-                        ResetGrouping();
-                        while (GroupByOptions.Count > _predefinedGroupByOptionsCount)
-                            GroupByOptions.RemoveAt(_predefinedGroupByOptionsCount);
-                        foreach (var (fieldId, fieldName) in fields)
-                            GroupByOptions.Add(new GroupByRecord("Group by " + fieldName, LogItemGroupingOptions.ByField, fieldId));
-
-                        IsProfileReady = true;
-                        _suspendUpdate = false;
-                    });
-                }),
-            _currentProfile.UnknownChangesDetected
-                .Subscribe(_ => IsRefreshVisible = true),
-            _logContainer.LogsAdded
-                .Where(_ => !_suspendUpdate)
-                .Subscribe(x => _uiDispatcher.BeginInvoke(() => AddLogs(x))),
-            _logContainer.LogsRemoved
-                .Where(_ => !_suspendUpdate)
-                .Subscribe(x => _uiDispatcher.BeginInvoke(() => RemoveLogs(x))),
-            _logContainer.SourceRenamed
-                .Subscribe(args =>
-                {
-                    _uiDispatcher.BeginInvoke(() => {
-                        foreach (var logItem in LogItems)
-                        {
-                            if (logItem.Record.Source.DisplayName.Equals(args.OldRecord.DisplayName, StringComparison.Ordinal))
-                            {
-                                logItem.HandleSourceRenamed(args.NewRecord);
-                            }
-                        }});
-                }),
-            _logContainer.SourcesCountChanged
-                .Subscribe(sourcesCount =>
-                {
-                    IsFileColumnVisible = sourcesCount > 1;
-                }),
-            Filtering.FilterChanged.Merge(Search.SearchChanged)
-                .Subscribe(_ => RefreshFilteredItems()),
-            this.WhenChanged(x => x.ColorizeBy).Subscribe(_ =>
+        _currentProfile.ProfileClosed
+            .Subscribe(_ =>
             {
-                foreach (var logItem in LogItems)
+                _suspendUpdate = true;
+                _uiDispatcher.Invoke(() =>
                 {
-                    logItem.ColorizeByFieldId = ColorizeBy.ForField ? ColorizeBy.FieldId : null;
-                    logItem.ColorizeByField = ColorizeBy.ForField;
-                }
-            }),
-            this.WhenChanged(x => x.GroupBy).Subscribe(_ =>
+                    IsProfileReady = false;
+                    IsRefreshVisible = false;
+                    LogItems.Clear();
+                    SelectedLogItems.Clear();
+                    SelectedLogItem = null;
+                    Search.DropAllSearches();
+                });
+            }).DisposeWith(_subscriptions);
+        _currentProfile.ProfileChanged
+            .Subscribe(profile =>
             {
-                var doGrouping = GroupBy.GroupingOption != LogItemGroupingOptions.NoGrouping;
-                if (doGrouping)
+                if (profile is null) return;
+
+                var fieldsContainer = _logContainer.GetFields();
+                var fields = fieldsContainer.GetFields();
+                var fieldNames = fields.Select(x => x.FieldName).ToArray();
+
+                _uiDispatcher.Invoke(() =>
                 {
-                    var groups = LogItems.GroupBy(x => x.GetGroupValueId(GroupBy.GroupingOption, GroupBy.FieldId));
-                    foreach (var group in groups)
+                    AddLogs(_logContainer.GetLogs());
+                    FieldColumns = new DynamicColumnsViewModel(fieldNames);
+
+                    ColorizeBy = ColorizeByOptions[0];
+                    while (ColorizeByOptions.Count > 1)
+                        ColorizeByOptions.RemoveAt(1);
+                    foreach (var field in fields)
+                        ColorizeByOptions.Add(new ColorizeByRecord("Colorize by " + field.FieldName, true, field.FieldId));
+
+                    ResetGrouping();
+                    while (GroupByOptions.Count > _predefinedGroupByOptionsCount)
+                        GroupByOptions.RemoveAt(_predefinedGroupByOptionsCount);
+                    foreach (var (fieldId, fieldName) in fields)
+                        GroupByOptions.Add(new GroupByRecord("Group by " + fieldName, LogItemGroupingOptions.ByField, fieldId));
+
+                    IsProfileReady = true;
+                    _suspendUpdate = false;
+                });
+            }).DisposeWith(_subscriptions);
+        _currentProfile.UnknownChangesDetected
+            .Subscribe(_ => IsRefreshVisible = true)
+            .DisposeWith(_subscriptions);
+        _logContainer.LogsAdded
+            .Where(_ => !_suspendUpdate)
+            .Subscribe(x => _uiDispatcher.Invoke(() => AddLogs(x)))
+            .DisposeWith(_subscriptions);
+        _logContainer.LogsRemoved
+            .Where(_ => !_suspendUpdate)
+            .Subscribe(x => _uiDispatcher.Invoke(() => RemoveLogs(x)))
+            .DisposeWith(_subscriptions);
+        _logContainer.SourceRenamed
+            .Subscribe(args =>
+            {
+                _uiDispatcher.Invoke(() => {
+                    foreach (var logItem in LogItems)
                     {
-                        var groupableVm = group.First().CreateGrouping(GroupBy.GroupingOption, GroupBy.FieldId);
-                        foreach (var item in group)
+                        if (logItem.Record.Source.DisplayName.Equals(args.OldRecord.DisplayName, StringComparison.Ordinal))
                         {
-                            item.GroupableField = groupableVm;
+                            logItem.HandleSourceRenamed(args.NewRecord);
                         }
+                    }});
+            }).DisposeWith(_subscriptions);
+        _logContainer.SourcesCountChanged
+            .Subscribe(sourcesCount =>
+            {
+                IsFileColumnVisible = sourcesCount > 1;
+            }).DisposeWith(_subscriptions);
+        Filtering.FilterChanged.Merge(Search.SearchChanged)
+            .Subscribe(_ => RefreshFilteredItems())
+            .DisposeWith(_subscriptions);
+        this.WhenChanged(x => x.ColorizeBy).Subscribe(_ =>
+        {
+            foreach (var logItem in LogItems)
+            {
+                logItem.ColorizeByFieldId = ColorizeBy.ForField ? ColorizeBy.FieldId : null;
+                logItem.ColorizeByField = ColorizeBy.ForField;
+            }
+        }).DisposeWith(_subscriptions);
+        this.WhenChanged(x => x.GroupBy).Subscribe(_ =>
+        {
+            var doGrouping = GroupBy.GroupingOption != LogItemGroupingOptions.NoGrouping;
+            if (doGrouping)
+            {
+                var groups = LogItems.GroupBy(x => x.GetGroupValueId(GroupBy.GroupingOption, GroupBy.FieldId));
+                foreach (var group in groups)
+                {
+                    var groupableVm = group.First().CreateGrouping(GroupBy.GroupingOption, GroupBy.FieldId);
+                    foreach (var item in group)
+                    {
+                        item.GroupableField = groupableVm;
                     }
                 }
+            }
 
-                if (DoGrouping == doGrouping)
-                {
-                    OnPropertyChanged(nameof(DoGrouping));
-                }
-                else
-                {
-                    DoGrouping = doGrouping;
-                }
-            }),
-            SelectedLogItems.WhenCollectionChanged()
-                .Subscribe(_ => SelectedLogItem = SelectedLogItems.FirstOrDefault()),
-            this.WhenChanged(x => x.SelectedLogItem)
-                .Subscribe(_ => SelectedLogArtifacts = SelectedLogItem?.Artifacts)
-        );
+            if (DoGrouping == doGrouping)
+            {
+                OnPropertyChanged(nameof(DoGrouping));
+            }
+            else
+            {
+                DoGrouping = doGrouping;
+            }
+        }).DisposeWith(_subscriptions);
+        SelectedLogItems.WhenCollectionChanged()
+            .Subscribe(_ => SelectedLogItem = SelectedLogItems.FirstOrDefault())
+            .DisposeWith(_subscriptions);
+        this.WhenChanged(x => x.SelectedLogItem)
+            .Subscribe(_ => SelectedLogArtifacts = SelectedLogItem?.Artifacts)
+            .DisposeWith(_subscriptions);
     }
 
     public void ResetGrouping()
@@ -333,7 +337,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             messageParsingColumnsToSet = new DynamicColumnsViewModel(extractedColumns.Select(x => x.extractedColumn).ToArray());
         }
 
-        _uiDispatcher.BeginInvoke(() =>
+        _uiDispatcher.Invoke(() =>
         {
             if (messageParsingColumnsToSet is not null)
             {

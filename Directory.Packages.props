@@ -44,5 +44,12 @@
     <PackageVersion Include="AutoFixture.AutoMoq" Version="4.18.1" />
     <PackageVersion Include="Moq" Version="4.18.2" />
     <PackageVersion Include="SpecFlow.xUnit" Version="3.9.74" />
+
+    <!-- Code analyzers -->
+    <PackageVersion Include="IDisposableAnalyzers" Version="4.0.7" />
+    <PackageVersion Include="DotNetProjectFile.Analyzers" Version="1.2.1" />
+    <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.9.28" />
+    <PackageVersion Include="Roslynator.Analyzers" Version="4.12.2" />
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="9.24.0.89429" />
   </ItemGroup>
 </Project>

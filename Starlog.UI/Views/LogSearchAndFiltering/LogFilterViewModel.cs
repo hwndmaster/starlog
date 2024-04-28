@@ -20,12 +20,12 @@ public sealed class LogFilterViewModel : DisposableViewModelBase, ILogFilterNode
         RefreshIcon();
 
         // Subscriptions:
-        Disposer.Add(eventBus.WhenFired<ProfileFilterUpdatedEvent>()
-                .Where(eventArgs => eventArgs.ProfileFilterId == profileFilter.Id)
-                .Subscribe(_ =>
-                {
-                    RefreshIcon();
-                }));
+        eventBus.WhenFired<ProfileFilterUpdatedEvent>()
+            .Where(eventArgs => eventArgs.ProfileFilterId == profileFilter.Id)
+            .Subscribe(_ =>
+            {
+                RefreshIcon();
+            }).DisposeWith(Disposer);
 
         // Actions:
         AddChildCommand = new ActionCommand(_ => throw new NotSupportedException());
@@ -102,6 +102,8 @@ public sealed class LogFilterViewModel : DisposableViewModelBase, ILogFilterNode
         get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
+
+    public Disposer DisposerForExternalSubscriptions => base.Disposer;
 
     public CollectionViewSource CategoryItemsView { get; } = new();
 
