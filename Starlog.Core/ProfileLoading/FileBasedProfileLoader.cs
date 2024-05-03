@@ -85,25 +85,26 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
 
         var isFileBasedProfile = !_fileService.IsDirectory(filesBasedProfileState.Settings.Path);
 
+        var disposer = new Disposer();
         var watchPath = isFileBasedProfile ? Path.GetDirectoryName(filesBasedProfileState.Settings.Path).NotNull() : filesBasedProfileState.Settings.Path;
         var watchFilter = isFileBasedProfile ? Path.GetFileName(filesBasedProfileState.Settings.Path) : filesBasedProfileState.Settings.LogsLookupPattern;
         var fileWatcher = _fileSystemWatcherFactory.Create(watchPath, watchFilter, increaseBuffer: true)
             ?? throw new InvalidOperationException("Couldn't run file watcher for the path: " + watchPath);
 
-        fileWatcher.Created.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args));
-        fileWatcher.Changed.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args));
-        fileWatcher.Renamed.Subscribe(args => FileWatcher_Renamed(filesBasedProfileState, logContainer, args));
-        fileWatcher.Deleted.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args));
-        fileWatcher.Error.Subscribe(FileWatcher_Error);
+        disposer.Add(fileWatcher);
 
-        var disposable = new CompositeDisposable
-        {
-            fileWatcher
-        };
+        fileWatcher.Created.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
+        fileWatcher.Changed.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
+        fileWatcher.Renamed.Subscribe(args => FileWatcher_Renamed(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
+        fileWatcher.Deleted.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
+        fileWatcher.Error.Subscribe(FileWatcher_Error).DisposeWith(disposer);
+
         if (!isFileBasedProfile)
         {
-            disposable.Add(_directoryMonitor.StartMonitoring(filesBasedProfileState.Settings.Path, filesBasedProfileState.Settings.LogsLookupPattern));
-            disposable.Add(_directoryMonitor.Pulse.Subscribe(async size => await DirectoryMonitor_Pulse(filesBasedProfileState, size, unknownChangesDetectedSubject).ConfigureAwait(false)));
+            _directoryMonitor.StartMonitoring(filesBasedProfileState.Settings.Path, filesBasedProfileState.Settings.LogsLookupPattern)
+                .DisposeWith(disposer);
+            _directoryMonitor.Pulse.Subscribe(async size => await DirectoryMonitor_Pulse(filesBasedProfileState, size, unknownChangesDetectedSubject).ConfigureAwait(false))
+                .DisposeWith(disposer);
         }
 
         if (!filesBasedProfileState.IsFileBasedProfile)
@@ -111,7 +112,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
             UpdateLastReadSize(filesBasedProfileState);
         }
 
-        return disposable;
+        return disposer;
     }
 
     private async Task<bool> LoadFileAsync(Profile profile, string file, ILogContainerWriter logContainer)
@@ -213,11 +214,11 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
 
         if (e.ChangeType == WatcherChangeTypes.Created)
         {
-            _scheduler.ScheduleAsync(async () => await LoadFileAsync(profileState.Profile, e.FullPath, logContainer));
+            _scheduler.Schedule(async () => await LoadFileAsync(profileState.Profile, e.FullPath, logContainer));
         }
         else if (e.ChangeType == WatcherChangeTypes.Changed)
         {
-            _scheduler.ScheduleAsync(async () =>
+            _scheduler.Schedule(async () =>
             {
                 var source = logContainer.GetSource(e.FullPath);
                 if (source is FileRecord fileRecord)
@@ -230,7 +231,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
                 else
                 {
                     // TODO: Cover with unit tests
-                    _scheduler.ScheduleAsync(async () => await LoadFileAsync(profileState.Profile, e.FullPath, logContainer));
+                    _scheduler.Schedule(async () => await LoadFileAsync(profileState.Profile, e.FullPath, logContainer));
                 }
             });
         }

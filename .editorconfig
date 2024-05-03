@@ -11,6 +11,7 @@ dotnet_diagnostic.CA1001.severity = warning # CA1001: Types that own disposable 
 dotnet_diagnostic.CA2213.severity = warning # CA2213: Disposable fields should be disposed
 dotnet_diagnostic.CA2215.severity = warning # CA2215: Dispose methods should call base class dispose
 dotnet_diagnostic.CS8509.severity = warning # CS8509: The switch expression does not handle all possible values of its input type (it is not exhaustive)
+dotnet_diagnostic.RCS1075.severity = suggestion # Avoid empty catch clause that catches System.Exception
 dotnet_diagnostic.RCS1090.severity = suggestion # RCS1090: Add call to 'ConfigureAwait' (or vice versa)
 
 # CA1001: Subject<T> to ignore

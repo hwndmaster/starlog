@@ -69,11 +69,7 @@
       "label": "test coverage (cleanup)",
       "hide": true,
       "type": "shell",
-      "command": "Remove-Item",
-      "args": [
-        "TestResults",
-        "-recurse"
-      ],
+      "command": "if (Test-Path TestResults) { Remove-Item TestResults -recurse }",
       "presentation": {
         "reveal": "silent"
       },

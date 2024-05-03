@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +31,7 @@ internal sealed class PlainTextLogCodecLineMaskPatternParser : IPlainTextLogCode
     {
         var dateTimePattern = Regex.Replace(dateTimeFormat, @"\w", (Match m) => @"\d")
             .Replace(" ", @"\s");
-        string resultingPattern = string.Empty;
+        StringBuilder resultingPattern = new();
         for (var i = 0; i < pattern.Length; i++)
         {
             if (pattern[i] == '%' && pattern.Length > i + 1 && pattern[i + 1] == '{')
@@ -40,7 +41,7 @@ internal sealed class PlainTextLogCodecLineMaskPatternParser : IPlainTextLogCode
                 {
                     if (pattern[i] is ' ')
                     {
-                        _logger.LogWarning("Mask Pattern contains non closing group: " + pattern);
+                        _logger.LogWarning("Mask Pattern contains non closing group: {Pattern}", pattern);
                         return null;
                     }
                     i++;
@@ -48,46 +49,48 @@ internal sealed class PlainTextLogCodecLineMaskPatternParser : IPlainTextLogCode
 
                 if (i == pattern.Length)
                 {
-                    _logger.LogWarning("Mask Pattern contains non closing group: " + pattern);
+                    _logger.LogWarning("Mask Pattern contains non closing group: {Pattern}", pattern);
                     return null;
                 }
 
                 var groupName = pattern.Substring(indexStart + 2, i - indexStart - 2);
-                resultingPattern += $"(?<{groupName}>";
+                resultingPattern.Append($"(?<{groupName}>");
                 if (groupName is "datetime")
                 {
-                    resultingPattern += dateTimePattern;
+                    resultingPattern.Append(dateTimePattern);
                 }
                 else if (groupName is "message")
                 {
-                    resultingPattern += ".+";
+                    resultingPattern.Append(".+");
                 }
                 else
                 {
-                    resultingPattern += @"\w+";
+                    resultingPattern.Append(@"\w+");
                 }
-                resultingPattern += ")";
+                resultingPattern.Append(")");
             }
             else if (pattern[i] == ' ')
             {
-                resultingPattern += @"\s";
+                resultingPattern.Append(@"\s");
             }
             else
             {
-                resultingPattern += pattern[i];
+                resultingPattern.Append(pattern[i]);
             }
         }
 
+        var resultingPatternString = resultingPattern.ToString();
+
         try
         {
-            new Regex(resultingPattern);
+            var _ = new Regex(resultingPatternString);
         }
         catch (Exception)
         {
-            _logger.LogWarning("Couldn't create regex object for Mask Pattern: " + pattern);
+            _logger.LogWarning("Couldn't create regex object for Mask Pattern: {Pattern}", pattern);
             return null;
         }
 
-        return resultingPattern;
+        return resultingPatternString;
     }
 }

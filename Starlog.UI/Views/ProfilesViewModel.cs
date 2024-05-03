@@ -2,6 +2,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Atom.Infrastructure.Tasks;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
@@ -38,6 +39,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         IMainController controller,
         IProfileLoadingController profileLoadingController,
         IProfileQueryService profileQuery,
+        IUiDispatcher uiDispatcher,
         IViewModelFactory viewModelFactory,
         IUserInteraction ui,
         ProfileAutoGridBuilder autoGridBuilder)
@@ -46,6 +48,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         Guard.NotNull(currentProfile);
         Guard.NotNull(profileLoadingController);
         Guard.NotNull(ui);
+        Guard.NotNull(uiDispatcher);
 
         // Dependencies:
         _comparisonController = comparisonController.NotNull();
@@ -68,7 +71,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                 {
                     if (dropObj is string[] fileDrop)
                     {
-                        profileLoadingController.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0]);
+                        profileLoadingController.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0]).RunAndForget();
                     }
                 })
         };
@@ -94,7 +97,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                 EditingProfile = viewModelFactory.CreateProfile(null);
                 EditingProfile.CommitProfileCommand
                     .OnOneTimeExecutedBooleanAction()
-                    .Subscribe(async _ => {
+                    .SubscribeOnUiThread(async _ => {
                         IsAddEditProfileVisible = false;
                         await ReloadListAsync();
                     })
@@ -141,7 +144,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
             .DisposeWith(_disposables);
 
         // Final preparation:
-        Task.Run(() => ReloadListAsync());
+        uiDispatcher.InvokeAsync(ReloadListAsync).RunAndForget();
     }
 
     public void Dispose()

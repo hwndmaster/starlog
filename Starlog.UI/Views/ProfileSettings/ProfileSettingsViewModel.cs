@@ -1,11 +1,11 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using Genius.Atom.Infrastructure.Events;
+using Genius.Atom.Infrastructure.Tasks;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
-using ReactiveUI;
 
 namespace Genius.Starlog.UI.Views.ProfileSettings;
 
@@ -19,10 +19,9 @@ public interface IProfileSettingsViewModel
 }
 
 // TODO: Cover with unit tests
-public sealed class ProfileSettingsViewModel : ViewModelBase, IProfileSettingsViewModel
+public sealed class ProfileSettingsViewModel : DisposableViewModelBase, IProfileSettingsViewModel
 {
     private readonly IProfileSettingsTemplateQueryService _templatesQuery;
-    private readonly IUiDispatcher _dispatcher;
     private readonly IUserInteraction _ui;
 
     public ProfileSettingsViewModel(
@@ -31,13 +30,14 @@ public sealed class ProfileSettingsViewModel : ViewModelBase, IProfileSettingsVi
         IProfileSettingsTemplateQueryService templatesQuery,
         ILogCodecContainer logCodecContainer,
         IProfileSettingsViewModelFactory vmFactory,
-        IUiDispatcher dispatcher,
+        IUiDispatcher uiDispatcher,
         IUserInteraction ui)
     {
-        // Dependencies:
         Guard.NotNull(logCodecContainer);
+        Guard.NotNull(uiDispatcher);
         Guard.NotNull(vmFactory);
-        _dispatcher = dispatcher.NotNull();
+
+        // Dependencies:
         _templatesQuery = templatesQuery.NotNull();
         _ui = ui.NotNull();
 
@@ -66,12 +66,13 @@ public sealed class ProfileSettingsViewModel : ViewModelBase, IProfileSettingsVi
 
         // Subscriptions:
         eventBus.WhenFired<ProfileSettingsTemplatesAffectedEvent>()
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(async _ => await ReloadTemplatesAsync());
-        Templates.WhenCollectionChanged().Subscribe(_ =>
-            AnyTemplateAvailable = Templates.Any());
+            .SubscribeOnUiThread(uiDispatcher, async _ => await ReloadTemplatesAsync())
+            .DisposeWith(Disposer);
+        Templates.WhenCollectionChanged()
+            .Subscribe(_ => AnyTemplateAvailable = Templates.Any())
+            .DisposeWith(Disposer);
 
-        Task.Run(ReloadTemplatesAsync);
+        uiDispatcher.InvokeAsync(ReloadTemplatesAsync).RunAndForget();
     }
 
     public ProfileSettingsBase? CommitChanges()
@@ -107,11 +108,13 @@ public sealed class ProfileSettingsViewModel : ViewModelBase, IProfileSettingsVi
         ((PlainTextProfileSettingsViewModel)SelectedProfileSettings).Path = path;
     }
 
+    /// <summary>
+    ///   This method must be invoked on Main Thread.
+    /// </summary>
     private async Task ReloadTemplatesAsync()
     {
         var templates = await _templatesQuery.GetAllAsync();
-        await _dispatcher.BeginInvoke(() =>
-            Templates.ReplaceItems(templates.Select(x => new ProfileSettingsTemplateSelectionViewModel(x))));
+        Templates.ReplaceItems(templates.Select(x => new ProfileSettingsTemplateSelectionViewModel(x)));
     }
 
     public void ResetForm()

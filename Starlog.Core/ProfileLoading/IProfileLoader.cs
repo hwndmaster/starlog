@@ -8,5 +8,5 @@ namespace Genius.Starlog.Core.ProfileLoading;
 internal interface IProfileLoader
 {
     Task<ProfileStateBase> LoadProfileAsync(Profile profile, ILogContainerWriter logContainer);
-    IDisposable StartProfileMonitoring(ProfileStateBase profile, ILogContainerWriter logContainer, Subject<Unit> unknownChangesDetectedSubject);
+    IDisposable StartProfileMonitoring(ProfileStateBase profileState, ILogContainerWriter logContainer, Subject<Unit> unknownChangesDetectedSubject);
 }
