@@ -16,7 +16,10 @@ public sealed class PlainTextLogCodecProcessorTests
 
     public PlainTextLogCodecProcessorTests()
     {
-        _sut = new(_settingsQueryMock.Object, new TestLogger<PlainTextLogCodecLineMaskPatternParser>());
+        _sut = new(
+            _settingsQueryMock.Object,
+            new MaskPatternParser(new TestLogger<MaskPatternParser>()),
+            new TestLogger<PlainTextLogCodecLineMaskPatternParser>());
     }
 
     [Fact]

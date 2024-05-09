@@ -3,7 +3,6 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views;
 
-// TODO: Cover with unit tests
 public sealed class PatternValueViewModel : ViewModelBase
 {
     private PatternValue _patternValue;
@@ -22,11 +21,7 @@ public sealed class PatternValueViewModel : ViewModelBase
         IsRegex = Type == PatternType.RegularExpression;
 
         // Subscriptions:
-        this.WhenChanged(x => x.Type)
-            .Subscribe(_ =>
-            {
-                IsRegex = Type == PatternType.RegularExpression;
-            });
+        WhenChangedNoDispose(nameof(Type), () => IsRegex = Type == PatternType.RegularExpression);
     }
 
     public PatternValue Commit()

@@ -6,32 +6,42 @@ using Genius.Atom.Infrastructure.Threading;
 
 namespace Genius.Starlog.Core.LogFlow;
 
-internal class LogContainer : ILogContainer, ILogContainerWriter, IDisposable
+internal class LogContainer : ILogContainerWriter, IDisposable
 {
-    private readonly ReaderWriterLockSlim _logsAccessingLock = new();
+    protected readonly Disposer _disposer = new();
+    private readonly ReaderWriterLockSlim _logsAccessingLock;
     private readonly ConcurrentDictionary<string, LogSourceBase> _sources = new();
     private readonly List<LogRecord> _logs = [];
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = [];
     private readonly LogFieldsContainer _fields = new();
 
-    private readonly Subject<LogSourceBase> _sourceAdded = new();
-    private readonly Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)> _sourceRenamed = new();
-    private readonly Subject<LogSourceBase> _sourceRemoved = new();
-    private readonly Subject<int> _sourcesCountChanged = new();
-    private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
-    private readonly Subject<ImmutableArray<LogRecord>> _logsRemoved = new();
+    private readonly Subject<LogSourceBase> _sourceAdded;
+    private readonly Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)> _sourceRenamed;
+    private readonly Subject<LogSourceBase> _sourceRemoved;
+    private readonly Subject<int> _sourcesCountChanged;
+    private readonly Subject<ImmutableArray<LogRecord>> _logsAdded;
+    private readonly Subject<ImmutableArray<LogRecord>> _logsRemoved;
 
     public LogContainer()
     {
+        _logsAccessingLock = new ReaderWriterLockSlim().DisposeWith(_disposer);
+        _logsAdded = new Subject<ImmutableArray<LogRecord>>().DisposeWith(_disposer);
+        _logsRemoved = new Subject<ImmutableArray<LogRecord>>().DisposeWith(_disposer);
+        _sourceAdded = new Subject<LogSourceBase>().DisposeWith(_disposer);
+        _sourceRemoved = new Subject<LogSourceBase>().DisposeWith(_disposer);
+        _sourceRenamed = new Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)>().DisposeWith(_disposer);
+        _sourcesCountChanged = new Subject<int>().DisposeWith(_disposer);
+
         _sourceAdded
             .Concat(_sourceRemoved)
-            .Subscribe(_ => _sourcesCountChanged.OnNext(SourcesCount));
+            .Subscribe(_ => _sourcesCountChanged.OnNext(SourcesCount))
+            .DisposeWith(_disposer);
     }
 
-    public void AddSource(LogSourceBase sourceRecord)
+    public void AddSource(LogSourceBase source)
     {
-        _sources.TryAdd(sourceRecord.Name, sourceRecord);
-        _sourceAdded.OnNext(sourceRecord);
+        _sources.TryAdd(source.Name, source);
+        _sourceAdded.OnNext(source);
     }
 
     public void AddLogLevel(LogLevelRecord logLevel)
@@ -129,26 +139,18 @@ internal class LogContainer : ILogContainer, ILogContainerWriter, IDisposable
         {
             if (!_sources.TryRemove(oldName, out previousSource))
             {
-                _logsAccessingLock.ExitWriteLock();
                 return;
             }
 
-            try
-            {
-                newSource = previousSource.WithNewName(newName);
-                _sources.TryAdd(previousSource.Name, newSource);
+            newSource = previousSource.WithNewName(newName);
+            _sources.TryAdd(previousSource.Name, newSource);
 
-                for (var i = 0; i < _logs.Count; i++)
-                {
-                    if (_logs[i].Source == previousSource)
-                    {
-                        _logs[i] = _logs[i] with { Source = newSource };
-                    }
-                }
-            }
-            finally
+            for (var i = 0; i < _logs.Count; i++)
             {
-                _logsAccessingLock.ExitWriteLock();
+                if (_logs[i].Source == previousSource)
+                {
+                    _logs[i] = _logs[i] with { Source = newSource };
+                }
             }
         }
 
@@ -157,13 +159,7 @@ internal class LogContainer : ILogContainer, ILogContainerWriter, IDisposable
 
     public void Dispose()
     {
-        _logsAccessingLock.Dispose();
-        _logsAdded.Dispose();
-        _logsRemoved.Dispose();
-        _sourceAdded.Dispose();
-        _sourceRemoved.Dispose();
-        _sourceRenamed.Dispose();
-        _sourcesCountChanged.Dispose();
+        _disposer.Dispose();
     }
 
     protected void Clear()

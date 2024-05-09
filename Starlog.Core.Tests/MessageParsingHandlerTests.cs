@@ -8,7 +8,7 @@ using Genius.Starlog.Core.TestingUtil;
 
 namespace Genius.Starlog.Core.Tests;
 
-public sealed class MessageParsingHandlerTests
+public sealed class MessageParsingHandlerTests : IDisposable
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly TestEventBus _eventBus = new();
@@ -19,7 +19,15 @@ public sealed class MessageParsingHandlerTests
 
     public MessageParsingHandlerTests()
     {
-        _sut = new(_profileHarness.CurrentProfile, _eventBus, _filterHarness.LogFilterContainer, _quickFilterProviderMock.Object);
+        _sut = new(_profileHarness.CurrentProfile, _eventBus,
+            new MaskPatternParser(new TestLogger<MaskPatternParser>()),
+            _filterHarness.LogFilterContainer,
+            _quickFilterProviderMock.Object);
+    }
+
+    public void Dispose()
+    {
+        _sut.Dispose();
     }
 
     [Fact]
@@ -40,7 +48,11 @@ public sealed class MessageParsingHandlerTests
     {
         // Arrange
         var messageParsing = SampleMessageParsingWithMethodRegex();
+
+        // Trigger to cache:
         var columns = _sut.RetrieveColumns(messageParsing);
+        Assert.Equal(new [] { "Lorem", "Ipsum" }, columns);
+
         messageParsing.Pattern = @"(?<Foo>\w+)-(?<Bar>\w+)-(?<Baz>\w+)";
 
         // Pre-check: cache not yet updated before `ProfilesAffectedEvent` is triggered.
@@ -89,7 +101,7 @@ public sealed class MessageParsingHandlerTests
         // Arrange
         var profile = _profileHarness.CreateProfile(setAsCurrent: true);
         var messageParsing = SampleMessageParsingWithMethodRegex();
-        messageParsing.Filters = new [] { profile.Filters[2].Id };
+        messageParsing.Filters = [profile.Filters[2].Id];
         var logRecord = new LogRecord() with { Message = "Foo-Bar" };
         _filterHarness.SetupFilterProcessor(profile.Filters[2], logRecord);
 
@@ -151,6 +163,25 @@ public sealed class MessageParsingHandlerTests
 
         // Verify
         Assert.Equal(new [] { string.Empty, string.Empty }, result);
+    }
+
+    [Fact]
+    public void ParseMessage_GivenMethodMaskPattern_HappyFlowScenario()
+    {
+        // Arrange
+        var messageParsing = new MessageParsing
+        {
+            Name = _fixture.Create<string>(),
+            Method = PatternType.MaskPattern,
+            Pattern = "File %{File} read %{Count} logs"
+        };
+        var logRecord = new LogRecord() with { Message = "File SampleFileName.log read 15 logs" };
+
+        // Act
+        var result = _sut.ParseMessage(messageParsing, logRecord).ToArray();
+
+        // Verify
+        Assert.Equal(new [] { "SampleFileName.log", "15" }, result);
     }
 
     private MessageParsing SampleMessageParsingWithMethodRegex()

@@ -78,6 +78,7 @@ public static class Module
 
         // Other components
         services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();
+        services.AddTransient<IMaskPatternParser, MaskPatternParser>();
         services.AddTransient<IMessageParsingHandler, MessageParsingHandler>();
         services.AddSingleton<IProfileLoaderFactory, ProfileLoaderFactory>();
         services.AddSingleton<IComparisonService, ComparisonService>();

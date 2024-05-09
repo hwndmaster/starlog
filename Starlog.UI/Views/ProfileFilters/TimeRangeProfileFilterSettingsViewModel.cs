@@ -29,8 +29,8 @@ public sealed class TimeRangeProfileFilterSettingsViewModel : ProfileFilterSetti
         ResetChangesInternal();
 
         // Subscriptions:
-        this.WhenAnyChanged(x => x.TimeFrom, x => x.TimeTo)
-            .Subscribe(_ => Name = LogFilterHelpers.ProposeNameForTimeRange(TimeFrom, TimeTo));
+        WhenAnyChangedNoDispose([nameof(TimeFrom), nameof(TimeTo)],
+            () => Name = LogFilterHelpers.ProposeNameForTimeRange(TimeFrom, TimeTo));
     }
 
     protected override void CommitChangesInternal()

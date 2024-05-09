@@ -7,13 +7,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.LogReading;
 
-internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor, ILogCodecSettingsReader
+internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
 {
+    private readonly IMaskPatternParser _maskPatternParser;
     private readonly ISettingsQueryService _settingsQuery;
     private readonly ILogger<PlainTextLogCodecLineMaskPatternParser> _plainTextLogCodecLineMaskPatternParserLogger;
 
-    public PlainTextLogCodecProcessor(ISettingsQueryService settingsQuery, ILogger<PlainTextLogCodecLineMaskPatternParser> plainTextLogCodecLineMaskPatternParserLogger)
+    public PlainTextLogCodecProcessor(ISettingsQueryService settingsQuery, IMaskPatternParser maskPatternParser, ILogger<PlainTextLogCodecLineMaskPatternParser> plainTextLogCodecLineMaskPatternParserLogger)
     {
+        _maskPatternParser = maskPatternParser.NotNull();
         _settingsQuery = settingsQuery.NotNull();
         _plainTextLogCodecLineMaskPatternParserLogger = plainTextLogCodecLineMaskPatternParserLogger.NotNull();
     }
@@ -40,7 +42,7 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor, ILogCodec
         IPlainTextLogCodecLineParser lineParser = patternValue.Type switch
         {
             PatternType.RegularExpression => new PlainTextLogCodecLineRegexParser(patternValue.Pattern),
-            PatternType.MaskPattern => new PlainTextLogCodecLineMaskPatternParser(profileSettings.DateTimeFormat, patternValue.Pattern, _plainTextLogCodecLineMaskPatternParserLogger),
+            PatternType.MaskPattern => new PlainTextLogCodecLineMaskPatternParser(profileSettings.DateTimeFormat, patternValue.Pattern, _maskPatternParser, _plainTextLogCodecLineMaskPatternParserLogger),
             _ => throw new NotSupportedException($"Pattern type '{patternValue.Type}' is not supported.")
         };
 

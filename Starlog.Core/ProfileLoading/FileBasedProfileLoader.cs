@@ -95,7 +95,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
 
         fileWatcher.Created.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
         fileWatcher.Changed.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
-        fileWatcher.Renamed.Subscribe(args => FileWatcher_Renamed(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
+        fileWatcher.Renamed.Subscribe(args => FileWatcher_Renamed(logContainer, args)).DisposeWith(disposer);
         fileWatcher.Deleted.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
         fileWatcher.Error.Subscribe(FileWatcher_Error).DisposeWith(disposer);
 
@@ -242,7 +242,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         }
     }
 
-    private void FileWatcher_Renamed(FilesBasedProfileState profileState, ILogContainerWriter logContainer, RenamedEventArgs e)
+    private void FileWatcher_Renamed(ILogContainerWriter logContainer, RenamedEventArgs e)
     {
         _logger.LogDebug("File {OldFullPath} was renamed to {FullPath}", e.OldFullPath, e.FullPath);
 
