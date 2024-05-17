@@ -29,7 +29,7 @@ public interface ILogsSearchViewModel : IViewModel
 }
 
 // TODO: Cover with unit tests
-public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
+public sealed class LogsSearchViewModel : DisposableViewModelBase, ILogsSearchViewModel
 {
     static readonly long OneMinuteTicks = TimeSpan.FromMinutes(1).Ticks;
     static readonly long FiveSecondTicks = TimeSpan.FromSeconds(5).Ticks;
@@ -60,7 +60,8 @@ public sealed class LogsSearchViewModel : ViewModelBase, ILogsSearchViewModel
         // Subscriptions:
         this.WhenAnyChanged(x => x.Text, x => x.SelectedDateTimeFromTicks, x => x.SelectedDateTimeToTicks)
             .Throttle(TimeSpan.FromMilliseconds(50))
-            .Subscribe(_ => _searchChanged.OnNext(Unit.Default));
+            .Subscribe(_ => _searchChanged.OnNext(Unit.Default))
+            .DisposeWith(Disposer);
     }
 
     public LogRecordSearchContext CreateContext()

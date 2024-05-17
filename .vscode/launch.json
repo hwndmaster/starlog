@@ -34,7 +34,9 @@
       "cwd": "${workspaceFolder}/build/net8.0-windows10.0.19041",
       "console": "internalConsole",
       "stopAtEntry": false,
-      "requireExactSource": false
+      "requireExactSource": false,
+      "enableStepFiltering": false,
+      //"justMyCode": false
     },
     {
       "name": ".NET Core Attach",

@@ -7,12 +7,14 @@ using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
+using Genius.Starlog.UI.Views.LogSearchAndFiltering;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Genius.Starlog.UI.Views;
 
 public interface IViewModelFactory
 {
+    LogFilterMessageParsingViewModel CreateLogFilterMessageParsing(MessageParsing messageParsing, bool isUserDefined);
     IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing);
     IProfileViewModel CreateProfile(Profile? profile);
 }
@@ -23,7 +25,6 @@ internal sealed class ViewModelFactory : IViewModelFactory
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
     private readonly ILogContainer _logContainer;
-    private readonly ILogCodecContainer _logCodecContainer;
     private readonly IMainController _mainController;
     private readonly IMessageParsingHandler _messageParsingHandler;
     private readonly IProfileLoadingController _profileLoadingController;
@@ -36,7 +37,6 @@ internal sealed class ViewModelFactory : IViewModelFactory
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
         ILogContainer logContainer,
-        ILogCodecContainer logCodecContainer,
         IMainController mainController,
         IMessageParsingHandler messageParsingHandler,
         IProfileLoadingController profileLoadingController,
@@ -48,7 +48,6 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
-        _logCodecContainer = logCodecContainer.NotNull();
         _mainController = mainController.NotNull();
         _messageParsingHandler = messageParsingHandler.NotNull();
         _profileLoadingController = profileLoadingController.NotNull();
@@ -56,6 +55,11 @@ internal sealed class ViewModelFactory : IViewModelFactory
         _profileSettingsViewModelFactory = profileSettingsViewModelFactory.NotNull();
         _quickFilterProvider = quickFilterProvider.NotNull();
         _ui = ui.NotNull();
+    }
+
+    public LogFilterMessageParsingViewModel CreateLogFilterMessageParsing(MessageParsing messageParsing, bool isUserDefined)
+    {
+        return new LogFilterMessageParsingViewModel(_commandBus, _currentProfile, _ui, this, messageParsing, isUserDefined);
     }
 
     public IMessageParsingViewModel CreateMessageParsing(MessageParsing? messageParsing)

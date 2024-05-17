@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reactive;
 using System.Windows;
 using System.Windows.Media;
+using Genius.Atom.Infrastructure;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Configuration;
@@ -13,14 +14,21 @@ using Microsoft.Extensions.Options;
 
 namespace Genius.Starlog.UI.Tests.ValueConverters;
 
-public sealed class LogLevelToColorConverterTests
+public sealed class LogLevelToColorConverterTests : IDisposable
 {
     private static readonly Color _standardColor = Colors.LightGoldenrodYellow;
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
+    private readonly Disposer _disposer;
 
     public LogLevelToColorConverterTests()
     {
+        _disposer = new();
         SetupServices();
+    }
+
+    public void Dispose()
+    {
+        _disposer.Dispose();
     }
 
     [StaFact]
@@ -97,8 +105,10 @@ public sealed class LogLevelToColorConverterTests
         services.AddSingleton(optionsMock.Object);
         services.AddSingleton(Mock.Of<ICurrentProfile>(x => x.ProfileClosed == Mock.Of<IObservable<Unit>>()));
 
+        var serviceProvider = services.BuildServiceProvider().DisposeWith(_disposer);
+
 #pragma warning disable CS0618 // Type or member is obsolete
-        App.OverrideServiceProvider(services.BuildServiceProvider());
+        App.OverrideServiceProvider(serviceProvider);
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 }

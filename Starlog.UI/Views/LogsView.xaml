@@ -187,6 +187,7 @@
                     <behaviors:LogsBookmarkableBehavior />
                     <behaviors:LogsLocateRecordBehavior />
                     <behaviors:DataGridAutoScrollBehavior AutoScroll="{Binding AutoScroll}" />
+                    <behaviors:DataGridKeyBindingsBehavior />
                 </i:Interaction.Behaviors>
             </DataGrid>
 

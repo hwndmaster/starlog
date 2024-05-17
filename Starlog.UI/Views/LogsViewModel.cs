@@ -22,6 +22,7 @@ public interface ILogsViewModel : ITabViewModel, IDisposable
     void UnBookmarkAll();
 
     ILogsFilteringViewModel Filtering { get; }
+    DelayedObservableCollection<ILogItemViewModel> LogItems { get; }
     ILogsSearchViewModel Search { get; }
     ObservableCollection<ILogItemViewModel> SelectedLogItems { get; }
 }

@@ -67,6 +67,50 @@ public sealed class PlainTextLogCodecProcessorTests
     }
 
     [Fact]
+    public async Task ReadAsync_ForMaskPattern_HappyFlowScenario()
+    {
+        // Arrange
+        var profile = CreateSampleProfileForMaskPattern();
+        var fields = new LogFieldsContainer();
+        var fileRecord = new FileRecord(_fixture.Create<string>(), 0);
+        using var stream = new MemoryStream(Encoding.Default.GetBytes(
+            """
+            FileArtifact 1
+            FileArtifact 2
+            1900-01-01 10:11:12.444 LEVEL1 1 Logger1 Some test message
+            1900-01-01 10:11:12.555 LEVEL2 2 Logger2 Another test message
+            Log artifact
+            1900-01-01 10:11:12.666 LEVEL1 2 Logger2 Yet another test message
+            Log artifact 1
+            Log artifact 2
+            """));
+
+        // Act
+        var result = await _sut.ReadAsync(profile, fileRecord, stream, new LogReadingSettings(ReadSourceArtifacts: true), fields);
+
+        // Verify
+        Assert.Equal(new [] { (0, "thread"), (1, "logger") },
+            result.UpdatedFields.GetFields().Select(x => (x.FieldId, x.FieldName)));
+        Assert.NotNull(result.FileArtifacts);
+        Assert.Equal(2, result.FileArtifacts.Artifacts.Length);
+        Assert.Equal("FileArtifact 1", result.FileArtifacts.Artifacts[0]);
+        Assert.Equal("FileArtifact 2", result.FileArtifacts.Artifacts[1]);
+        Assert.Equal(2, result.LogLevels.Count);
+        Assert.Equal("LEVEL1", result.LogLevels.ElementAt(0).Name);
+        Assert.Equal("LEVEL2", result.LogLevels.ElementAt(1).Name);
+        Assert.Equal(3, result.Records.Length);
+        AssertLogRecord(result.UpdatedFields, result.Records[0],
+            new DateTimeOffset(1900, 1, 1, 10, 11, 12, 444, TimeSpan.Zero),
+            "LEVEL1", "Some test message", ["1", "Logger1"], null);
+        AssertLogRecord(result.UpdatedFields, result.Records[1],
+            new DateTimeOffset(1900, 1, 1, 10, 11, 12, 555, TimeSpan.Zero),
+            "LEVEL2", "Another test message", ["2", "Logger2"], "Log artifact");
+        AssertLogRecord(result.UpdatedFields, result.Records[2],
+            new DateTimeOffset(1900, 1, 1, 10, 11, 12, 666, TimeSpan.Zero),
+            "LEVEL1", "Yet another test message", ["2", "Logger2"], "Log artifact 1\r\nLog artifact 2");
+    }
+
+    [Fact]
     public async Task ReadAsync_WithReadFileArtifactsSetToTrue_AndWithFileArtifactLinesCountSetToZero()
     {
         // Arrange
@@ -283,6 +327,11 @@ public sealed class PlainTextLogCodecProcessorTests
             Pattern = @"(?<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3})\s(?<level>\w+)\s(?<thread>\d+)\s(?<logger>\w+)\s(?<message>.*)"
         };
 
+        return CreateSampleProfile(pattern);
+    }
+
+    private Profile CreateSampleProfile(PatternValue pattern)
+    {
         _settingsQueryMock.Setup(x => x.Get()).Returns(new Settings
         {
             PlainTextLogCodecLinePatterns = new List<PatternValue> { pattern }
@@ -298,5 +347,17 @@ public sealed class PlainTextLogCodecProcessorTests
                 LinePatternId = pattern.Id,
             }
         };
+    }
+
+    private Profile CreateSampleProfileForMaskPattern()
+    {
+        var pattern = new PatternValue {
+            Id = Guid.NewGuid(),
+            Name = _fixture.Create<string>(),
+            Type = PatternType.MaskPattern,
+            Pattern = "%{datetime} %{level} %{thread} %{logger} %{message}"
+        };
+
+        return CreateSampleProfile(pattern);
     }
 }

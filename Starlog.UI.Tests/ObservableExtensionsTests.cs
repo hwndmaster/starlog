@@ -12,7 +12,7 @@ public sealed class ObservableExtensionsTests
         // Arrange
         var handled = 0;
         var actionCommand = new ActionCommand();
-        actionCommand.OnOneTimeExecutedBooleanAction()
+        using var _ = actionCommand.OnOneTimeExecutedBooleanAction()
             .Subscribe(_ => handled++);
 
         // Act
@@ -36,7 +36,7 @@ public sealed class ObservableExtensionsTests
         var handled = 0;
         bool booleanValue = false;
         var actionCommand = new ActionCommand(_ => Task.FromResult(booleanValue));
-        actionCommand.OnOneTimeExecutedBooleanAction()
+        using var _ = actionCommand.OnOneTimeExecutedBooleanAction()
             .Subscribe(_ => handled++);
 
         // Acts and Verifies: when action returns false

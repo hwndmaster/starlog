@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Genius.Atom.Infrastructure;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Atom.Infrastructure.TestingUtil.Events;
 using Genius.Atom.Infrastructure.TestingUtil.Io;
@@ -69,11 +70,12 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         int fileRemovedHandled = 0;
         List<LogSourceBase> sourcesAdded = new();
         Profile? profileSelected = null;
-        _sut.LogsAdded.Subscribe(_ => logsAddedHandled++);
-        _sut.LogsRemoved.Subscribe(_ => logsRemovedHandled++);
-        _sut.SourceAdded.Subscribe(sourcesAdded.Add);
-        _sut.SourceRemoved.Subscribe(_ => fileRemovedHandled++);
-        _sut.ProfileChanged.Subscribe(x => profileSelected = x);
+        using var disposer = new Disposer();
+        _sut.LogsAdded.Subscribe(_ => logsAddedHandled++).DisposeWith(disposer);
+        _sut.LogsRemoved.Subscribe(_ => logsRemovedHandled++).DisposeWith(disposer);
+        _sut.SourceAdded.Subscribe(sourcesAdded.Add).DisposeWith(disposer);
+        _sut.SourceRemoved.Subscribe(_ => fileRemovedHandled++).DisposeWith(disposer);
+        _sut.ProfileChanged.Subscribe(x => profileSelected = x).DisposeWith(disposer);
 
         // Pre-verify
         Assert.Null(_sut.Profile);
@@ -136,10 +138,10 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task CloseProfile_HappyFlowScenario()
     {
         // Arrange
-        var files = SampleFiles(_sampleProfile);
+        SampleFiles(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
         var profileClosed = false;
-        _sut.ProfileClosed.Subscribe(_ => profileClosed = true);
+        using var _ = _sut.ProfileClosed.Subscribe(_ => profileClosed = true);
 
         // Pre-Verify
         Assert.NotNull(_sut.Profile);
@@ -208,7 +210,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task GetFields_HappyFlowScenario()
     {
         // Arrange & Pre-verify
-        var files = SampleFiles(_sampleProfile);
+        SampleFiles(_sampleProfile);
         var fields = _sut.GetFields();
         Assert.Equal(0, fields.GetFieldCount());
 
@@ -257,8 +259,8 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         var addedFile = SampleFile(_sampleProfile, null, files.Length);
         List<LogRecord> logsAdded = new();
         List<LogSourceBase> sourcesAdded = new();
-        _sut.LogsAdded.Subscribe(logs => logsAdded.AddRange(logs));
-        _sut.SourceAdded.Subscribe(sourcesAdded.Add);
+        using var _ = _sut.LogsAdded.Subscribe(logs => logsAdded.AddRange(logs));
+        using var __ = _sut.SourceAdded.Subscribe(sourcesAdded.Add);
 
         // Act
         Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
@@ -272,16 +274,40 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     }
 
     [Fact]
+    public async Task FileWatcher_CreatedOrChanged_GivenFileBasedProfile_WhenAnotherFileCreated_ThenNotLoaded()
+    {
+        // Arrange
+        var profileDirectory = _sampleProfile.Settings.Source;
+        var profileFile = SampleFile(_sampleProfile, null, fileIndex: 0);
+        var addedFile = SampleFile(_sampleProfile, null, fileIndex: 1);
+        ((PlainTextProfileSettings)_sampleProfile.Settings).Path = profileFile.FullPath;
+        await _sut.LoadProfileAsync(_sampleProfile);
+
+        List<LogRecord> logsAdded = new();
+        List<LogSourceBase> sourcesAdded = new();
+        using var _ = _sut.LogsAdded.Subscribe(logs => logsAdded.AddRange(logs));
+        using var __ = _sut.SourceAdded.Subscribe(sourcesAdded.Add);
+
+        // Act
+        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
+        _fileWatcherFactory.RecentlyCreatedInstance.OnCreated(profileDirectory, Path.GetFileName(addedFile.FullPath));
+
+        // Verify
+        Assert.Empty(sourcesAdded);
+        Assert.DoesNotContain(_sut.GetSources(), x => x.Name.Equals(addedFile.FullPath));
+    }
+
+    [Fact]
     public async Task FileWatcher_CreatedOrChanged_WhenFileUpdated_ThenLoaded()
     {
         // Arrange
         var files = SampleFiles(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
 
-        List<LogRecord> logsAdded = new();
+        List<LogRecord> logsAdded = [];
         bool anyFileAdded = false;
-        _sut.LogsAdded.Subscribe(logs => logsAdded.AddRange(logs));
-        _sut.SourceAdded.Subscribe(_ => anyFileAdded = true);
+        using var _ = _sut.LogsAdded.Subscribe(logs => logsAdded.AddRange(logs));
+        using var __ = _sut.SourceAdded.Subscribe(_ => anyFileAdded = true);
         var initialLastReadOffset = files[0].Content.Length;
         files[0] = files[0] with {
             Content = files[0].Content.Concat(_fixture.CreateMany<byte>(_fixture.Create<int>())).ToArray(),
@@ -318,7 +344,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         _fileService.MoveFile(files[0].FullPath, newFilePath);
         files[0] = files[0] with { FullPath = newFilePath };
         LogSourceBase? sourceRenamedEventOldRecord = null, sourceRenamedEventNewRecord = null;
-        _sut.SourceRenamed.Subscribe(x => (sourceRenamedEventOldRecord, sourceRenamedEventNewRecord) = (x.OldRecord, x.NewRecord));
+        using var _ = _sut.SourceRenamed.Subscribe(x => (sourceRenamedEventOldRecord, sourceRenamedEventNewRecord) = (x.OldRecord, x.NewRecord));
 
         // Act
         Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
@@ -345,7 +371,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         await _sut.LoadProfileAsync(_sampleProfile);
         var fileRemoved = files[1];
         string? sourceRemoved = null;
-        _sut.SourceRemoved.Subscribe(x => sourceRemoved = x.Name);
+        using var _ = _sut.SourceRemoved.Subscribe(x => sourceRemoved = x.Name);
 
         // Act
         Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
@@ -366,7 +392,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task FileWatcher_Error_ThenHandledWithLogger()
     {
         // Arrange
-        var files = SampleFiles(_sampleProfile);
+        SampleFiles(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
         var exception = new Exception(_fixture.Create<string>());
 
@@ -384,14 +410,14 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task DirectoryMonitorPulse_WhenLastReadSizeDoesNotEqualToActual_ReportsUnknownChangesDetected()
     {
         // Arrange
-        AutoResetEvent autoResetEvent = new(false);
+        using AutoResetEvent autoResetEvent = new(false);
         bool unknownChangesDetectedHandled = false;
-        _sut.UnknownChangesDetected.Subscribe(_ => {
+        using var _ = _sut.UnknownChangesDetected.Subscribe(_ => {
             unknownChangesDetectedHandled = true;
             autoResetEvent.Set();
         });
 
-        var files = SampleFiles(_sampleProfile);
+        SampleFiles(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
         var lastReadSize = _fileService.GetDirectorySize(_sampleProfile.Settings.Source, ((PlainTextProfileSettings)_sampleProfile.Settings).LogsLookupPattern, recursive: true);
 
@@ -506,5 +532,6 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public void Dispose()
     {
         _sut.Dispose();
+        _directoryMonitor.Dispose();
     }
 }

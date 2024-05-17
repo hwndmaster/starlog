@@ -68,6 +68,24 @@ public sealed class MessageParsingHandlerTests : IDisposable
     }
 
     [Fact]
+    public void RetrieveColumns_GivenMethodMaskPattern_HappyFlowScenario()
+    {
+        // Arrange
+        var messageParsing = new MessageParsing
+        {
+            Name = _fixture.Create<string>(),
+            Method = PatternType.MaskPattern,
+            Pattern = "File %{File} read %{Count} logs"
+        };
+
+        // Act
+        var columns = _sut.RetrieveColumns(messageParsing);
+
+        // Verify
+        Assert.Equal(new [] { "File", "Count" }, columns);
+    }
+
+    [Fact]
     public void ParseMessage_GivenMethodRegex_HappyFlowScenario()
     {
         // Arrange
@@ -117,7 +135,7 @@ public sealed class MessageParsingHandlerTests : IDisposable
     public void ParseMessage_GivenMethodRegex_AndFiltersFromQuickProvider_WhenMatching()
     {
         // Arrange
-        var profile = _profileHarness.CreateProfile(setAsCurrent: true);
+        _profileHarness.CreateProfile(setAsCurrent: true);
         var quickFilters = _profileHarness.Fixture.CreateMany<TestProfileFilter>().ToArray();
         _quickFilterProviderMock.Setup(x => x.GetQuickFilters()).Returns(quickFilters);
         var messageParsing = SampleMessageParsingWithMethodRegex();

@@ -28,7 +28,9 @@ internal sealed class ProfileLoaderFactory : IProfileLoaderFactory
         IFileService fileService,
         IFileSystemWatcherFactory fileSystemWatcherFactory,
         ILogCodecContainerInternal logCodecContainer,
+#pragma warning disable S6672 // Generic logger injection should match enclosing type
         ILogger<FileBasedProfileLoader> fileBasedLogger,
+#pragma warning restore S6672 // Generic logger injection should match enclosing type
         ISynchronousScheduler scheduler)
     {
         _directoryMonitor = directoryMonitor.NotNull();

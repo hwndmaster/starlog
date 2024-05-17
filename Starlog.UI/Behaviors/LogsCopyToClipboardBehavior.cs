@@ -13,8 +13,6 @@ public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
     private readonly IClipboardHelper _clipboardHelper;
 
     private readonly MenuItem _menuItemCopy;
-    private readonly MenuItem _menuItemCopyWhole;
-    private readonly MenuItem _menuItemCopyMsg;
 
     private DataGridClipboardCopyMode _previousClipboardCopyMode;
 
@@ -22,17 +20,17 @@ public sealed class LogsCopyToClipboardBehavior : Behavior<DataGrid>
     {
         _clipboardHelper = App.ServiceProvider.GetRequiredService<IClipboardHelper>();
 
-        _menuItemCopyWhole = new MenuItem { Header = "Everything",
+        var menuItemCopyWhole = new MenuItem { Header = "Everything",
             InputGestureText = "Ctrl+C",
             Command = new ActionCommand(_ => CopyToClipboard()) };
-        _menuItemCopyMsg = new MenuItem { Header = "Message(s)", Command = new ActionCommand(_ =>
+        var menuItemCopyMsg = new MenuItem { Header = "Message(s)", Command = new ActionCommand(_ =>
         {
             var content = _clipboardHelper.CreateLogMessagesStringForClipboard(AssociatedObject.SelectedItems.OfType<ILogItemViewModel>());
             _clipboardHelper.CopyToClipboard(content);
         }) };
         _menuItemCopy = new MenuItem { Header = "Copy to clipboard", Items = {
-            _menuItemCopyWhole,
-            _menuItemCopyMsg
+            menuItemCopyWhole,
+            menuItemCopyMsg
         }};
     }
 

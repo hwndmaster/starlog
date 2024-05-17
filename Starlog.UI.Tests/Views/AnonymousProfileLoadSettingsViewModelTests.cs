@@ -10,10 +10,10 @@ namespace Genius.Starlog.UI.Tests.Views;
 public sealed class AnonymousProfileLoadSettingsViewModelTests
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private Mock<ILogCodecContainer> _logCodecContainerMock = new();
+    private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
     private readonly AnonymousProfileLoadSettingsViewModel _sut;
     private bool _closedHandled = false;
-    private ProfileSettingsBase _profileSettings;
+    private readonly ProfileSettingsBase _profileSettings;
     private ProfileSettingsBase? _profileSettingsConfirmed;
 
     public AnonymousProfileLoadSettingsViewModelTests()

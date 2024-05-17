@@ -48,7 +48,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         Guard.NotNull(profile);
         Guard.NotNull(logContainer);
 
-        _logger.LogDebug("Loading profile: {profileId}", profile.Id);
+        _logger.LogDebug("Loading profile: {ProfileId}", profile.Id);
 
         if (profile.Settings is not IFileBasedProfileSettings fileBasedProfileSettings)
             throw new InvalidOperationException("Profile is not file based as expected in this routine");
@@ -88,10 +88,9 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         var disposer = new Disposer();
         var watchPath = isFileBasedProfile ? Path.GetDirectoryName(filesBasedProfileState.Settings.Path).NotNull() : filesBasedProfileState.Settings.Path;
         var watchFilter = isFileBasedProfile ? Path.GetFileName(filesBasedProfileState.Settings.Path) : filesBasedProfileState.Settings.LogsLookupPattern;
-        var fileWatcher = _fileSystemWatcherFactory.Create(watchPath, watchFilter, increaseBuffer: true)
-            ?? throw new InvalidOperationException("Couldn't run file watcher for the path: " + watchPath);
-
-        disposer.Add(fileWatcher);
+        var fileWatcher = (_fileSystemWatcherFactory.Create(watchPath, watchFilter, increaseBuffer: true)
+            ?? throw new InvalidOperationException("Couldn't run file watcher for the path: " + watchPath))
+            .DisposeWith(disposer);
 
         fileWatcher.Created.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
         fileWatcher.Changed.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
@@ -103,7 +102,8 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         {
             _directoryMonitor.StartMonitoring(filesBasedProfileState.Settings.Path, filesBasedProfileState.Settings.LogsLookupPattern)
                 .DisposeWith(disposer);
-            _directoryMonitor.Pulse.Subscribe(async size => await DirectoryMonitor_Pulse(filesBasedProfileState, size, unknownChangesDetectedSubject).ConfigureAwait(false))
+            _directoryMonitor.Pulse.Subscribe(size =>
+                DirectoryMonitor_PulseAsync(filesBasedProfileState, size, unknownChangesDetectedSubject).RunAndForget())
                 .DisposeWith(disposer);
         }
 
@@ -142,7 +142,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         Guard.NotNull(fileRecord);
         Guard.NotNull(logContainer);
 
-        if (profile.Settings is not PlainTextProfileSettings plainTextProfileSettings)
+        if (profile.Settings is not PlainTextProfileSettings)
             throw new InvalidOperationException("Cannot read profile logs, since it is not plain text.");
 
         var tp = TracePerf.Start<FileBasedProfileLoader>(nameof(ReadLogsAsync));
@@ -182,7 +182,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         return true;
     }
 
-    private async Task DirectoryMonitor_Pulse(FilesBasedProfileState profileState, long profileDirectorySize, Subject<Unit> unknownChangesDetectedSubject)
+    private async Task DirectoryMonitor_PulseAsync(FilesBasedProfileState profileState, long profileDirectorySize, Subject<Unit> unknownChangesDetectedSubject)
     {
         if (profileState.LastReadSize != profileDirectorySize)
         {
@@ -202,13 +202,12 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
 
     private void FileWatcher_CreatedOrChangedOrDeleted(FilesBasedProfileState profileState, ILogContainerWriter logContainer, FileSystemEventArgs e)
     {
-        _logger.LogDebug("File {fullPath} was {changeType}", e.FullPath, e.ChangeType);
+        _logger.LogDebug("File {FullPath} was {ChangeType}", e.FullPath, e.ChangeType);
 
         UpdateLastReadSize(profileState);
 
         if (profileState.IsFileBasedProfile && !e.FullPath.Equals(profileState.Settings.Path))
         {
-            // TODO: Cover with unit tests
             return;
         }
 

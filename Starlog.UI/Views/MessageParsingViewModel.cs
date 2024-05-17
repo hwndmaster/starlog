@@ -13,7 +13,7 @@ using Genius.Starlog.UI.AutoGridBuilders;
 
 namespace Genius.Starlog.UI.Views;
 
-public interface IMessageParsingViewModel
+public interface IMessageParsingViewModel : IDisposable
 {
     MessageParsing? MessageParsing { get; }
     IActionCommand CommitCommand { get; }

@@ -17,6 +17,8 @@ dotnet_diagnostic.RCS1090.severity = suggestion # RCS1090: Add call to 'Configur
 # CA1001: Subject<T> to ignore
 dotnet_code_quality.CA1001.excluded_symbol_names = T:System.Reactive.Subjects.Subject*
 
-# CS0618: Type or member is obsolete
 [{**/VersionUpgraders/**.cs}]
-dotnet_diagnostic.CS0618.severity = none
+dotnet_diagnostic.CS0618.severity = none # CS0618: Type or member is obsolete
+
+[**/*Tests.cs]
+dotnet_diagnostic.VSTHRD200.severity = none # Use "Async" suffix for async methods

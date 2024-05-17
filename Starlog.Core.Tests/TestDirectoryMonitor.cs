@@ -28,6 +28,7 @@ internal sealed class TestDirectoryMonitor : IDirectoryMonitor
     public void Dispose()
     {
         StopMonitoring();
+        _pulse.Dispose();
     }
 
     public IObservable<long> Pulse => _pulse;
