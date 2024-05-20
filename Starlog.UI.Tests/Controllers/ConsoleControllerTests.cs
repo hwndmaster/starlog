@@ -12,9 +12,9 @@ namespace Genius.Starlog.UI.Tests.Controllers;
 
 public sealed class ConsoleControllerTests
 {
-    private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
-    private readonly Mock<IProfileSettingsTemplateQueryService> _templatesQueryMock = new();
-    private readonly Mock<IProfileLoadingController> _profileLoadingControllerMock = new();
+    private readonly ILogCodecContainer _logCodecContainerMock = A.Fake<ILogCodecContainer>();
+    private readonly IProfileSettingsTemplateQueryService _templatesQueryMock = A.Fake<IProfileSettingsTemplateQueryService>();
+    private readonly IProfileLoadingController _profileLoadingControllerMock = A.Fake<IProfileLoadingController>();
     private readonly TestLogger<ConsoleController> _logger = new();
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
 
@@ -22,8 +22,8 @@ public sealed class ConsoleControllerTests
 
     public ConsoleControllerTests()
     {
-        _sut = new(_logCodecContainerMock.Object,
-            _templatesQueryMock.Object, _profileLoadingControllerMock.Object,
+        _sut = new(_logCodecContainerMock,
+            _templatesQueryMock, _profileLoadingControllerMock,
             _logger);
     }
 
@@ -35,17 +35,19 @@ public sealed class ConsoleControllerTests
         var codec = new LogCodec(Guid.NewGuid(), options.Codec!);
         var profileSettings = _fixture.Create<ProfileSettingsBase>();
         var allCodecs = _fixture.CreateMany<LogCodec>().Append(codec);
-        var processor = Mock.Of<ILogCodecSettingsReader>(x => x.ReadFromCommandLineArguments(profileSettings, It.Is<string[]>(arg => arg.SequenceEqual(options.CodecSettings))) == true);
-        _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns(allCodecs);
-        _logCodecContainerMock.Setup(x => x.CreateProfileSettings(codec)).Returns(profileSettings);
-        _logCodecContainerMock.Setup(x => x.FindLogCodecSettingsReader(profileSettings)).Returns(processor);
+        var processor = A.Fake<ILogCodecSettingsReader>();
+        A.CallTo(() => processor.ReadFromCommandLineArguments(profileSettings, A<string[]>.That.Matches(arg => arg.SequenceEqual(options.CodecSettings)))).Returns(true);
+        A.CallTo(() => _logCodecContainerMock.GetLogCodecs()).Returns(allCodecs);
+        A.CallTo(() => _logCodecContainerMock.CreateProfileSettings(codec)).Returns(profileSettings);
+        A.CallTo(() => _logCodecContainerMock.FindLogCodecSettingsReader(profileSettings)).Returns(processor);
 
         // Act
         await _sut.LoadPathAsync(options);
 
         // Verify
-        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.Is<ProfileSettingsBase>(
-            ps => ps == profileSettings)), Times.Once);
+        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(
+            A<ProfileSettingsBase>.That.Matches(ps => ps == profileSettings)))
+            .MustHaveHappenedOnceExactly();
         Assert.DoesNotContain(_logger.Logs, x => x.LogLevel == LogLevel.Warning);
     }
 
@@ -54,14 +56,14 @@ public sealed class ConsoleControllerTests
     {
         // Arrange
         var options = _fixture.Create<LoadPathCommandLineOptions>();
-        _logCodecContainerMock.Setup(x => x.GetLogCodecs())
+        A.CallTo(() => _logCodecContainerMock.GetLogCodecs())
             .Returns(_fixture.CreateMany<LogCodec>()); // LogCodec from options is not included.
 
         // Act
         await _sut.LoadPathAsync(options);
 
         // Verify
-        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.IsAny<ProfileSettingsBase>()), Times.Never);
+        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(A<ProfileSettingsBase>.Ignored)).MustNotHaveHappened();
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
     }
 
@@ -73,17 +75,19 @@ public sealed class ConsoleControllerTests
         var codec = new LogCodec(Guid.NewGuid(), options.Codec!);
         var profileCodec = _fixture.Create<ProfileSettingsBase>();
         var allCodecs = _fixture.CreateMany<LogCodec>().Append(codec);
-        var processor = Mock.Of<ILogCodecSettingsReader>(x =>
-            x.ReadFromCommandLineArguments(profileCodec, It.Is<string[]>(arg => arg.SequenceEqual(options.CodecSettings))) == false);
-        _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns(allCodecs);
-        _logCodecContainerMock.Setup(x => x.CreateProfileSettings(codec)).Returns(profileCodec);
-        _logCodecContainerMock.Setup(x => x.FindLogCodecSettingsReader(profileCodec)).Returns(processor);
+        var processor = A.Fake<ILogCodecSettingsReader>();
+        A.CallTo(() => processor.ReadFromCommandLineArguments(profileCodec, A<string[]>.That.Matches(arg => arg.SequenceEqual(options.CodecSettings))))
+            .Returns(false);
+        A.CallTo(() => _logCodecContainerMock.GetLogCodecs()).Returns(allCodecs);
+        A.CallTo(() => _logCodecContainerMock.CreateProfileSettings(codec)).Returns(profileCodec);
+        A.CallTo(() => _logCodecContainerMock.FindLogCodecSettingsReader(profileCodec)).Returns(processor);
 
         // Act
         await _sut.LoadPathAsync(options);
 
         // Verify
-        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.IsAny<ProfileSettingsBase>()), Times.Never);
+        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(A<ProfileSettingsBase>.Ignored))
+            .MustNotHaveHappened();
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
     }
 
@@ -94,13 +98,13 @@ public sealed class ConsoleControllerTests
         var options = _fixture.Create<LoadPathCommandLineOptions>();
         var codec = new LogCodec(Guid.NewGuid(), options.Codec!);
         var allCodecs = _fixture.CreateMany<LogCodec>().Append(codec);
-        _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns(allCodecs);
+        A.CallTo(() => _logCodecContainerMock.GetLogCodecs()).Returns(allCodecs);
 
         // Act
         await _sut.LoadPathAsync(options);
 
         // Verify
-        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.IsAny<ProfileSettingsBase>()), Times.Never);
+        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(A<ProfileSettingsBase>.Ignored)).MustNotHaveHappened();
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
     }
 
@@ -114,14 +118,14 @@ public sealed class ConsoleControllerTests
             Name = options.Template!,
             Settings = new TestProfileSettings()
         };
-        _templatesQueryMock.Setup(x => x.GetAllAsync()).ReturnsAsync([template]);
+        A.CallTo(() => _templatesQueryMock.GetAllAsync()).Returns([template]);
 
         // Act
         await _sut.LoadPathAsync(options);
 
         // Verify
-        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.Is<TestProfileSettings>(
-            y => y.LogCodec == template.Settings.LogCodec && y.IsCloned)), Times.Once);
+        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(A<TestProfileSettings>.That.Matches(
+            y => y.LogCodec == template.Settings.LogCodec && y.IsCloned))).MustHaveHappenedOnceExactly();
     }
 
     [Fact]
@@ -138,13 +142,13 @@ public sealed class ConsoleControllerTests
             Name = _fixture.Create<string>(),
             Settings = new TestProfileSettings()
         };
-        _templatesQueryMock.Setup(x => x.FindByIdAsync(templateId)).ReturnsAsync(template);
+        A.CallTo(() => _templatesQueryMock.FindByIdAsync(templateId)).Returns(template);
 
         // Act
         await _sut.LoadPathAsync(options);
 
         // Verify
-        _profileLoadingControllerMock.Verify(x => x.LoadProfileSettingsAsync(It.Is<TestProfileSettings>(
-            y => y.LogCodec == template.Settings.LogCodec && y.IsCloned)), Times.Once);
+        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(A<TestProfileSettings>.That.Matches(
+            y => y.LogCodec == template.Settings.LogCodec && y.IsCloned))).MustHaveHappenedOnceExactly();
     }
 }

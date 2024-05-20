@@ -11,7 +11,7 @@ public sealed class ProfileRepositoryTests
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly TestEventBus _eventBus = new();
-    private readonly Mock<IJsonPersister> _persisterMock = new();
+    private readonly IJsonPersister _persisterMock = A.Fake<IJsonPersister>();
 
     [Fact]
     public async Task DeleteAsync_WhenIdIsForAnonymousProfile_ThenSetsAnonymousProfileToNull()
@@ -103,9 +103,9 @@ public sealed class ProfileRepositoryTests
 
     private ProfileRepository CreateSystemUnderTest(Profile[] profiles)
     {
-        _persisterMock.Setup(x => x.LoadCollection<Profile>(It.IsAny<string>()))
+        A.CallTo(() => _persisterMock.LoadCollection<Profile>(A<string>.Ignored))
             .Returns(profiles);
-        return new ProfileRepository(_eventBus, _persisterMock.Object,
-            new TestLogger<ProfileRepository>(), Mock.Of<ISettingsRepository>());
+        return new ProfileRepository(_eventBus, _persisterMock,
+            new TestLogger<ProfileRepository>(), A.Fake<ISettingsRepository>());
     }
 }

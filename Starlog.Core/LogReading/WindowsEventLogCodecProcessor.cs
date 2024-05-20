@@ -3,7 +3,7 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.Core.LogReading;
 
-internal sealed class WindowsEventLogCodecProcessor : ILogCodecProcessor, ILogCodecSettingsReader
+internal sealed class WindowsEventLogCodecProcessor : ILogCodecProcessor
 {
     public bool MayContainSourceArtifacts(ProfileSettingsBase profileSettings)
     {

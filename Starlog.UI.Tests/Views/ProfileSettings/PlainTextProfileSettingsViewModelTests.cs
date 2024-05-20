@@ -8,7 +8,7 @@ namespace Genius.Starlog.UI.Tests.Views;
 public sealed class PlainTextProfileSettingsViewModelTests
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly Mock<ISettingsQueryService> _settingsQueryMock = new();
+    private readonly ISettingsQueryService _settingsQueryFake = A.Fake<ISettingsQueryService>();
     private readonly PatternValue[] _patternValues;
 
     public PlainTextProfileSettingsViewModelTests()
@@ -18,7 +18,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         {
             PlainTextLogCodecLinePatterns = _patternValues,
         };
-        _settingsQueryMock.Setup(x => x.Get()).Returns(settings);
+        A.CallTo(() => _settingsQueryFake.Get()).Returns(settings);
     }
 
     [Fact]
@@ -136,6 +136,6 @@ public sealed class PlainTextProfileSettingsViewModelTests
 
     private PlainTextProfileSettingsViewModel CreateSystemUnderTest(PlainTextProfileSettings profileSettings)
     {
-        return new PlainTextProfileSettingsViewModel(profileSettings, _settingsQueryMock.Object);
+        return new PlainTextProfileSettingsViewModel(profileSettings, _settingsQueryFake);
     }
 }

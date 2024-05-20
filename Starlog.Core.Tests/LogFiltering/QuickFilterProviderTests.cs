@@ -12,7 +12,7 @@ public sealed class QuickFilterProviderTests
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
     private readonly LogFilterContainer _logFilterContainer;
     private readonly QuickFilterProvider _sut;
-    private readonly Mock<ILogFieldsContainer> _logFieldContainerMock = new();
+    private readonly ILogFieldsContainer _logFieldContainerFake = A.Fake<ILogFieldsContainer>();
 
     public QuickFilterProviderTests()
     {
@@ -22,7 +22,8 @@ public sealed class QuickFilterProviderTests
         _logFilterContainer.RegisterLogFilter<MessageProfileFilter, TestFilterProcessor>(_fixture.Create<LogFilter>());
         _logFilterContainer.RegisterLogFilter<FieldProfileFilter, TestFilterProcessor>(_fixture.Create<LogFilter>());
 
-        var logLevelMappingConfig = Mock.Of<IOptions<LogLevelMappingConfiguration>>(x => x.Value == new LogLevelMappingConfiguration
+        var logLevelMappingConfig = A.Fake<IOptions<LogLevelMappingConfiguration>>();
+        A.CallTo(() => logLevelMappingConfig.Value).Returns(new LogLevelMappingConfiguration
         {
             TreatAsMinor = _fixture.CreateMany<string>().ToArray(),
             TreatAsWarning = _fixture.CreateMany<string>().ToArray(),
@@ -30,7 +31,8 @@ public sealed class QuickFilterProviderTests
             TreatAsCritical = _fixture.CreateMany<string>().ToArray(),
         });
 
-        var logContainer = Mock.Of<ILogContainer>(x => x.GetFields() == _logFieldContainerMock.Object);
+        var logContainer = A.Fake<ILogContainer>();
+        A.CallTo(() => logContainer.GetFields()).Returns(_logFieldContainerFake);
 
         _sut = new QuickFilterProvider(logContainer, _logFilterContainer, logLevelMappingConfig);
     }
@@ -39,7 +41,7 @@ public sealed class QuickFilterProviderTests
     public void GetQuickFilters_IdentifiersArePreserved()
     {
         // Arrange
-        _logFieldContainerMock.Setup(x => x.GetThreadFieldIfAny()).Returns((_fixture.Create<int>(), _fixture.Create<string>()));
+        A.CallTo(() => _logFieldContainerFake.GetThreadFieldIfAny()).Returns((_fixture.Create<int>(), _fixture.Create<string>()));
 
         // Act
         var actual1 = _sut.GetQuickFilters().ToList();
@@ -55,7 +57,7 @@ public sealed class QuickFilterProviderTests
     {
         // Arrange
         var threadField = (_fixture.Create<int>(), _fixture.Create<string>());
-        _logFieldContainerMock.Setup(x => x.GetThreadFieldIfAny()).Returns(threadField);
+        A.CallTo(() => _logFieldContainerFake.GetThreadFieldIfAny()).Returns(threadField);
 
         // Act
         var actual = _sut.GetQuickFilters().ToArray()[^2..];

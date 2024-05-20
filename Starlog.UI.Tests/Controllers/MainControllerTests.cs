@@ -10,21 +10,21 @@ namespace Genius.Starlog.UI.Tests.Controllers;
 
 public sealed class MainControllerTests
 {
-    private readonly Mock<IClipboardHelper> _clipboardHelperMock = new();
-    private readonly Mock<IDialogCoordinator> _dialogCoordinatorMock = new();
-    private readonly Mock<IUserInteraction> _uiMock = new();
-    private readonly Mock<IMainViewModel> _mainViewModelMock = new();
+    private readonly IClipboardHelper _clipboardHelperMock = A.Fake<IClipboardHelper>();
+    private readonly IDialogCoordinator _dialogCoordinatorMock = A.Fake<IDialogCoordinator>();
+    private readonly IUserInteraction _uiMock = A.Fake<IUserInteraction>();
+    private readonly IMainViewModel _mainViewModelMock = A.Fake<IMainViewModel>();
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
 
     private readonly MainController _sut;
 
     public MainControllerTests()
     {
-        _sut = new(_clipboardHelperMock.Object,
-            _dialogCoordinatorMock.Object,
+        _sut = new(_clipboardHelperMock,
+            _dialogCoordinatorMock,
             new TestFileService(),
-            _uiMock.Object,
-            new Lazy<IMainViewModel>(() => _mainViewModelMock.Object));
+            _uiMock,
+            new Lazy<IMainViewModel>(() => _mainViewModelMock));
     }
 
     [StaFact]
@@ -37,9 +37,9 @@ public sealed class MainControllerTests
         await _sut.ShowShareViewAsync(items);
 
         // Verify
-        _uiMock.Verify(x => x.ShowInformation(It.IsAny<string>()), Times.Never);
-        _dialogCoordinatorMock.Verify(x => x.ShowMetroDialogAsync(_mainViewModelMock.Object,
-            It.Is<CustomDialog>(cd => cd.Content is ShareLogsView), It.IsAny<MetroDialogSettings>()), Times.Once);
+        A.CallTo(() => _uiMock.ShowInformation(A<string>.Ignored)).MustNotHaveHappened();
+        A.CallTo(() => _dialogCoordinatorMock.ShowMetroDialogAsync(_mainViewModelMock,
+            A<CustomDialog>.That.Matches(cd => cd.Content is ShareLogsView), A<MetroDialogSettings>.Ignored)).MustHaveHappenedOnceExactly();
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public sealed class MainControllerTests
         await _sut.ShowShareViewAsync(items);
 
         // Verify
-        _uiMock.Verify(x => x.ShowInformation(It.IsAny<string>()));
-        _dialogCoordinatorMock.Verify(x => x.ShowMetroDialogAsync(It.IsAny<object>(), It.IsAny<BaseMetroDialog>(), It.IsAny<MetroDialogSettings>()), Times.Never);
+        A.CallTo(() => _uiMock.ShowInformation(A<string>.Ignored));
+        A.CallTo(() => _dialogCoordinatorMock.ShowMetroDialogAsync(A<object>.Ignored, A<BaseMetroDialog>.Ignored, A<MetroDialogSettings>.Ignored)).MustNotHaveHappened();
     }
 }

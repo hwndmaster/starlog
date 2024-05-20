@@ -11,13 +11,13 @@ namespace Genius.Starlog.Core.Tests.LogReading;
 public sealed class PlainTextLogCodecProcessorTests
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly Mock<ISettingsQueryService> _settingsQueryMock = new();
+    private readonly ISettingsQueryService _settingsQueryFake = A.Fake<ISettingsQueryService>();
     private readonly PlainTextLogCodecProcessor _sut;
 
     public PlainTextLogCodecProcessorTests()
     {
         _sut = new(
-            _settingsQueryMock.Object,
+            _settingsQueryFake,
             new MaskPatternParser(new TestLogger<MaskPatternParser>()),
             new TestLogger<PlainTextLogCodecLineMaskPatternParser>());
     }
@@ -115,7 +115,7 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
-        var fields = Mock.Of<ILogFieldsContainer>();
+        var fields = A.Fake<ILogFieldsContainer>();
         var fileRecord = new FileRecord(_fixture.Create<string>(), 0);
         using var stream = new MemoryStream(Encoding.Default.GetBytes(
             """
@@ -136,7 +136,7 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
-        var fields = Mock.Of<ILogFieldsContainer>();
+        var fields = A.Fake<ILogFieldsContainer>();
         using var stream = new MemoryStream(Encoding.Default.GetBytes(
             """
             Expected two file artifact lines, but here only single one
@@ -180,7 +180,7 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
-        var fields = Mock.Of<ILogFieldsContainer>();
+        var fields = A.Fake<ILogFieldsContainer>();
         var fileRecord = new FileRecord(_fixture.Create<string>(), 0);
         using var stream = new MemoryStream(Encoding.Default.GetBytes(
             """
@@ -199,7 +199,7 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         // Arrange
         var profile = CreateSampleProfile();
-        var fields = Mock.Of<ILogFieldsContainer>();
+        var fields = A.Fake<ILogFieldsContainer>();
         using var stream = new MemoryStream(Encoding.Default.GetBytes(_fixture.Create<string>()));
         ((PlainTextProfileSettings)profile.Settings).LinePatternId = Guid.NewGuid();
 
@@ -212,7 +212,7 @@ public sealed class PlainTextLogCodecProcessorTests
     public async Task ReadAsync_WhenEmptyStream_ReturnsNoResult()
     {
         // Arrange
-        var fields = Mock.Of<ILogFieldsContainer>();
+        var fields = A.Fake<ILogFieldsContainer>();
         using var stream = new MemoryStream(Array.Empty<byte>());
 
         // Act
@@ -233,7 +233,7 @@ public sealed class PlainTextLogCodecProcessorTests
             Type = PatternType.RegularExpression,
             Pattern = _fixture.Create<string>()
         };
-        _settingsQueryMock.Setup(x => x.Get()).Returns(new Settings
+        A.CallTo(() => _settingsQueryFake.Get()).Returns(new Settings
         {
             PlainTextLogCodecLinePatterns = new List<PatternValue> { pattern }
         });
@@ -275,7 +275,7 @@ public sealed class PlainTextLogCodecProcessorTests
         var lineRegexName = _fixture.Create<string>();
         var anotherLineRegexName = _fixture.Create<string>();
         var patternId = Guid.NewGuid();
-        _settingsQueryMock.Setup(x => x.Get()).Returns(new Settings
+        A.CallTo(() => _settingsQueryFake.Get()).Returns(new Settings
         {
             PlainTextLogCodecLinePatterns = new List<PatternValue>
             {
@@ -332,7 +332,7 @@ public sealed class PlainTextLogCodecProcessorTests
 
     private Profile CreateSampleProfile(PatternValue pattern)
     {
-        _settingsQueryMock.Setup(x => x.Get()).Returns(new Settings
+        A.CallTo(() => _settingsQueryFake.Get()).Returns(new Settings
         {
             PlainTextLogCodecLinePatterns = new List<PatternValue> { pattern }
         });

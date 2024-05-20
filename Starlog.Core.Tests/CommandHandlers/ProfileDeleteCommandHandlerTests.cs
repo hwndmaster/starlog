@@ -25,7 +25,7 @@ public sealed class ProfileDeleteCommandHandlerTests
         await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.DeleteAsync(command.ProfileId));
+        A.CallTo(() => _harness.ProfileRepo.DeleteAsync(command.ProfileId)).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
     }
 }

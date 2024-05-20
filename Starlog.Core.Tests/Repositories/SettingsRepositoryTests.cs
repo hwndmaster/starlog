@@ -10,8 +10,8 @@ namespace Genius.Starlog.Core.Tests.Repositories;
 public sealed class SettingsRepositoryTests
 {
     private readonly Fixture _fixture = new();
-    private readonly Mock<IEventBus> _eventBusMock = new();
-    private readonly Mock<IJsonPersister> _persisterMock = new();
+    private readonly IEventBus _eventBusMock = A.Fake<IEventBus>();
+    private readonly IJsonPersister _persisterMock = A.Fake<IJsonPersister>();
 
     [Fact]
     public void Constructor_WhenExistingSettings_ThenLoaded()
@@ -78,15 +78,15 @@ public sealed class SettingsRepositoryTests
 
         // Verify
         Assert.Equal(newSettings, sut.Get());
-        _persisterMock.Verify(x => x.Store(It.IsAny<string>(), newSettings));
-        _eventBusMock.Verify(x => x.Publish(It.Is<SettingsUpdatedEvent>(e => e.Settings == newSettings)), Times.Once);
+        A.CallTo(() => _persisterMock.Store(A<string>.Ignored, newSettings)).MustHaveHappened();
+        A.CallTo(() => _eventBusMock.Publish(A<SettingsUpdatedEvent>.That.Matches(e => e.Settings == newSettings))).MustHaveHappenedOnceExactly();
     }
 
     private SettingsRepository CreateSystemUnderTest(Settings? settings = null)
     {
-        _persisterMock.Setup(x => x.Load<Settings>(It.IsAny<string>()))
+        A.CallTo(() => _persisterMock.Load<Settings>(A<string>.Ignored))
             .Returns(settings!);
-        return new SettingsRepository(_eventBusMock.Object, _persisterMock.Object,
-            Mock.Of<ILogger<SettingsRepository>>());
+        return new SettingsRepository(_eventBusMock, _persisterMock,
+            A.Fake<ILogger<SettingsRepository>>());
     }
 }

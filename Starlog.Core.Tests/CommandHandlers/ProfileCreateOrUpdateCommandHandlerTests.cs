@@ -26,9 +26,9 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         var guid = await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(It.Is<Profile>(x =>
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(A<Profile>.That.Matches(x =>
             x.Name == command.Name
-            && x.Settings == command.Settings)));
+            && x.Settings == command.Settings))).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
     }
 
@@ -47,10 +47,10 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(It.Is<Profile>(x =>
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(A<Profile>.That.Matches(x =>
             x.Id == command.ProfileId
             && x.Name == command.Name
-            && x.Settings == command.Settings)));
+            && x.Settings == command.Settings))).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
     }
 

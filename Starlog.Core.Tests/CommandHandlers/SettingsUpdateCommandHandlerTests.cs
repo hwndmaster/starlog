@@ -9,13 +9,13 @@ namespace Genius.Starlog.Core.Tests.CommandHandlers;
 
 public sealed class SettingsUpdateCommandHandlerTests
 {
-    private readonly Mock<ISettingsRepository> _repoMock = new();
-    private readonly Mock<IEventBus> _eventBusMock = new();
+    private readonly ISettingsRepository _repoMock = A.Fake<ISettingsRepository>();
+    private readonly IEventBus _eventBusMock = A.Fake<IEventBus>();
     private readonly SettingsUpdateCommandHandler _sut;
 
     public SettingsUpdateCommandHandlerTests()
     {
-        _sut = new(_repoMock.Object, _eventBusMock.Object);
+        _sut = new(_repoMock, _eventBusMock);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public sealed class SettingsUpdateCommandHandlerTests
         await _sut.ProcessAsync(command);
 
         // Verify
-        _repoMock.Verify(x => x.Store(settings));
-        _eventBusMock.Verify(x => x.Publish(It.Is<SettingsUpdatedEvent>(x => x.Settings == settings)));
+        A.CallTo(() => _repoMock.Store(settings)).MustHaveHappened();
+        A.CallTo(() => _eventBusMock.Publish(A<SettingsUpdatedEvent>.That.Matches(x => x.Settings == settings))).MustHaveHappened();
     }
 }

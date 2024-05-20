@@ -19,10 +19,11 @@ public sealed class FieldFilterProcessorTests
         // Arrange
         const int fieldId = 0;
         string[] fieldValues = ["1", "2", "3", "4"];
-        var fieldsMock = new Mock<ILogFieldsContainer>();
-        fieldsMock.Setup(x => x.GetFieldValue(fieldId, It.IsAny<int>()))
-            .Returns((int fieldId, int fieldValueId) => fieldValues[fieldValueId]);
-        var logContainer = Mock.Of<ILogContainer>(x => x.GetFields() == fieldsMock.Object);
+        var fieldsFake = A.Fake<ILogFieldsContainer>();
+        A.CallTo(() => fieldsFake.GetFieldValue(fieldId, A<int>.Ignored))
+            .ReturnsLazily((int fieldId, int fieldValueId) => fieldValues[fieldValueId]);
+        var logContainer = A.Fake<ILogContainer>();
+        A.CallTo(() => logContainer.GetFields()).Returns(fieldsFake);
         var sut = new FieldFilterProcessor(logContainer);
         var profileFilter = new FieldProfileFilter(_fixture.Create<LogFilter>())
         {

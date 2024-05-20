@@ -30,7 +30,7 @@ public sealed class MessageParsingCreateOrUpdateCommandHandlerTests
         var result = await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile));
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(profile)).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
         Assert.Equal(messageParsingsCount + 1, profile.MessageParsings.Count);
         Assert.Equal(command.MessageParsing, profile.MessageParsings[^1]);
@@ -60,7 +60,7 @@ public sealed class MessageParsingCreateOrUpdateCommandHandlerTests
         var result = await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile));
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(profile)).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
         Assert.Equal(messageParsingsCount, profile.MessageParsings.Count);
         Assert.Equal(command.MessageParsing, profile.MessageParsings[0]);

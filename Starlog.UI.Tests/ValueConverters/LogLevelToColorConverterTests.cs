@@ -71,7 +71,8 @@ public sealed class LogLevelToColorConverterTests : IDisposable
         // Arrange
         var dummy = _fixture.Create<LogRecord>();
         var logRecord = dummy with { Level = dummy.Level with { Name = logLevel } };
-        var value = Mock.Of<ILogItemViewModel>(x => x.Record == logRecord);
+        var value = A.Fake<ILogItemViewModel>();
+        A.CallTo(() => value.Record).Returns(logRecord);
         var sut = CreateSystemUnderTest();
 
         // Act
@@ -92,8 +93,8 @@ public sealed class LogLevelToColorConverterTests : IDisposable
 
     private void SetupServices()
     {
-        var optionsMock = new Mock<IOptions<LogLevelMappingConfiguration>>();
-        optionsMock.SetupGet(x => x.Value).Returns(new LogLevelMappingConfiguration
+        var optionsMock = A.Fake<IOptions<LogLevelMappingConfiguration>>();
+        A.CallTo(() => optionsMock.Value).Returns(new LogLevelMappingConfiguration
         {
             TreatAsMinor = ["debug", "trace", "statistics"],
             TreatAsWarning = ["warn", "warning"],
@@ -102,8 +103,11 @@ public sealed class LogLevelToColorConverterTests : IDisposable
         });
 
         var services = new ServiceCollection();
-        services.AddSingleton(optionsMock.Object);
-        services.AddSingleton(Mock.Of<ICurrentProfile>(x => x.ProfileClosed == Mock.Of<IObservable<Unit>>()));
+        services.AddSingleton(optionsMock);
+
+        var currentProfile = A.Fake<ICurrentProfile>();
+        A.CallTo(() => currentProfile.ProfileClosed).Returns(A.Fake<IObservable<Unit>>());
+        services.AddSingleton(currentProfile);
 
         var serviceProvider = services.BuildServiceProvider().DisposeWith(_disposer);
 

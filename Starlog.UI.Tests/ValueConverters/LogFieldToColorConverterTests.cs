@@ -14,9 +14,13 @@ public sealed class LogFieldToColorConverterTests
         var sut = new LogFieldToColorConverter();
         var records = Enumerable.Range(1, 25)
             .Select(x => new LogRecord() with { FieldValueIndices = [x] });
-        var vms = records.Select(record => Mock.Of<ILogItemViewModel>(x =>
-            x.Record == record
-            && x.ColorizeByFieldId == 0)).ToList();
+        var vms = records.Select(record =>
+        {
+            var vm = A.Fake<ILogItemViewModel>();
+            A.CallTo(() => vm.Record).Returns(record);
+            A.CallTo(() => vm.ColorizeByFieldId).Returns(0);
+            return vm;
+        }).ToList();
 
         // Act
         var results = vms.Select(vm => sut.Convert([vm], typeof(object), null!, null!));
@@ -39,9 +43,13 @@ public sealed class LogFieldToColorConverterTests
             new LogRecord() with { FieldValueIndices = [1, 2] },
             new LogRecord() with { FieldValueIndices = [1, 3] }
         };
-        var vms = records.Select(record => Mock.Of<ILogItemViewModel>(x =>
-            x.Record == record
-            && x.ColorizeByFieldId == 1)).ToList();
+        var vms = records.Select(record =>
+        {
+            var vm = A.Fake<ILogItemViewModel>();
+            A.CallTo(() => vm.Record).Returns(record);
+            A.CallTo(() => vm.ColorizeByFieldId).Returns(1);
+            return vm;
+        }).ToList();
 
         // Act
         var results = vms.Select(vm => sut.Convert([vm], typeof(object), null!, null!));

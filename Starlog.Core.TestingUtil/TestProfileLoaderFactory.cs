@@ -9,6 +9,6 @@ internal sealed class TestProfileLoaderFactory : IProfileLoaderFactory
 
     public IProfileLoader? Create(Profile profile)
     {
-        return InstanceToReturn ?? Mock.Of<IProfileLoader>();
+        return InstanceToReturn ?? A.Fake<IProfileLoader>();
     }
 }

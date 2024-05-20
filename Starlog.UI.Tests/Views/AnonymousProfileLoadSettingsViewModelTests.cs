@@ -10,7 +10,7 @@ namespace Genius.Starlog.UI.Tests.Views;
 public sealed class AnonymousProfileLoadSettingsViewModelTests
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
+    private readonly ILogCodecContainer _logCodecContainerFake = A.Fake<ILogCodecContainer>();
     private readonly AnonymousProfileLoadSettingsViewModel _sut;
     private bool _closedHandled = false;
     private readonly ProfileSettingsBase _profileSettings;
@@ -20,26 +20,26 @@ public sealed class AnonymousProfileLoadSettingsViewModelTests
     {
         _profileSettings = _fixture.Create<ProfileSettingsBase>();
 
-        var profileSettingsVm = new Mock<IProfileSettingsViewModel>();
-        profileSettingsVm.Setup(x => x.CommitChanges()).Returns(_profileSettings);
+        var profileSettingsVm = A.Fake<IProfileSettingsViewModel>();
+        A.CallTo(() => profileSettingsVm.CommitChanges()).Returns(_profileSettings);
 
         var logCodec = new LogCodec(Guid.NewGuid(), PlainTextProfileSettings.CodecName);
         var profileSettings = new PlainTextProfileSettings(logCodec)
         {
             Path = _fixture.Create<string>()
         };
-        _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns([logCodec]);
-        _logCodecContainerMock.Setup(x => x.CreateProfileSettings(logCodec)).Returns(profileSettings);
+        A.CallTo(() => _logCodecContainerFake.GetLogCodecs()).Returns([logCodec]);
+        A.CallTo(() => _logCodecContainerFake.CreateProfileSettings(logCodec)).Returns(profileSettings);
 
-        var vmFactoryMock = new Mock<IProfileSettingsViewModelFactory>();
-        vmFactoryMock.Setup(x => x.CreateProfileSettings(profileSettings)).Returns(profileSettingsVm.Object);
+        var vmFactoryMock = A.Fake<IProfileSettingsViewModelFactory>();
+        A.CallTo(() => vmFactoryMock.CreateProfileSettings(profileSettings)).Returns(profileSettingsVm);
 
         var closeCommand = new ActionCommand(_ => _closedHandled = true);
         var confirmCommand = new ActionCommand<ProfileSettingsBase>(arg => _profileSettingsConfirmed = arg);
 
         _sut = new AnonymousProfileLoadSettingsViewModel(
-            _logCodecContainerMock.Object,
-            vmFactoryMock.Object,
+            _logCodecContainerFake,
+            vmFactoryMock,
             _fixture.Create<string>(),
             closeCommand,
             confirmCommand);

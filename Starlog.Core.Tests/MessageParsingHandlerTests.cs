@@ -14,7 +14,7 @@ public sealed class MessageParsingHandlerTests : IDisposable
     private readonly TestEventBus _eventBus = new();
     private readonly ProfileHarness _profileHarness = new();
     private readonly FilterHarness _filterHarness = new();
-    private readonly Mock<IQuickFilterProvider> _quickFilterProviderMock = new();
+    private readonly IQuickFilterProvider _quickFilterProviderFake = A.Fake<IQuickFilterProvider>();
     private readonly MessageParsingHandler _sut;
 
     public MessageParsingHandlerTests()
@@ -22,7 +22,7 @@ public sealed class MessageParsingHandlerTests : IDisposable
         _sut = new(_profileHarness.CurrentProfile, _eventBus,
             new MaskPatternParser(new TestLogger<MaskPatternParser>()),
             _filterHarness.LogFilterContainer,
-            _quickFilterProviderMock.Object);
+            _quickFilterProviderFake);
     }
 
     public void Dispose()
@@ -137,7 +137,7 @@ public sealed class MessageParsingHandlerTests : IDisposable
         // Arrange
         _profileHarness.CreateProfile(setAsCurrent: true);
         var quickFilters = _profileHarness.Fixture.CreateMany<TestProfileFilter>().ToArray();
-        _quickFilterProviderMock.Setup(x => x.GetQuickFilters()).Returns(quickFilters);
+        A.CallTo(() => _quickFilterProviderFake.GetQuickFilters()).Returns(quickFilters);
         var messageParsing = SampleMessageParsingWithMethodRegex();
         messageParsing.Filters = new [] { quickFilters[1].Id };
         var logRecord = new LogRecord() with { Message = "Foo-Bar" };

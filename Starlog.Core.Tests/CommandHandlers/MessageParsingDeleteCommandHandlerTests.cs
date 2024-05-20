@@ -28,7 +28,7 @@ public sealed class MessageParsingDeleteCommandHandlerTests
         await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile));
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(profile)).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
         Assert.Equal(messageParsingCount - 1, profile.MessageParsings.Count);
         Assert.DoesNotContain(messageParsingToDelete, profile.MessageParsings);
@@ -46,8 +46,8 @@ public sealed class MessageParsingDeleteCommandHandlerTests
         await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile), Times.Never);
-        _harness.VerifyEventPublished<ProfilesAffectedEvent>(Times.Never());
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(profile)).MustNotHaveHappened();
+        _harness.VerifyEventPublished<ProfilesAffectedEvent>(numberOfTimes: 0);
         Assert.Equal(messageParsingCount, profile.MessageParsings.Count);
     }
 }

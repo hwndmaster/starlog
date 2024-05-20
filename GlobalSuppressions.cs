@@ -9,6 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("", "S112:General or reserved exceptions should never be thrown", Justification = "<Pending>")]
 [assembly: SuppressMessage("", "S127:\"for\" loop stop conditions should be invariant", Justification = "<Pending>")]
+[assembly: SuppressMessage("", "S1066:Mergeable \"if\" statements should be combined", Justification = "<Pending>")]
 [assembly: SuppressMessage("", "S1121:Assignments should not be made from within sub-expressions", Justification = "<Pending>")]
 [assembly: SuppressMessage("", "S3060:\"is\" should not be used with \"this\"", Justification = "<Pending>")]
 [assembly: SuppressMessage("", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "<Pending>")]

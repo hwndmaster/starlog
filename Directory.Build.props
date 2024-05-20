@@ -58,8 +58,8 @@
   <!-- Automated Testing components -->
   <ItemGroup Condition="$(IsTestProject) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
     <Using Include="AutoFixture" />
-    <Using Include="AutoFixture.AutoMoq" />
-    <Using Include="Moq" />
+    <Using Include="AutoFixture.AutoFakeItEasy" />
+    <Using Include="FakeItEasy" />
   </ItemGroup>
   <ItemGroup Condition="$(IsTestProject)">
     <Using Include="Xunit" />
@@ -74,7 +74,7 @@
   </ItemGroup>
   <ItemGroup Condition="$(IsTestProject) Or $(MSBuildProjectName.EndsWith('.TestingUtil'))">
     <PackageReference Include="AutoFixture" />
-    <PackageReference Include="AutoFixture.AutoMoq" />
-    <PackageReference Include="Moq" />
+    <PackageReference Include="AutoFixture.AutoFakeItEasy" />
+    <PackageReference Include="FakeItEasy" />
   </ItemGroup>
 </Project>

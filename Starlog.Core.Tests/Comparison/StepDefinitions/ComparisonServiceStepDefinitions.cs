@@ -44,11 +44,11 @@ public sealed class ComparisonServiceStepDefinitions
             row[5],
             null)).ToImmutableArray();
 
-        var profileLoaderMock = new Mock<IProfileLoader>();
-        _profileLoaderFactory.InstanceToReturn = profileLoaderMock.Object;
+        var profileLoaderMock = A.Fake<IProfileLoader>();
+        _profileLoaderFactory.InstanceToReturn = profileLoaderMock;
 
-        profileLoaderMock.Setup(x => x.LoadProfileAsync(profile, It.IsAny<ILogContainerWriter>()))
-            .Callback((Profile profile, ILogContainerWriter logContainerWriter) =>
+        A.CallTo(() => profileLoaderMock.LoadProfileAsync(profile, A<ILogContainerWriter>.Ignored))
+            .Invokes((Profile profile, ILogContainerWriter logContainerWriter) =>
             {
                 logContainerWriter.AddLogs(records);
 
@@ -59,7 +59,7 @@ public sealed class ComparisonServiceStepDefinitions
                 }
             })
             // TODO: create a proper FilesBasedProfileState
-            .ReturnsAsync(_fixture.Create<ProfileStateBase>());
+            .Returns(_fixture.Create<ProfileStateBase>());
 
         _scenarioContext.Add("Profile" + profileIndex, profile);
     }

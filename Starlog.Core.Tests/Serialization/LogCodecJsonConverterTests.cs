@@ -10,12 +10,12 @@ namespace Genius.Starlog.Core.Tests.Serialization;
 public sealed class LogCodecJsonConverterTests
 {
     private readonly Fixture _fixture = new();
-    private readonly Mock<ILogCodecContainer> _logCodecContainerMock = new();
+    private readonly ILogCodecContainer _logCodecContainerFake = A.Fake<ILogCodecContainer>();
     private readonly LogCodecJsonConverter _sut;
 
     public LogCodecJsonConverterTests()
     {
-        _sut = new LogCodecJsonConverter(_logCodecContainerMock.Object);
+        _sut = new LogCodecJsonConverter(_logCodecContainerFake);
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public sealed class LogCodecJsonConverterTests
     {
         // Arrange
         var value = _fixture.Create<LogCodec>();
-        _logCodecContainerMock.Setup(x => x.GetLogCodecs()).Returns(new [] { value });
+        A.CallTo(() => _logCodecContainerFake.GetLogCodecs()).Returns([value]);
         var input = Encoding.Default.GetBytes($"\"{value.Id}\"");
         var reader = new Utf8JsonReader(input, true, new JsonReaderState());
         reader.Read();

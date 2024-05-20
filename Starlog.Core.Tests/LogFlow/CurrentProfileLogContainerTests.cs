@@ -29,19 +29,19 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     private readonly TestEventBus _eventBus = new();
     private readonly TestSynchronousScheduler _scheduler = new();
     private readonly TestLogger<LogContainer> _logger = new();
-    private readonly Mock<ILogCodecContainerInternal> _logCodecContainerMock = new();
+    private readonly ILogCodecContainerInternal _logCodecContainerMock = A.Fake<ILogCodecContainerInternal>();
 
     private readonly CurrentProfileLogContainer _sut;
 
     private readonly Profile _sampleProfile;
-    private readonly Mock<ILogCodecProcessor> _logCodecProcessorMock;
+    private readonly ILogCodecProcessor _logCodecProcessorMock;
 
     public CurrentProfileLogContainerTests()
     {
         new SupportMutableValueTypesCustomization().Customize(_fixture);
 
         var profileLoaderFactory = new ProfileLoaderFactory(_directoryMonitor, _eventBus, _fileService, _fileWatcherFactory,
-            _logCodecContainerMock.Object, new TestLogger<FileBasedProfileLoader>(), _scheduler);
+            _logCodecContainerMock, new TestLogger<FileBasedProfileLoader>(), _scheduler);
         _sut = new CurrentProfileLogContainer(_eventBus, profileLoaderFactory);
 
         _sampleProfile = new Profile
@@ -54,9 +54,9 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
             }
         };
 
-        _logCodecProcessorMock = new Mock<ILogCodecProcessor>();
-        _logCodecContainerMock.Setup(x => x.FindLogCodecProcessor(_sampleProfile.Settings))
-            .Returns(() => _logCodecProcessorMock.Object);
+        _logCodecProcessorMock = A.Fake<ILogCodecProcessor>();
+        A.CallTo(() => _logCodecContainerMock.FindLogCodecProcessor(_sampleProfile.Settings))
+            .Returns(_logCodecProcessorMock);
     }
 
     [Fact]
@@ -459,7 +459,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
 
     private FileWithContentRecord SampleFile(Profile profile, bool? readFileArtifacts, int fileIndex)
     {
-        _logCodecProcessorMock.Setup(x => x.MayContainSourceArtifacts(profile.Settings)).Returns(true);
+        A.CallTo(() => _logCodecProcessorMock.MayContainSourceArtifacts(profile.Settings)).Returns(true);
 
         var fileName = _fixture.Create<string>() + LOGFILE_EXTENSION;
         var sampleContent = _fixture.CreateMany<byte>(_fixture.Create<int>()).ToArray();
@@ -484,19 +484,19 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
                     return [value, value * 2];
                 })
                 .CreateMany().ToArray()),
-            Mock.Of<ILogFieldsContainer>(),
+            A.Fake<ILogFieldsContainer>(),
             _fixture.CreateMany<LogLevelRecord>().ToArray(),
             []);
     }
 
     private void SetupProcessorRead(Profile profile, FileWithContentRecord fileWithContentRecord, bool? readSourceArtifacts, int? verifyLastReadOffset = null)
     {
-        _logCodecProcessorMock.Setup(x => x.ReadAsync(profile,
-                It.Is<FileRecord>(fr => fr.FullPath.Equals(fileWithContentRecord.FullPath, StringComparison.OrdinalIgnoreCase)),
-                It.IsAny<Stream>(),
-                It.Is<LogReadingSettings>(s => !readSourceArtifacts.HasValue || s.ReadSourceArtifacts == readSourceArtifacts),
-                It.IsAny<ILogFieldsContainer>()))
-            .ReturnsAsync((Profile _, FileRecord fileRecord, Stream stream, LogReadingSettings _, ILogFieldsContainer fields) =>
+        A.CallTo(() => _logCodecProcessorMock.ReadAsync(profile,
+                A<FileRecord>.That.Matches(fr => fr.FullPath.Equals(fileWithContentRecord.FullPath, StringComparison.OrdinalIgnoreCase)),
+                A<Stream>.Ignored,
+                A<LogReadingSettings>.That.Matches(s => !readSourceArtifacts.HasValue || s.ReadSourceArtifacts == readSourceArtifacts),
+                A<ILogFieldsContainer>.Ignored))
+            .ReturnsLazily((Profile _, LogSourceBase fileRecord, Stream stream, LogReadingSettings _, ILogFieldsContainer fields) =>
             {
                 if (verifyLastReadOffset is not null)
                 {

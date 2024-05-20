@@ -18,13 +18,13 @@ public sealed class ProfileLoadingControllerTests
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly TestCommandBus _commandBus = new();
-    private readonly Mock<ICurrentProfile> _currentProfileMock = new();
-    private readonly Mock<IDialogCoordinator> _dialogCoordinatorMock = new();
+    private readonly ICurrentProfile _currentProfileMock = A.Fake<ICurrentProfile>();
+    private readonly IDialogCoordinator _dialogCoordinatorMock = A.Fake<IDialogCoordinator>();
     private readonly TestEventBus _eventBus = new();
-    private readonly Mock<IMainController> _mainControllerMock = new();
-    private readonly Mock<IMainViewModel> _mainViewModelMock = new();
-    private readonly Mock<IProfileSettingsViewModelFactory> _profileSettingsViewModelFactoryMock = new();
-    private readonly Mock<ISettingsQueryService> _settingsQueryMock = new();
+    private readonly IMainController _mainControllerMock = A.Fake<IMainController>();
+    private readonly IMainViewModel _mainViewModelMock = A.Fake<IMainViewModel>();
+    private readonly IProfileSettingsViewModelFactory _profileSettingsViewModelFactoryMock = A.Fake<IProfileSettingsViewModelFactory>();
+    private readonly ISettingsQueryService _settingsQueryMock = A.Fake<ISettingsQueryService>();
     private readonly TestLogger<ProfileLoadingController> _logger = new();
 
     private readonly ProfileLoadingController _sut;
@@ -33,17 +33,17 @@ public sealed class ProfileLoadingControllerTests
 
     public ProfileLoadingControllerTests()
     {
-        _mainControllerMock.SetupGet(x => x.Loaded).Returns(_loadedTask.Task);
+        A.CallTo(() => _mainControllerMock.Loaded).Returns(_loadedTask.Task);
 
         _sut = new(_commandBus,
-            _currentProfileMock.Object,
-            _dialogCoordinatorMock.Object,
+            _currentProfileMock,
+            _dialogCoordinatorMock,
             _eventBus,
             _logger,
-            _mainControllerMock.Object,
-            new Lazy<IMainViewModel>(() => _mainViewModelMock.Object),
-            _settingsQueryMock.Object,
-            _profileSettingsViewModelFactoryMock.Object);
+            _mainControllerMock,
+            new Lazy<IMainViewModel>(() => _mainViewModelMock),
+            _settingsQueryMock,
+            _profileSettingsViewModelFactoryMock);
     }
 
     [Fact]
@@ -51,12 +51,12 @@ public sealed class ProfileLoadingControllerTests
     {
         // Arrange
         var profileSettings = _fixture.Create<ProfileSettingsBase>();
-        _currentProfileMock.Setup(x => x.LoadProfileAsync(It.IsAny<Profile>()))
-            .Callback(() =>
+        A.CallTo(() => _currentProfileMock.LoadProfileAsync(A<Profile>.Ignored))
+            .Invokes(() =>
             {
                 // Ensure the MainViewModel is set to busy
-                _mainControllerMock.Verify(x => x.SetBusy(true), Times.Once);
-                _mainControllerMock.Verify(x => x.SetBusy(false), Times.Never);
+                A.CallTo(() => _mainControllerMock.SetBusy(true)).MustHaveHappenedOnceExactly();
+                A.CallTo(() => _mainControllerMock.SetBusy(false)).MustNotHaveHappened();
             });
         var tab = SetupDummyTabsAnd<ILogsViewModel>();
 
@@ -72,9 +72,9 @@ public sealed class ProfileLoadingControllerTests
         _commandBus.AssertSingleCommand<ProfileLoadAnonymousCommand>(
             x => Assert.Equal(profileSettings, x.Settings)
         );
-        _currentProfileMock.Verify(x => x.LoadProfileAsync(actualProfile), Times.Once);
-        _mainControllerMock.Verify(x => x.ShowLogsTab(), Times.Once);
-        _mainControllerMock.Verify(x => x.SetBusy(false), Times.Once);
+        A.CallTo(() => _currentProfileMock.LoadProfileAsync(actualProfile)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _mainControllerMock.ShowLogsTab()).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _mainControllerMock.SetBusy(false)).MustHaveHappenedOnceExactly();
         Assert.DoesNotContain(_logger.Logs, x => x.LogLevel == LogLevel.Warning);
     }
 
@@ -87,15 +87,17 @@ public sealed class ProfileLoadingControllerTests
             AutoLoadPreviouslyOpenedProfile = true,
             AutoLoadProfile = _fixture.Create<Guid>()
         };
-        _settingsQueryMock.Setup(x => x.Get()).Returns(settings);
+        A.CallTo(() => _settingsQueryMock.Get()).Returns(settings);
         var executed = false;
-        var loadProfileCommand = new Mock<IActionCommand>();
-        loadProfileCommand.Setup(x => x.Execute(null)).Callback(() => executed = true);
-        var profile = Mock.Of<IProfileViewModel>(x => x.Id == settings.AutoLoadProfile && x.LoadProfileCommand == loadProfileCommand.Object);
+        var loadProfileCommand = A.Fake<IActionCommand>();
+        A.CallTo(() => loadProfileCommand.Execute(null)).Invokes(() => executed = true);
+        var profile = A.Fake<IProfileViewModel>();
+        A.CallTo(() => profile.Id).Returns(settings.AutoLoadProfile);
+        A.CallTo(() => profile.LoadProfileCommand).Returns(loadProfileCommand);
         var allProfiles = new DelayedObservableCollection<IProfileViewModel>(_fixture.CreateMany<IProfileViewModel>().Append(profile));
         var profileTab = SetupDummyTabsAnd<IProfilesViewModel>();
-        Mock.Get(profileTab).Setup(x => x.Profiles).Returns(allProfiles);
-        _mainControllerMock.Setup(x => x.GetProfilesTab()).Returns(profileTab);
+        A.CallTo(() => profileTab.Profiles).Returns(allProfiles);
+        A.CallTo(() => _mainControllerMock.GetProfilesTab()).Returns(profileTab);
 
         // Act
         var task = _sut.AutoLoadProfileAsync();
@@ -120,15 +122,15 @@ public sealed class ProfileLoadingControllerTests
         await _sut.AutoLoadProfileAsync();
 
         // Verify
-        _settingsQueryMock.Verify(x => x.Get(), Times.Never);
+        A.CallTo(() => _settingsQueryMock.Get()).MustNotHaveHappened();
     }
 
     private T SetupDummyTabsAnd<T>()
         where T: class, ITabViewModel
     {
-        var tab = Mock.Of<T>();
+        var tab = A.Fake<T>();
         var allTabs = _fixture.CreateMany<ITabViewModel>().Append(tab).ToImmutableArray();
-        _mainViewModelMock.Setup(x => x.Tabs).Returns(allTabs);
+        A.CallTo(() => _mainViewModelMock.Tabs).Returns(allTabs);
         return tab;
     }
 }
