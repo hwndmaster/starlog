@@ -12,7 +12,6 @@
         // Do not generate summary otherwise it leads to duplicate errors in Problems panel
         "/consoleloggerparameters:NoSummary",
         //"/verbosity:n"
-        //"/property:PERSONAL_ENV=true"
       ],
       "group": {
         "kind": "build",
@@ -55,6 +54,7 @@
         "--no-build",
         "--collect:\"Code Coverage;Format=Cobertura;CoverageFileName=coverage.xml\"",
         "--results-directory:.\\TestResults",
+        "--settings:.runsettings",
         "--blame-hang-timeout:30000"
       ],
       "dependsOn": [
