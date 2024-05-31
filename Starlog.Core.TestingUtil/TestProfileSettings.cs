@@ -22,6 +22,6 @@ public sealed class TestProfileSettings : ProfileSettingsBase
         };
     }
 
-    public bool IsCloned { get; private set; } = false;
+    public bool IsCloned { get; private set; }
     public override string Source => throw new NotImplementedException();
 }

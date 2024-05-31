@@ -7,7 +7,7 @@ using Genius.Starlog.Core.ProfileLoading;
 
 namespace Genius.Starlog.Core.LogFlow;
 
-internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile, IDisposable
+internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
 {
     private readonly IEventBus _eventBus;
     private readonly IProfileLoaderFactory _profileLoaderFactory;
@@ -56,9 +56,14 @@ internal sealed class CurrentProfileLogContainer : LogContainer, ICurrentProfile
         _profileClosed.OnNext(Unit.Default);
     }
 
-    public void Dispose()
+    protected override void Dispose(bool disposing)
     {
         _profileDisposable?.Dispose();
+        _profileClosed.Dispose();
+        _profileChanged.Dispose();
+        _unknownChangesDetected.Dispose();
+
+        base.Dispose(disposing);
     }
 
     public Profile? Profile { get; private set; }

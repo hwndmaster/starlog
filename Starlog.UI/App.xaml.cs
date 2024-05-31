@@ -47,7 +47,7 @@ public partial class App : Application
         AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
             if (args.RequestingAssembly is null)
                 return null;
-            var proposedPath = Path.GetDirectoryName(args.RequestingAssembly!.Location) + "\\" + args.Name.Split(',')[0] + ".dll";
+            var proposedPath = Path.Combine(Path.GetDirectoryName(args.RequestingAssembly!.Location)!, args.Name.Split(',')[0] + ".dll");
             if (!File.Exists(proposedPath))
                 proposedPath = args.RequestingAssembly.Location;
             if (!File.Exists(proposedPath))

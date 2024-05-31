@@ -93,13 +93,14 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler, ID
             }
         }
 
-        Regex regex = GetRegex(item);
-        var match = regex.Match(logRecord.Message);
-        if (!match.Success && logRecord.LogArtifacts is not null)
+        Regex? regex = GetRegex(item);
+        var match = regex?.Match(logRecord.Message);
+        if (regex is not null && match is not null
+            && !match.Success && logRecord.LogArtifacts is not null)
         {
             match = regex.Match(logRecord.LogArtifacts);
         }
-        if (!match.Success)
+        if (match is null || !match.Success)
         {
             if (!testingMode)
             {
@@ -119,7 +120,7 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler, ID
         _disposer.Dispose();
     }
 
-    private Regex GetRegex(MessageParsing item)
+    private Regex? GetRegex(MessageParsing item)
     {
         return _regexCache.GetOrAdd(item.Id, (_)
             => {

@@ -11,7 +11,7 @@ public sealed class LocContainerTests
     public void SourceCount_WhenSourceAddedOrRemoved_CountChanged()
     {
         // Arrange
-        var sut = new LogContainer();
+        using var sut = new LogContainer();
         var source1 = new DummyLogSource(_fixture);
         var source2 = new DummyLogSource(_fixture);
 

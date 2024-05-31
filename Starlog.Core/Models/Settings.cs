@@ -9,13 +9,13 @@ public sealed class Settings
     ///   Indicates whether the application should automatically load previously opened profile.
     ///   Works in conjunction with <see cref="AutoLoadProfile" />.
     /// </summary>
-    public bool AutoLoadPreviouslyOpenedProfile { get; set; } = false;
+    public bool AutoLoadPreviouslyOpenedProfile { get; set; }
 
     /// <summary>
     ///   The identifier of the profile to be automatically loaded when the application starts.
     ///   Works in conjunction with <see cref="AutoLoadPreviouslyOpenedProfile" />.
     /// </summary>
-    public Guid? AutoLoadProfile { get; set; } = null;
+    public Guid? AutoLoadProfile { get; set; }
 
     /// <summary>
     ///   A list of pattern templates which can be used in profiles with log codec type "Plain Text".

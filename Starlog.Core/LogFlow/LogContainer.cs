@@ -162,6 +162,12 @@ internal class LogContainer : ILogContainerWriter, IDisposable
 
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
         _disposer.Dispose();
     }
 

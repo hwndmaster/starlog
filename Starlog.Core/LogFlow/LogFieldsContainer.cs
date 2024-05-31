@@ -56,10 +56,10 @@ internal interface ILogFieldsContainer : ILogFieldsContainerReadonly
 internal sealed class LogFieldsContainer : ILogFieldsContainer
 {
     private readonly object fieldAccessingLock = new();
-    private Dictionary<int, int> _fieldIdPerFieldNameHash = new();
-    private List<string> _fieldMapping = new();
-    private List<List<string>> _fieldValues = new();
-    private List<Dictionary<string, int>> _fieldValuesToIndicesMapping = new();
+    private readonly Dictionary<int, int> _fieldIdPerFieldNameHash = [];
+    private List<string> _fieldMapping = [];
+    private List<List<string>> _fieldValues = [];
+    private List<Dictionary<string, int>> _fieldValuesToIndicesMapping = [];
 
     public LogFieldsContainer() {}
 

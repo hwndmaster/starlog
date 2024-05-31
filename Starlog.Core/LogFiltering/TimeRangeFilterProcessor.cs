@@ -7,6 +7,7 @@ public sealed class TimeRangeFilterProcessor : IFilterProcessor
 {
     public bool IsMatch(ProfileFilterBase profileFilter, LogRecord log)
     {
+        Guard.NotNull(profileFilter);
         var filter = (TimeRangeProfileFilter)profileFilter;
 
         return log.DateTime >= filter.TimeFrom && log.DateTime <= filter.TimeTo;

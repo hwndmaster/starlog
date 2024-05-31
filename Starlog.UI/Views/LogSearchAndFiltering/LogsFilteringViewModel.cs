@@ -41,7 +41,7 @@ public sealed class LogsFilteringViewModel : DisposableViewModelBase, ILogsFilte
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _bookmarkedCategory = new LogFilterBookmarkedCategoryViewModel();
     private readonly LogFilterCategoryViewModel<LogFilterMessageParsingViewModel> _messageParsingCategory = new("Message parsing", "MessageParsing32", expanded: true, canAddChildren: true);
     private readonly Subject<Unit> _filterChanged = new();
-    private bool _suspendUpdate = false;
+    private bool _suspendUpdate;
 
 
     public LogsFilteringViewModel(

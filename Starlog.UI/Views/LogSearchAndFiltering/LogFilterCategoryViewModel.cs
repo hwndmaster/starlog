@@ -66,7 +66,7 @@ public class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase, ILogFi
         set => RaiseAndSetIfChanged(value);
     }
 
-    public bool IsPinned { get; set; } = false;
+    public bool IsPinned { get; set; }
 
     public ObservableCollection<TChildViewModel> CategoryItems { get; } = new();
     public CollectionViewSource CategoryItemsView { get; } = new CollectionViewSource();

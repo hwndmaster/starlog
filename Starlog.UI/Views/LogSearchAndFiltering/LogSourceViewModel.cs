@@ -29,7 +29,7 @@ public sealed class LogSourceViewModel : ViewModelBase, ILogFilterNodeViewModel
     public bool CanAddChildren => false;
     public bool CanModifyOrDelete => false;
     public bool CanPin => true;
-    public bool IsExpanded { get; set; } = false;
+    public bool IsExpanded { get; set; }
 
     public bool IsPinned
     {

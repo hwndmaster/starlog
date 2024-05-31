@@ -27,6 +27,8 @@ public static class Module
 {
     public static void Configure(IServiceCollection services, IConfiguration config)
     {
+        Guard.NotNull(config);
+
         // Repositories and Query services
         services.RegisterRepository<Profile, ProfileRepository, IProfileQueryService, IProfileRepository>();
         services.RegisterRepository<ProfileSettingsTemplate, ProfileSettingsTemplateRepository, IProfileSettingsTemplateQueryService, IProfileSettingsTemplateRepository>();

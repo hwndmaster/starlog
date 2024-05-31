@@ -6,5 +6,5 @@ internal sealed class FilesBasedProfileState : ProfileStateBase
 {
     public required bool IsFileBasedProfile { get; init; }
     public required IFileBasedProfileSettings Settings { get; init; }
-    public long LastReadSize { get; set; } = 0;
+    public long LastReadSize { get; set; }
 }

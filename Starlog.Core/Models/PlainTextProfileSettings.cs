@@ -42,7 +42,7 @@ public sealed class PlainTextProfileSettings : ProfileSettingsBase, IFileBasedPr
     ///   Indicates the number of how many lines in each log file are dedicated for the file artifacts.
     ///   Such as command line arguments, the time when file logging has been started, etc.
     /// </summary>
-    public int FileArtifactLinesCount { get; set; } = 0;
+    public int FileArtifactLinesCount { get; set; }
 
     /// <summary>
     ///   Defines a lookup pattern for log files.
