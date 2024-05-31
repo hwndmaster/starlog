@@ -42,7 +42,8 @@ public sealed class ErrorsViewModel : ViewModelBase, IErrorsViewModel, IDisposab
                 Errors += (Errors.Length > 0 ? Environment.NewLine : string.Empty) + args.Reason;
             })
             .DisposeWith(_disposer);
-        WhenChangedNoDispose(nameof(Errors), () => HasAnyError = !string.IsNullOrEmpty(Errors));
+        this.WhenChanged(x => x.Errors)
+            .Subscribe(_ => HasAnyError = !string.IsNullOrEmpty(Errors));
     }
 
     public void Dispose()

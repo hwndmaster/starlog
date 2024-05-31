@@ -19,7 +19,7 @@ public sealed class ProfileRepositoryTests
         // Arrange
         var profiles = _fixture.CreateMany<Profile>().ToArray();
         var anonProfile = _fixture.Build<Profile>().With(x => x.Id, Profile.AnonymousProfileId).Create();
-        var sut = CreateSystemUnderTest(profiles);
+        using var sut = CreateSystemUnderTest(profiles);
         sut.SetAnonymous(anonProfile);
 
         // Pre-verify
@@ -41,7 +41,7 @@ public sealed class ProfileRepositoryTests
         // Arrange
         var profiles = _fixture.CreateMany<Profile>().ToArray();
         var anonProfile = _fixture.Build<Profile>().With(x => x.Id, Profile.AnonymousProfileId).Create();
-        var sut = CreateSystemUnderTest(profiles);
+        using var sut = CreateSystemUnderTest(profiles);
         sut.SetAnonymous(anonProfile);
         var profileToDelete = profiles[0];
 
@@ -71,7 +71,7 @@ public sealed class ProfileRepositoryTests
         // Arrange
         var profiles = _fixture.CreateMany<Profile>().ToArray();
         var anonProfile = _fixture.Build<Profile>().With(x => x.Id, Profile.AnonymousProfileId).Create();
-        var sut = CreateSystemUnderTest(profiles);
+        using var sut = CreateSystemUnderTest(profiles);
         sut.SetAnonymous(anonProfile);
 
         // Act
@@ -91,7 +91,7 @@ public sealed class ProfileRepositoryTests
         // Arrange
         var profiles = _fixture.CreateMany<Profile>().ToArray();
         var anonProfile = _fixture.Build<Profile>().With(x => x.Id, Profile.AnonymousProfileId).Create();
-        var sut = CreateSystemUnderTest(profiles);
+        using var sut = CreateSystemUnderTest(profiles);
         sut.SetAnonymous(anonProfile);
 
         // Act

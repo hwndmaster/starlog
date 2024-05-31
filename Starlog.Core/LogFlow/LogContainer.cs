@@ -9,28 +9,31 @@ namespace Genius.Starlog.Core.LogFlow;
 internal class LogContainer : ILogContainerWriter, IDisposable
 {
     protected readonly Disposer _disposer = new();
-    private readonly ReaderWriterLockSlim _logsAccessingLock;
     private readonly ConcurrentDictionary<string, LogSourceBase> _sources = new();
     private readonly List<LogRecord> _logs = [];
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = [];
     private readonly LogFieldsContainer _fields = new();
 
+#pragma warning disable CA2213 // Disposable fields should be disposed
+    // The following objects are being already added to `_disposer`:
+    private readonly ReaderWriterLockSlim _logsAccessingLock;
     private readonly Subject<LogSourceBase> _sourceAdded;
     private readonly Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)> _sourceRenamed;
     private readonly Subject<LogSourceBase> _sourceRemoved;
     private readonly Subject<int> _sourcesCountChanged;
     private readonly Subject<ImmutableArray<LogRecord>> _logsAdded;
     private readonly Subject<ImmutableArray<LogRecord>> _logsRemoved;
+#pragma warning restore CA2213 // Disposable fields should be disposed
 
     public LogContainer()
     {
-        _logsAccessingLock = new ReaderWriterLockSlim().DisposeWith(_disposer);
-        _logsAdded = new Subject<ImmutableArray<LogRecord>>().DisposeWith(_disposer);
-        _logsRemoved = new Subject<ImmutableArray<LogRecord>>().DisposeWith(_disposer);
-        _sourceAdded = new Subject<LogSourceBase>().DisposeWith(_disposer);
-        _sourceRemoved = new Subject<LogSourceBase>().DisposeWith(_disposer);
-        _sourceRenamed = new Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)>().DisposeWith(_disposer);
-        _sourcesCountChanged = new Subject<int>().DisposeWith(_disposer);
+        _logsAccessingLock = _disposer.Add(new ReaderWriterLockSlim());
+        _logsAdded = _disposer.Add(new Subject<ImmutableArray<LogRecord>>());
+        _logsRemoved = _disposer.Add(new Subject<ImmutableArray<LogRecord>>());
+        _sourceAdded = _disposer.Add(new Subject<LogSourceBase>());
+        _sourceRemoved = _disposer.Add(new Subject<LogSourceBase>());
+        _sourceRenamed = _disposer.Add(new Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)>());
+        _sourcesCountChanged = _disposer.Add(new Subject<int>());
 
         _sourceAdded
             .Concat(_sourceRemoved)

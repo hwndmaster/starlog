@@ -35,10 +35,11 @@ internal sealed class DirectoryMonitor : IDirectoryMonitor
             throw new InvalidOperationException("Monitoring has already been started.");
         }
 
+        _cancellation?.Cancel();
         _cancellation = new CancellationTokenSource();
 
         _backgroundTask = CreateNeverEndingTask(now => DoWork(path, searchPattern), _cancellation.Token);
-        _backgroundTask.Post(default);
+        _backgroundTask.Post(new object());
 
         return new DisposableAction(() => StopMonitoring());
     }
@@ -47,17 +48,20 @@ internal sealed class DirectoryMonitor : IDirectoryMonitor
     {
         Interlocked.Exchange(ref _interrupted, 1);
         _cancellation?.Cancel();
-        _cancellation = null;
         _backgroundTask = null;
     }
 
     public void Dispose()
     {
         StopMonitoring();
+
+        _cancellation?.Dispose();
+        _cancellation = null;
+        _pulse.Dispose();
     }
 
     // Consider detaching from DirectoryMonitor
-    private ITargetBlock<object?> CreateNeverEndingTask(
+    private static ITargetBlock<object?> CreateNeverEndingTask(
         Action<object?> action, CancellationToken cancellationToken)
     {
         Guard.NotNull(action);

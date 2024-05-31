@@ -49,11 +49,11 @@ internal sealed class ProfileFilterViewModelFactory : IProfileFilterViewModelFac
         return profileFilter switch
         {
             FilesProfileFilter files => new FilesProfileFilterSettingsViewModel(files, _logContainer),
-            MessageProfileFilter message => new MessageProfileFilterSettingsViewModel(message, _logContainer),
+            MessageProfileFilter message => new MessageProfileFilterSettingsViewModel(message),
             FieldProfileFilter field => new FieldProfileFilterSettingsViewModel(field, _logContainer),
             LogLevelsProfileFilter logLevels => new LogLevelsProfileFilterSettingsViewModel(logLevels, _logContainer),
-            TimeAgoProfileFilter timeAgo => new TimeAgoProfileFilterSettingsViewModel(timeAgo, _logContainer),
-            TimeRangeProfileFilter timeRange => new TimeRangeProfileFilterSettingsViewModel(timeRange, _logContainer, isNewFilter),
+            TimeAgoProfileFilter timeAgo => new TimeAgoProfileFilterSettingsViewModel(timeAgo),
+            TimeRangeProfileFilter timeRange => new TimeRangeProfileFilterSettingsViewModel(timeRange, isNewFilter),
             _ => throw new InvalidOperationException($"{nameof(profileFilter)} is of unexpected type {profileFilter.GetType().Name}")
         };
     }

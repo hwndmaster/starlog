@@ -27,7 +27,6 @@ public interface ILogsViewModel : ITabViewModel, IDisposable
     ObservableCollection<ILogItemViewModel> SelectedLogItems { get; }
 }
 
-// TODO: Cover with unit tests
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 {
     public record ColorizeByRecord(string Title, bool ForField, int? FieldId);
@@ -42,7 +41,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private readonly CompositeDisposable _subscriptions = new();
     private readonly int _predefinedGroupByOptionsCount;
     private LogRecordMatcherContext? _filterContext;
-    private bool _suspendUpdate = false;
+    private bool _suspendUpdate;
 
     public LogsViewModel(
         ICurrentProfile currentProfile,

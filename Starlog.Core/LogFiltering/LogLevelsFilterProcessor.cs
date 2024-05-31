@@ -7,8 +7,9 @@ public sealed class LogLevelsFilterProcessor : IFilterProcessor
 {
     public bool IsMatch(ProfileFilterBase profileFilter, LogRecord log)
     {
-        var filter = (LogLevelsProfileFilter)profileFilter;
+        Guard.NotNull(profileFilter);
 
+        var filter = (LogLevelsProfileFilter)profileFilter;
         var result = filter.LogLevels.Contains(log.Level.Name, StringComparer.OrdinalIgnoreCase);
 
         return filter.Exclude ? !result : result;

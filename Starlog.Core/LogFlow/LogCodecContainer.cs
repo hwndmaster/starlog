@@ -44,12 +44,7 @@ internal sealed class LogCodecContainer : ILogCodecContainerInternal, IQueryServ
 
     public ILogCodecSettingsReader FindLogCodecSettingsReader(ProfileSettingsBase profileSettings)
     {
-        if (!_registeredLogCodecs.TryGetValue(profileSettings.LogCodec.Id, out var value))
-        {
-            throw new InvalidOperationException("The log codec '" + profileSettings.LogCodec.Id + "' doesn't exists.");
-        }
-
-        return _processors.Value.First(x => x.GetType() == value.ProcessorType);
+        return FindLogCodecProcessor(profileSettings);
     }
 
     public ILogCodecProcessor FindLogCodecProcessor(ProfileSettingsBase profileSettings)
@@ -64,14 +59,12 @@ internal sealed class LogCodecContainer : ILogCodecContainerInternal, IQueryServ
 
     public Task<LogCodec?> FindByIdAsync(Guid entityId)
     {
-        // TODO: Cover with unit tests
         var hasRecord = _registeredLogCodecs.TryGetValue(entityId, out var record);
         return Task.FromResult(hasRecord ? record.Codec : null);
     }
 
     public Task<IEnumerable<LogCodec>> GetAllAsync()
     {
-        // TODO: Cover with unit tests
         return Task.FromResult(GetLogCodecs());
     }
 

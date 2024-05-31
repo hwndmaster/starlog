@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core.Models;
 
@@ -12,13 +13,12 @@ public interface IProfileFilterSettingsViewModel : IViewModel
     string Name { get; set; }
 }
 
-// TODO: Cover with unit tests
 public abstract class ProfileFilterSettingsViewModel<TProfileFilter> : ViewModelBase, IProfileFilterSettingsViewModel
     where TProfileFilter : ProfileFilterBase
 {
     protected TProfileFilter _profileFilter;
 
-    protected ProfileFilterSettingsViewModel(TProfileFilter profileFilter)
+    protected ProfileFilterSettingsViewModel([NotNull] TProfileFilter profileFilter)
     {
         _profileFilter = profileFilter.NotNull();
 

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.UI.Views;
@@ -12,7 +13,6 @@ public interface IClipboardHelper
     void CopyToClipboard(string content);
 }
 
-// TODO: Cover with unit tests
 internal sealed class ClipboardHelper : IClipboardHelper
 {
     private readonly ILogContainer _logContainer;
@@ -56,14 +56,14 @@ internal sealed class ClipboardHelper : IClipboardHelper
                 {
                     sb.AppendLine();
                 }
-                var d = item.DateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                sb.Append($"{d}\t\t{item.Level.Name}");
+                var d = item.DateTime.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentCulture);
+                sb.Append(CultureInfo.CurrentCulture, $"{d}\t\t{item.Level.Name}");
                 for (var fieldId = 0; fieldId < item.FieldValueIndices.Length; fieldId++)
                 {
                     var value = fields.GetFieldValue(fieldId, item.FieldValueIndices[fieldId]);
-                    sb.Append($"\t{fieldsDict[fieldId]} {value}");
+                    sb.Append(CultureInfo.CurrentCulture, $"\t{fieldsDict[fieldId]} {value}");
                 }
-                sb.AppendLine($"\t{item.Message}");
+                sb.AppendLine(CultureInfo.CurrentCulture, $"\t{item.Message}");
 
                 if (!string.IsNullOrEmpty(item.LogArtifacts))
                 {

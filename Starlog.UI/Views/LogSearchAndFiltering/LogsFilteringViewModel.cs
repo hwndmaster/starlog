@@ -25,7 +25,6 @@ public interface ILogsFilteringViewModel : IDisposable
     IObservable<Unit> FilterChanged { get; }
 }
 
-// TODO: Cover with unit tests
 public sealed class LogsFilteringViewModel : DisposableViewModelBase, ILogsFilteringViewModel
 {
     private readonly ICommandBus _commandBus;
@@ -293,7 +292,6 @@ public sealed class LogsFilteringViewModel : DisposableViewModelBase, ILogsFilte
         return vms;
     }
 
-    // TODO: Cover with unit tests
     private IEnumerable<ILogFilterNodeViewModel> AddMessageParsings(IEnumerable<MessageParsing> messageParsings)
     {
         var vms = messageParsings.Select(x =>

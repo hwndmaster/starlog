@@ -7,6 +7,9 @@ public sealed class TicksToDateTimeConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
+        if (value is null)
+            return default!;
+
         long ticks;
         if (value is string stringValue)
         {
@@ -22,7 +25,7 @@ public sealed class TicksToDateTimeConverter : IValueConverter
         }
 
         var dt = new DateTimeOffset(ticks, TimeSpan.Zero);
-        return dt.ToString("yyyy-MM-dd HH:mm:ss.fff");
+        return dt.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentCulture);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

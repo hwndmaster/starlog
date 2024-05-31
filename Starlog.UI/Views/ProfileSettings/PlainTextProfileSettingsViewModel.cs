@@ -5,7 +5,6 @@ using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.UI.Views.ProfileSettings;
 
-// TODO: Cover with unit tests
 public sealed class PlainTextProfileSettingsViewModel : ProfileSettingsBaseViewModel
 {
     private readonly PlainTextProfileSettings _plainTextProfileSettings;

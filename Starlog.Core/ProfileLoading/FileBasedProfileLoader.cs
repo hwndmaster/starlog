@@ -1,5 +1,4 @@
 using System.Reactive;
-using System.Reactive.Disposables;
 using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.Infrastructure.Io;
@@ -12,7 +11,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.ProfileLoading;
 
-// TODO: Cover with unit tests
 internal sealed class FileBasedProfileLoader : IProfileLoader
 {
     internal const int UPDATE_LASTREADSIZE_WAIT_TIMEOUT_MS = 200;
@@ -182,7 +180,7 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         return true;
     }
 
-    private async Task DirectoryMonitor_PulseAsync(FilesBasedProfileState profileState, long profileDirectorySize, Subject<Unit> unknownChangesDetectedSubject)
+    private static async Task DirectoryMonitor_PulseAsync(FilesBasedProfileState profileState, long profileDirectorySize, Subject<Unit> unknownChangesDetectedSubject)
     {
         if (profileState.LastReadSize != profileDirectorySize)
         {
@@ -229,14 +227,12 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
                 }
                 else
                 {
-                    // TODO: Cover with unit tests
                     _scheduler.Schedule(async () => await LoadFileAsync(profileState.Profile, e.FullPath, logContainer));
                 }
             });
         }
         else if (e.ChangeType == WatcherChangeTypes.Deleted)
         {
-            // TODO: Cover with unit tests
             logContainer.RemoveSource(e.FullPath);
         }
     }

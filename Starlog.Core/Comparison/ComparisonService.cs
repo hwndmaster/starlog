@@ -23,7 +23,6 @@ internal sealed partial class ComparisonService : IComparisonService
         _profileLoaderFactory = profileLoaderFactory.NotNull();
     }
 
-    // TODO: Cover with unit tests
     public async Task<ComparisonContext?> LoadProfilesAsync(Profile profile1, Profile profile2)
     {
         var logContainer1 = new LogContainer();
@@ -41,9 +40,9 @@ internal sealed partial class ComparisonService : IComparisonService
         var taskProfileLoading1 = profileLoader1.LoadProfileAsync(profile1, logContainer1);
         var taskProfileLoading2 = profileLoader2.LoadProfileAsync(profile2, logContainer2);
 
-        await Task.WhenAll(taskProfileLoading1, taskProfileLoading2).ConfigureAwait(false);
+        var results = await Task.WhenAll(taskProfileLoading1, taskProfileLoading2).ConfigureAwait(false);
 
-        if (taskProfileLoading1.Result is null || taskProfileLoading2.Result is null)
+        if (results.Any(x => x is null))
         {
             return null;
         }

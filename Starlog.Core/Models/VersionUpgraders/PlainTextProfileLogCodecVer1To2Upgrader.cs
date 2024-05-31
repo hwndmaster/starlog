@@ -14,6 +14,8 @@ public class PlainTextProfileLogCodecVer1To2Upgrader : IDataVersionUpgrader<Plai
 
     public PlainTextProfileLogCodecV2 Upgrade(PlainTextProfileLogCodecV1 value)
     {
+        Guard.NotNull(value);
+
         var foundItem = _settings.Value.PlainTextLogCodecLinePatterns.FirstOrDefault(x => x.Pattern.Equals(value.LineRegex));
 
         return new PlainTextProfileLogCodecV2

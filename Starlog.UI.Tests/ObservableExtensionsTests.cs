@@ -4,8 +4,6 @@ namespace Genius.Starlog.UI.Tests;
 
 public sealed class ObservableExtensionsTests
 {
-    private readonly IFixture _fixture = new Fixture();
-
     [Fact]
     public void OnOneTimeExecutedBooleanAction_WhenSimpleActionCommand()
     {

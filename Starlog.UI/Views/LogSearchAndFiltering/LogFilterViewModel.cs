@@ -6,7 +6,6 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 
-// TODO: Cover with unit tests
 public sealed class LogFilterViewModel : DisposableViewModelBase, ILogFilterNodeViewModel,
     IHasModifyCommand, IHasDeleteCommand, ISelectable
 {
@@ -49,7 +48,7 @@ public sealed class LogFilterViewModel : DisposableViewModelBase, ILogFilterNode
         OnPropertyChanged(nameof(Title));
     }
 
-    private string FindBestMatchingIcon(FieldProfileFilter field)
+    private static string FindBestMatchingIcon(FieldProfileFilter field)
     {
         if (field.Name.StartsWith("logger", StringComparison.InvariantCultureIgnoreCase)
             || field.Name.StartsWith("component", StringComparison.InvariantCultureIgnoreCase))
@@ -89,7 +88,7 @@ public sealed class LogFilterViewModel : DisposableViewModelBase, ILogFilterNode
     public bool CanAddChildren => false;
     public bool CanModifyOrDelete => IsUserDefined;
     public bool CanPin => true;
-    public bool IsExpanded { get; set; } = false;
+    public bool IsExpanded { get; set; }
 
     public bool IsPinned
     {

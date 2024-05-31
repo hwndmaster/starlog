@@ -31,7 +31,6 @@ public interface ILogItemViewModel : IViewModel
     DynamicColumnEntriesViewModel? MessageParsingEntries { get; set; }
 }
 
-// TODO: Cover with unit tests
 public sealed partial class LogItemViewModel : ViewModelBase, ILogItemViewModel
 {
     private readonly ILogContainer _logContainer;

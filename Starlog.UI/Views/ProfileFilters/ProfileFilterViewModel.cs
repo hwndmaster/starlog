@@ -14,12 +14,10 @@ public interface IProfileFilterViewModel
     IActionCommand CommitFilterCommand { get; }
 }
 
-// TODO: Cover with unit tests
 public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewModel
 {
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
-    private readonly ILogFilterContainer _logFilterContainer;
     private readonly IUserInteraction _ui;
     private ProfileFilterBase? _profileFilter;
 
@@ -33,18 +31,19 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         IProfileFilterViewModelFactory vmFactory)
     {
         Guard.NotNull(logContainer);
+        Guard.NotNull(logFilterContainer);
+        Guard.NotNull(vmFactory);
 
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
-        _logFilterContainer = logFilterContainer.NotNull();
         _ui = ui.NotNull();
 
         // Members initialization:
         _profileFilter = profileFilter;
         FilterTypeCanBeChanged = _profileFilter is null;
 
-        foreach (var logFilter in _logFilterContainer.GetLogFilters())
+        foreach (var logFilter in logFilterContainer.GetLogFilters())
         {
             if (logFilter.Id == FieldProfileFilter.LogFilterId && logContainer.GetFields().GetThreadFieldIfAny() is null)
             {
@@ -63,7 +62,7 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         });
 
         // Actions:
-        CommitFilterCommand = new ActionCommand(_ => CommitFilter());
+        CommitFilterCommand = new ActionCommand(async _ => await CommitFilterAsync());
         ResetCommand = new ActionCommand(_ => FilterSettings.ResetChanges(), _ => _profileFilter is not null);
     }
 
@@ -77,7 +76,7 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         FilterSettings = FilterTypes.First(x => x.ProfileFilter.LogFilter.Id == _profileFilter.LogFilter.Id);
     }
 
-    private async Task<bool> CommitFilter()
+    private async Task<bool> CommitFilterAsync()
     {
         Guard.NotNull(_currentProfile.Profile);
 

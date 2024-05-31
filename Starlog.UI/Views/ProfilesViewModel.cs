@@ -23,7 +23,6 @@ public interface IProfilesViewModel : ITabViewModel, IDisposable
     ICommand DeleteProfileCommand { get; }
 }
 
-// TODO: Cover with unit tests
 public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 {
     private readonly IComparisonController _comparisonController;

@@ -22,7 +22,6 @@ public interface IProfileViewModel : ISelectable
     IActionCommand LocateCommand { get; }
 }
 
-// TODO: Cover with unit tests
 public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
 {
     private readonly ICommandBus _commandBus;
@@ -62,7 +61,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         });
 
         // Actions:
-        CommitProfileCommand = new ActionCommand(_ => CommitProfile());
+        CommitProfileCommand = new ActionCommand(async _ => await CommitProfileAsync());
         LoadProfileCommand = new ActionCommand(async _ => await profileLoadingController.LoadProfileAsync(_profile!));
         LocateCommand = new ActionCommand(_ => _controller.Locate(_profile!),
             _ => _profile is not null);
@@ -78,7 +77,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         ProfileSettings.CopyFrom(sourceProfile.ProfileSettings);
     }
 
-    private async Task<bool> CommitProfile()
+    private async Task<bool> CommitProfileAsync()
     {
         Validate();
 

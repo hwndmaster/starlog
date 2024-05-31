@@ -14,8 +14,9 @@ public sealed class FieldFilterProcessor : IFilterProcessor
 
     public bool IsMatch(ProfileFilterBase profileFilter, LogRecord log)
     {
-        var filter = (FieldProfileFilter)profileFilter;
+        Guard.NotNull(profileFilter);
 
+        var filter = (FieldProfileFilter)profileFilter;
         var fieldValueId = log.FieldValueIndices[filter.FieldId];
         var fieldValue = _logContainer.GetFields().GetFieldValue(filter.FieldId, fieldValueId);
         var result = filter.Values.Contains(fieldValue, StringComparer.OrdinalIgnoreCase);

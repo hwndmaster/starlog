@@ -13,6 +13,7 @@ public sealed class AnonymousProfileLoadSettingsViewModel : ViewModelBase
         IActionCommand<ProfileSettingsBase> confirmCommand)
     {
         // Dependencies:
+        Guard.NotNull(logCodecContainer);
         Guard.NotNull(vmFactory);
 
         // Members initialization:

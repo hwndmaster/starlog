@@ -207,7 +207,7 @@ public sealed class LogRecordMatcherTests
                 return false;
             if (filter == filters[1])
                 return true;
-            throw new Exception();
+            throw new InvalidOperationException();
         });
 
         // Act

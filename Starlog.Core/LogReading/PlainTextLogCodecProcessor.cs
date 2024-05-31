@@ -13,7 +13,12 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
     private readonly ISettingsQueryService _settingsQuery;
     private readonly ILogger<PlainTextLogCodecLineMaskPatternParser> _plainTextLogCodecLineMaskPatternParserLogger;
 
-    public PlainTextLogCodecProcessor(ISettingsQueryService settingsQuery, IMaskPatternParser maskPatternParser, ILogger<PlainTextLogCodecLineMaskPatternParser> plainTextLogCodecLineMaskPatternParserLogger)
+    public PlainTextLogCodecProcessor(
+        ISettingsQueryService settingsQuery,
+        IMaskPatternParser maskPatternParser,
+#pragma warning disable S6672 // Generic logger injection should match enclosing type
+        ILogger<PlainTextLogCodecLineMaskPatternParser> plainTextLogCodecLineMaskPatternParserLogger)
+#pragma warning restore S6672 // Generic logger injection should match enclosing type
     {
         _maskPatternParser = maskPatternParser.NotNull();
         _settingsQuery = settingsQuery.NotNull();

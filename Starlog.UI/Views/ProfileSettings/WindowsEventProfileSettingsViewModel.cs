@@ -4,7 +4,6 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.ProfileSettings;
 
-// TODO: Cover with unit tests
 public sealed class WindowsEventProfileSettingsViewModel : ProfileSettingsBaseViewModel
 {
     private readonly WindowsEventProfileSettings _windowsEventLogCodec;

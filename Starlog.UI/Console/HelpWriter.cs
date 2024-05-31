@@ -4,7 +4,6 @@ using System.Text;
 
 namespace Genius.Starlog.UI.Console;
 
-// TODO: Cover with unit tests
 public class HelpWriter : TextWriter
 {
     private readonly Subject<string> _textWritten = new();
@@ -17,6 +16,13 @@ public class HelpWriter : TextWriter
         }
 
         base.Write(value);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+
+        _textWritten.Dispose();
     }
 
     public override Encoding Encoding => Encoding.UTF8;

@@ -2,7 +2,6 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.ProfileSettings;
 
-// TODO: Cover with unit tests
 public abstract class ProfileSettingsBaseViewModel : ViewModelBase
 {
     protected ProfileSettingsBaseViewModel(ProfileSettingsBase profileSettings)

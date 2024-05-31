@@ -58,7 +58,7 @@ public sealed class ProfileLoadingControllerTests
                 A.CallTo(() => _mainControllerMock.SetBusy(true)).MustHaveHappenedOnceExactly();
                 A.CallTo(() => _mainControllerMock.SetBusy(false)).MustNotHaveHappened();
             });
-        var tab = SetupDummyTabsAnd<ILogsViewModel>();
+        SetupDummyTabsAnd<ILogsViewModel>();
 
         // Act
         var loadPathTask = _sut.LoadProfileSettingsAsync(profileSettings);

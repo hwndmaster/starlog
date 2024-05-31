@@ -61,13 +61,13 @@ internal sealed class ConsoleController : IConsoleController
             var logCodec = _logCodecContainer.GetLogCodecs().FirstOrDefault(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
             if (logCodec is null)
             {
-                _logger.LogWarning("Couldn't load a profile with unknown codec '{codec}'.", codecName);
+                _logger.LogWarning("Couldn't load a profile with unknown codec '{Codec}'.", codecName);
                 return;
             }
             settings = _logCodecContainer.CreateProfileSettings(logCodec);
             if (settings is null)
             {
-                _logger.LogWarning("Couldn't create profile codec settings for codec '{codec}'.", codecName);
+                _logger.LogWarning("Couldn't create profile codec settings for codec '{Codec}'.", codecName);
                 return;
             }
             if (options.CodecSettings is not null)
@@ -76,7 +76,7 @@ internal sealed class ConsoleController : IConsoleController
                 if (!logCodecSettingsReader.ReadFromCommandLineArguments(settings, options.CodecSettings.ToArray()))
                 {
                     // Couldn't read arguments, terminating...
-                    _logger.LogWarning("Couldn't load a profile from '{path}' with codec '{codec}' and the following settings: {settings}", options.Path, codecName, string.Join(',', options.CodecSettings));
+                    _logger.LogWarning("Couldn't load a profile from '{Path}' with codec '{Codec}' and the following settings: {Settings}", options.Path, codecName, string.Join(',', options.CodecSettings));
                     return;
                 }
             }

@@ -1,6 +1,5 @@
 namespace Genius.Starlog.UI.Views.Comparison;
 
-// TODO: Cover with unit tests
 public sealed class LogItemPairViewModel : ViewModelBase
 {
     private readonly LogItemViewModel _item1;

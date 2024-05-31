@@ -6,7 +6,7 @@ using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.Tests.Views;
 
-public sealed class ErrorsViewModelTests
+public sealed class ErrorsViewModelTests : IDisposable
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly ProfileHarness _profileHarness = new();
@@ -16,6 +16,11 @@ public sealed class ErrorsViewModelTests
     public ErrorsViewModelTests()
     {
         _sut = new ErrorsViewModel(_profileHarness.CurrentProfile, _eventBus);
+    }
+
+    public void Dispose()
+    {
+        _sut.Dispose();
     }
 
     [Fact]

@@ -1,19 +1,14 @@
-using System.Reactive.Linq;
 using Genius.Atom.UI.Forms.Validation;
-using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
-// TODO: Cover with unit tests
 public sealed class TimeRangeProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<TimeRangeProfileFilter>
 {
-    public TimeRangeProfileFilterSettingsViewModel(TimeRangeProfileFilter profileFilter, ILogContainer logContainer, bool isNewFilter)
+    public TimeRangeProfileFilterSettingsViewModel(TimeRangeProfileFilter profileFilter, bool isNewFilter)
         : base(profileFilter)
     {
-        Guard.NotNull(logContainer);
-
         // Members initialization:
         AddValidationRule(new [] { nameof(TimeFrom), nameof(TimeTo) },
             new ValueRangeValidationRule<DateTime>(() => TimeFrom, () => TimeTo));
@@ -29,8 +24,8 @@ public sealed class TimeRangeProfileFilterSettingsViewModel : ProfileFilterSetti
         ResetChangesInternal();
 
         // Subscriptions:
-        WhenAnyChangedNoDispose([nameof(TimeFrom), nameof(TimeTo)],
-            () => Name = LogFilterHelpers.ProposeNameForTimeRange(TimeFrom, TimeTo));
+        this.WhenAnyChanged(x => x.TimeFrom, x => x.TimeTo)
+            .Subscribe(_ => Name = LogFilterHelpers.ProposeNameForTimeRange(TimeFrom, TimeTo));
     }
 
     protected override void CommitChangesInternal()

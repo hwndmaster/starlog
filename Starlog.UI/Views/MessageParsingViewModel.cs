@@ -30,7 +30,6 @@ public sealed class MessageParsingTestViewModel : ViewModelBase
     public DynamicColumnEntriesViewModel? Entries { get; set; }
 }
 
-// TODO: Cover with unit tests
 public sealed class MessageParsingViewModel : DisposableViewModelBase, IMessageParsingViewModel
 {
     private readonly ICommandBus _commandBus;

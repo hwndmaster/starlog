@@ -11,6 +11,8 @@ public sealed class MessageFilterProcessor : IFilterProcessor
 
     public bool IsMatch(ProfileFilterBase profileFilter, LogRecord log)
     {
+        Guard.NotNull(profileFilter);
+
         var filter = (MessageProfileFilter)profileFilter;
 
         if (filter.IsRegex)

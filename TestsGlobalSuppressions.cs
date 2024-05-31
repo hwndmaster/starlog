@@ -7,6 +7,6 @@ using System.Diagnostics.CodeAnalysis;
 
 // SonarLint-related analyzers cannot be disabled in .editorconfig file, therefore disabling them here.
 
-[assembly: SuppressMessage("Minor Code Smell", "S3459:Unassigned members should be removed", Justification = "<Pending>")]
-[assembly: SuppressMessage("Major Code Smell", "S1144:Unused private types or members should be removed", Justification = "<Pending>")]
-[assembly: SuppressMessage("Major Code Smell", "S6562:Always set the \"DateTimeKind\" when creating new \"DateTime\" instances", Justification = "<Pending>")]
+[assembly: SuppressMessage("", "S1144:Unused private types or members should be removed", Justification = "<Pending>")]
+[assembly: SuppressMessage("", "S3459:Unassigned members should be removed", Justification = "<Pending>")]
+[assembly: SuppressMessage("", "S6562:Always set the \"DateTimeKind\" when creating new \"DateTime\" instances", Justification = "<Pending>")]

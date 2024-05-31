@@ -13,7 +13,7 @@ public sealed class LogFieldToColorConverter : IMultiValueConverter
 
     public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (values.Length == 0)
+        if (values is null || values.Length == 0)
             return null;
         if (values[0] is not ILogItemViewModel vm)
             throw new InvalidOperationException("Expected a view model of LogItemViewModel type.");

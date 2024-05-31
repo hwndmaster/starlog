@@ -1,19 +1,14 @@
-using System.Reactive.Linq;
 using Genius.Atom.UI.Forms.Validation;
-using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
-// TODO: Cover with unit tests
 public sealed class MessageProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<MessageProfileFilter>
 {
-    public MessageProfileFilterSettingsViewModel(MessageProfileFilter profileFilter, ILogContainer logContainer)
+    public MessageProfileFilterSettingsViewModel(MessageProfileFilter profileFilter)
         : base(profileFilter)
     {
-        Guard.NotNull(logContainer);
-
         // Members initialization:
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Pattern)));
         AddValidationRule(new IsRegexValidationRule(nameof(Pattern)), shouldValidatePropertyName: nameof(IsRegex));

@@ -7,7 +7,7 @@ namespace Genius.Starlog.Core.Models;
 /// </summary>
 public sealed class FieldProfileFilter : ProfileFilterBase
 {
-    public static Guid LogFilterId = new Guid("84a5fa19-2eeb-454a-afe9-eee8fe44bac0");
+    public static readonly Guid LogFilterId = new Guid("84a5fa19-2eeb-454a-afe9-eee8fe44bac0");
 
     [JsonConstructor]
     public FieldProfileFilter(LogFilter logFilter)

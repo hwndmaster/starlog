@@ -9,7 +9,7 @@ public sealed class PatternValueViewModel : ViewModelBase
 
     public PatternValueViewModel(PatternValue patternValue)
     {
-        _patternValue = patternValue;
+        _patternValue = patternValue.NotNull();
 
         // Members initialization:
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Pattern)));
@@ -21,7 +21,8 @@ public sealed class PatternValueViewModel : ViewModelBase
         IsRegex = Type == PatternType.RegularExpression;
 
         // Subscriptions:
-        WhenChangedNoDispose(nameof(Type), () => IsRegex = Type == PatternType.RegularExpression);
+        this.WhenChanged(x => x.Type)
+            .Subscribe(_ => IsRegex = Type == PatternType.RegularExpression);
     }
 
     public PatternValue Commit()

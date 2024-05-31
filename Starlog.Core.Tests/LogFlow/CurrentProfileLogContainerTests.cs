@@ -394,14 +394,14 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         // Arrange
         SampleFiles(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
-        var exception = new Exception(_fixture.Create<string>());
+        var exception = new InvalidOperationException(_fixture.Create<string>());
 
         // Act
         Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
         _fileWatcherFactory.RecentlyCreatedInstance.OnError(exception);
 
         // Verify
-        _logger.Logs.Any(x => x.LogLevel == LogLevel.Error
+        Assert.Contains(_logger.Logs, x => x.LogLevel == LogLevel.Error
             && x.Message.Equals(exception.Message)
             && x.Exception == exception);
     }

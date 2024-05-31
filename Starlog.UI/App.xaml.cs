@@ -4,8 +4,10 @@ global using System.Linq;
 global using System.Windows;
 global using Genius.Atom.Infrastructure;
 global using Genius.Atom.UI.Forms;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using Genius.Atom.Infrastructure.Tasks;
 using Genius.Starlog.Core;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Console;
@@ -73,8 +75,8 @@ public partial class App : Application
         mainWindow.Loaded += (_, __) => mainController.NotifyMainWindowIsLoaded();
         mainWindow.Show();
 
-        consoleParser.Process(e.Args);
-        Task.Run(() => profileLoadingController.AutoLoadProfileAsync());
+        consoleParser.Process(e?.Args ?? Array.Empty<string>());
+        Task.Run(() => profileLoadingController.AutoLoadProfileAsync()).RunAndForget();
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -133,7 +135,10 @@ public partial class App : Application
             var logger = ServiceProvider.GetService<ILogger<App>>();
             logger?.LogCritical(e.Exception, e.Exception.Message);
         }
-        catch (Exception) {}
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+        }
 
 #if !DEBUG
         MessageBox.Show("An unhandled exception just occurred: " + e.Exception.Message, "Unhandled Exception", MessageBoxButton.OK, MessageBoxImage.Warning);

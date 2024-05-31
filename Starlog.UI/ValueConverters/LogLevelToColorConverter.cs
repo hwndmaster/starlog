@@ -31,6 +31,8 @@ public sealed class LogLevelToColorConverter : IValueConverter
 
     public LogLevelToColorConverter(FrameworkElement anyElement)
     {
+        Guard.NotNull(anyElement);
+
         _standardColor = (Color)anyElement.FindResource("MahApps.Colors.ThemeForeground");
     }
 

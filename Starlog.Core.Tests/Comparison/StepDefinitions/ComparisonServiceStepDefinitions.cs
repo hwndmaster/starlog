@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core.Comparison;
 using Genius.Starlog.Core.LogFlow;
@@ -35,7 +36,7 @@ public sealed class ComparisonServiceStepDefinitions
         };
 
         var records = table.Rows.Select(row => new LogRecord(
-            DateTimeOffset.Parse(row[0]),
+            DateTimeOffset.Parse(row[0], CultureInfo.CurrentCulture),
             new LogLevelRecord(row[1].GetHashCode(), row[0]),
             // TODO: row[2],
             new FileRecord(_fixture.Create<string>() + @"\" + row[3], _fixture.Create<long>()),
@@ -93,7 +94,7 @@ public sealed class ComparisonServiceStepDefinitions
 
             if (!string.IsNullOrEmpty(expectedRecordIndex1))
             {
-                Assert.Equal(refRecords1[int.Parse(expectedRecordIndex1) - 1], record.Record1);
+                Assert.Equal(refRecords1[int.Parse(expectedRecordIndex1, CultureInfo.CurrentCulture) - 1], record.Record1);
             }
             else
             {
@@ -101,7 +102,7 @@ public sealed class ComparisonServiceStepDefinitions
             }
             if (!string.IsNullOrEmpty(expectedRecordIndex2))
             {
-                Assert.Equal(refRecords2[int.Parse(expectedRecordIndex2) - 1], record.Record2);
+                Assert.Equal(refRecords2[int.Parse(expectedRecordIndex2, CultureInfo.CurrentCulture) - 1], record.Record2);
             }
             else
             {

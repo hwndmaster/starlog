@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Windows.Data;
-using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.ValueConverters;
 
@@ -8,7 +7,7 @@ public sealed class TickRangeToTimeConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (values.Length != 2)
+        if (values is null || values.Length != 2)
         {
             return DependencyProperty.UnsetValue;
         }

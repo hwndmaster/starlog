@@ -10,7 +10,6 @@ public interface ILogArtifactsFormatter
     FlowDocument CreateArtifactsDocument(SourceArtifacts? fileArtifacts, string? logArtifacts);
 }
 
-// TODO: Cover with unit tests
 public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
 {
     public FlowDocument CreateArtifactsDocument(SourceArtifacts? fileArtifacts, string? logArtifacts)

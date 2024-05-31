@@ -18,7 +18,6 @@ public interface IProfileSettingsViewModel
     string Source { get; }
 }
 
-// TODO: Cover with unit tests
 public sealed class ProfileSettingsViewModel : DisposableViewModelBase, IProfileSettingsViewModel
 {
     private readonly IProfileSettingsTemplateQueryService _templatesQuery;
@@ -33,6 +32,7 @@ public sealed class ProfileSettingsViewModel : DisposableViewModelBase, IProfile
         IUiDispatcher uiDispatcher,
         IUserInteraction ui)
     {
+        Guard.NotNull(eventBus);
         Guard.NotNull(logCodecContainer);
         Guard.NotNull(uiDispatcher);
         Guard.NotNull(vmFactory);

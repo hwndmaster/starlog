@@ -23,7 +23,7 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         var command = _harness.Fixture.Create<ProfileCreateCommand>();
 
         // Act
-        var guid = await _sut.ProcessAsync(command);
+        await _sut.ProcessAsync(command);
 
         // Verify
         A.CallTo(() => _harness.ProfileRepo.StoreAsync(A<Profile>.That.Matches(x =>

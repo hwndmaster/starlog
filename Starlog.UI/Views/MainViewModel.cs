@@ -12,7 +12,6 @@ public interface IMainViewModel : IViewModel
     bool IsComparisonAvailable { get; set; }
 }
 
-// TODO: Cover with unit tests
 internal sealed class MainViewModel : DisposableViewModelBase, IMainViewModel
 {
     public MainViewModel(

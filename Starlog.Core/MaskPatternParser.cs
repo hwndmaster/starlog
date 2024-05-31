@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,7 @@ internal sealed class MaskPatternParser : IMaskPatternParser
                 }
 
                 var groupName = pattern.Substring(indexStart + 2, i - indexStart - 2);
-                resultingPattern.Append($"(?<{groupName}>");
+                resultingPattern.Append(CultureInfo.CurrentCulture, $"(?<{groupName}>");
 
                 var fieldCustomPattern = customFieldHandler(groupName);
                 if (fieldCustomPattern is not null)
@@ -54,7 +55,7 @@ internal sealed class MaskPatternParser : IMaskPatternParser
                 {
                     resultingPattern.Append(".+");
                 }
-                resultingPattern.Append(")");
+                resultingPattern.Append(')');
             }
             else if (pattern[i] == ' ')
             {
@@ -70,7 +71,7 @@ internal sealed class MaskPatternParser : IMaskPatternParser
 
         try
         {
-            var _ = new Regex(resultingPatternString);
+            _ = new Regex(resultingPatternString);
         }
         catch (Exception)
         {

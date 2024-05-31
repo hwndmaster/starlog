@@ -9,7 +9,6 @@ public interface IComparisonViewModel : ITabViewModel
     void PopulateProfiles(ComparisonContext comparisonContext);
 }
 
-// TODO: Cover with unit tests
 public sealed class ComparisonViewModel : TabViewModelBase, IComparisonViewModel
 {
     private ComparisonContext? _context;

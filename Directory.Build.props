@@ -41,7 +41,6 @@
   <Import Project="./Atom.targets"/>
 
   <ItemGroup Label="Analyzers">
-     <PackageReference Include="IDisposableAnalyzers" PrivateAssets="all"/>
      <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all"/>
      <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all"/>
      <PackageReference Include="SonarAnalyzer.CSharp" PrivateAssets="all"/>
@@ -67,6 +66,7 @@
   <ItemGroup Condition="$(IsTestProject)">
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.analyzers" />
     <PackageReference Include="xunit.runner.visualstudio">
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         <PrivateAssets>all</PrivateAssets>

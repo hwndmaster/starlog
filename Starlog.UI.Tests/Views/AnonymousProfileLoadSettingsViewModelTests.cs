@@ -12,7 +12,7 @@ public sealed class AnonymousProfileLoadSettingsViewModelTests
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly ILogCodecContainer _logCodecContainerFake = A.Fake<ILogCodecContainer>();
     private readonly AnonymousProfileLoadSettingsViewModel _sut;
-    private bool _closedHandled = false;
+    private bool _closedHandled;
     private readonly ProfileSettingsBase _profileSettings;
     private ProfileSettingsBase? _profileSettingsConfirmed;
 

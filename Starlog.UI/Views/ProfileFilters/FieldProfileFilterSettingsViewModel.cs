@@ -8,20 +8,17 @@ using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
-// TODO: Cover with unit tests
 public sealed class FieldProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<FieldProfileFilter>
 {
     public record FieldRecord(int Id, string Name);
-    private readonly ILogContainer _logContainer;
 
     public FieldProfileFilterSettingsViewModel(FieldProfileFilter profileFilter, ILogContainer logContainer)
         : base(profileFilter)
     {
-        // Dependencies:
-        _logContainer = logContainer.NotNull();
+        Guard.NotNull(logContainer);
 
         // Members initialization:
-        var fieldsContainer = _logContainer.GetFields();
+        var fieldsContainer = logContainer.GetFields();
         Fields = new ObservableCollection<FieldRecord>(fieldsContainer.GetFields().Select(x => new FieldRecord(x.FieldId, x.FieldName)));
 
         // Subscriptions:
@@ -30,7 +27,7 @@ public sealed class FieldProfileFilterSettingsViewModel : ProfileFilterSettingsV
             {
                 Values.Clear();
                 Values.AddRange(fieldsContainer.GetFieldValues(SelectedField.Id)
-                    .Union(profileFilter.Values)
+                    .Union(_profileFilter.Values)
                     .Order());
             });
         SelectedValues.WhenCollectionChanged()
@@ -40,12 +37,12 @@ public sealed class FieldProfileFilterSettingsViewModel : ProfileFilterSettingsV
             {
                 Name = SelectedValues.Any()
                     ? LogFilterHelpers.ProposeNameForStringList(SelectedField.Name, SelectedValues, Exclude)
-                    : profileFilter.LogFilter.Name;
+                    : _profileFilter.LogFilter.Name;
             });
 
         // Final preparation:
-        SelectedField = Fields.First(x => x.Id == profileFilter.FieldId);
-        SelectedValues.AddRange(profileFilter.Values);
+        SelectedField = Fields.First(x => x.Id == _profileFilter.FieldId);
+        SelectedValues.AddRange(_profileFilter.Values);
     }
 
     protected override void CommitChangesInternal()

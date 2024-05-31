@@ -6,6 +6,8 @@ public class ProfileSettingsLegacyUpgrader : IDataVersionUpgrader<ProfileSetting
 {
     public PlainTextProfileSettings Upgrade(ProfileSettingsLegacy value)
     {
+        Guard.NotNull(value);
+
         return new PlainTextProfileSettings(value.LogCodec.LogCodec)
         {
             Path = string.Empty,

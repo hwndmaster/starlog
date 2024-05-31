@@ -28,7 +28,6 @@ public interface ILogsSearchViewModel : IViewModel
     double SelectedDateTimeToTicks { get; set; }
 }
 
-// TODO: Cover with unit tests
 public sealed class LogsSearchViewModel : DisposableViewModelBase, ILogsSearchViewModel
 {
     static readonly long OneMinuteTicks = TimeSpan.FromMinutes(1).Ticks;

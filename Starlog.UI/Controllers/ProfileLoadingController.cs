@@ -105,7 +105,7 @@ internal sealed class ProfileLoadingController : IProfileLoadingController
             await _currentProfile.LoadProfileAsync(profile).ConfigureAwait(false);
             _mainController.ShowLogsTab();
         })
-        .ContinueWith(_ => _mainController.SetBusy(false), TaskContinuationOptions.None)
+        .ContinueWith(_ => _mainController.SetBusy(false), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Current)
         .ConfigureAwait(false);
     }
 
@@ -130,8 +130,8 @@ internal sealed class ProfileLoadingController : IProfileLoadingController
         {
             _logger.LogError(faultedTask.Exception, faultedTask.Exception!.Message);
             _eventBus.Publish(new ProfileLoadingErrorEvent(profile, "Couldn't load profile due to errors. Check log files for details."));
-        }, TaskContinuationOptions.OnlyOnFaulted)
-        .ContinueWith(_ => _mainController.SetBusy(false), TaskContinuationOptions.None)
+        }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Current)
+        .ContinueWith(_ => _mainController.SetBusy(false), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Current)
         .ConfigureAwait(false);
     }
 
