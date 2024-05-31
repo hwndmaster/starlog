@@ -28,7 +28,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     private readonly TestFileSystemWatcherFactory _fileWatcherFactory = new();
     private readonly TestEventBus _eventBus = new();
     private readonly TestSynchronousScheduler _scheduler = new();
-    private readonly TestLogger<LogContainer> _logger = new();
+    private readonly TestLogger<FileBasedProfileLoader> _fileBasedProfileLogger = new();
     private readonly ILogCodecContainerInternal _logCodecContainerMock = A.Fake<ILogCodecContainerInternal>();
 
     private readonly CurrentProfileLogContainer _sut;
@@ -41,7 +41,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         new SupportMutableValueTypesCustomization().Customize(_fixture);
 
         var profileLoaderFactory = new ProfileLoaderFactory(_directoryMonitor, _eventBus, _fileService, _fileWatcherFactory,
-            _logCodecContainerMock, new TestLogger<FileBasedProfileLoader>(), _scheduler);
+            _logCodecContainerMock, _fileBasedProfileLogger, _scheduler);
         _sut = new CurrentProfileLogContainer(_eventBus, profileLoaderFactory);
 
         _sampleProfile = new Profile
@@ -401,7 +401,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         _fileWatcherFactory.RecentlyCreatedInstance.OnError(exception);
 
         // Verify
-        Assert.Contains(_logger.Logs, x => x.LogLevel == LogLevel.Error
+        Assert.Contains(_fileBasedProfileLogger.Logs, x => x.LogLevel == LogLevel.Error
             && x.Message.Equals(exception.Message)
             && x.Exception == exception);
     }
