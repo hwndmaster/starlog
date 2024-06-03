@@ -17,6 +17,9 @@ public abstract class ProfileSettingsBase
     /// </summary>
     public LogCodec LogCodec { get; }
 
+    /// <summary>
+    ///   The source name.
+    /// </summary>
     [JsonIgnore]
     public abstract string Source { get; }
 

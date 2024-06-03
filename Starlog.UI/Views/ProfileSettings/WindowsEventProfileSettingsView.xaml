@@ -3,6 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
         Validation.ErrorTemplate="{x:Null}">
@@ -10,17 +12,19 @@
         <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
             <DockPanel>
                 <Label>Pick the source:</Label>
-                <mah:DropDownButton Content="Pick from template"
-                                    ItemsSource="{Binding Sources}"
-                                    Width="200"
-                                    HorizontalAlignment="Left">
-                    <mah:DropDownButton.ItemContainerStyle>
-                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
-                            <Setter Property="Command" Value="{Binding Path=PlacementTarget.DataContext.PickSourceCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContextMenu}}" />
-                            <Setter Property="CommandParameter" Value="{Binding Settings}" />
-                        </Style>
-                    </mah:DropDownButton.ItemContainerStyle>
-                </mah:DropDownButton>
+                <ListBox SelectionMode="Multiple"
+                         ItemsSource="{Binding Sources}">
+                    <i:Interaction.Behaviors>
+                        <atom:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedSources}" />
+                    </i:Interaction.Behaviors>
+                </ListBox>
+            </DockPanel>
+            <DockPanel>
+                <Label>Select top X entries:</Label>
+                <mah:NumericUpDown Value="{Binding SelectCount}"
+                    Minimum="5" Maximum="1000"
+                    Width="70" HorizontalAlignment="Left" />
+                <TextBlock Margin="5,0,0,0" VerticalAlignment="Center">(per source)</TextBlock>
             </DockPanel>
         </StackPanel>
     </Grid>

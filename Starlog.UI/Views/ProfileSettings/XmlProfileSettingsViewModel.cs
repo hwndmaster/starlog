@@ -4,12 +4,12 @@ namespace Genius.Starlog.UI.Views.ProfileSettings;
 
 public sealed class XmlProfileSettingsViewModel : ProfileSettingsBaseViewModel
 {
-    private readonly XmlProfileSettings _xmlLogCodec;
+    private readonly XmlProfileSettings _xmlProfileSettings;
 
-    public XmlProfileSettingsViewModel(XmlProfileSettings logCodec)
-        : base(logCodec)
+    public XmlProfileSettingsViewModel(XmlProfileSettings profileSettings)
+        : base(profileSettings)
     {
-        _xmlLogCodec = logCodec.NotNull();
+        _xmlProfileSettings = profileSettings.NotNull();
     }
 
     public override bool CommitChanges()
@@ -23,7 +23,7 @@ public sealed class XmlProfileSettingsViewModel : ProfileSettingsBaseViewModel
         // TODO: Do nothing for now
     }
 
-    internal override void CopySettingsFrom(ProfileSettingsBaseViewModel logCodec)
+    internal override void CopySettingsFrom(ProfileSettingsBaseViewModel otherProfileSettings)
     {
         // TODO: Do nothing for now
     }

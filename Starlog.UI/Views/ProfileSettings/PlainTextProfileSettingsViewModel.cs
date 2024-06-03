@@ -57,9 +57,9 @@ public sealed class PlainTextProfileSettingsViewModel : ProfileSettingsBaseViewM
         Path = _plainTextProfileSettings.Path;
     }
 
-    internal override void CopySettingsFrom(ProfileSettingsBaseViewModel logCodec)
+    internal override void CopySettingsFrom(ProfileSettingsBaseViewModel otherProfileSettings)
     {
-        if (logCodec is not PlainTextProfileSettingsViewModel settings)
+        if (otherProfileSettings is not PlainTextProfileSettingsViewModel settings)
             return;
 
         DateTimeFormat = settings.DateTimeFormat;

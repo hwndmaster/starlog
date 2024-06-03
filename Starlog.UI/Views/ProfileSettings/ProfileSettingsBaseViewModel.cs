@@ -14,5 +14,5 @@ public abstract class ProfileSettingsBaseViewModel : ViewModelBase
 
     public abstract bool CommitChanges();
     public abstract void ResetForm();
-    internal abstract void CopySettingsFrom(ProfileSettingsBaseViewModel logCodec);
+    internal abstract void CopySettingsFrom(ProfileSettingsBaseViewModel otherProfileSettings);
 }

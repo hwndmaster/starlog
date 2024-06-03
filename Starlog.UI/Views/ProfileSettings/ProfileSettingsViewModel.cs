@@ -46,6 +46,7 @@ public sealed class ProfileSettingsViewModel : DisposableViewModelBase, IProfile
         {
             ProfileSettings.Add(vmFactory.CreateLogCodec(logCodec, profileSettings));
         }
+        SelectedProfileSettings = ProfileSettings.First(x => x.ProfileSettings == profileSettings);
 
         InitializeProperties(() =>
         {

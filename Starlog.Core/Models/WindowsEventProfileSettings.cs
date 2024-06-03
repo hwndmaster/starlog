@@ -14,8 +14,23 @@ public sealed class WindowsEventProfileSettings : ProfileSettingsBase
 
     internal override ProfileSettingsBase CloneInternal()
     {
-        return new WindowsEventProfileSettings(LogCodec);
+        return new WindowsEventProfileSettings(LogCodec)
+        {
+            Sources = Sources,
+            SelectCount = SelectCount
+        };
     }
 
-    public override string Source => throw new NotImplementedException();
+    /// <inheritdoc />
+    public override string Source => string.Join(", ", Sources);
+
+    /// <summary>
+    ///   The sources to be listed.
+    /// </summary>
+    public string[] Sources { get; set; } = Array.Empty<string>();
+
+    /// <summary>
+    ///   Indicates the number of how many entries to select from each source.
+    /// </summary>
+    public int SelectCount { get; set; } = 100;
 }

@@ -6,46 +6,56 @@ namespace Genius.Starlog.UI.Views.ProfileSettings;
 
 public sealed class WindowsEventProfileSettingsViewModel : ProfileSettingsBaseViewModel
 {
-    private readonly WindowsEventProfileSettings _windowsEventLogCodec;
+    private readonly WindowsEventProfileSettings _windowsEventProfileSettings;
     private readonly Lazy<ObservableCollection<string>> _sources;
 
-    public WindowsEventProfileSettingsViewModel(WindowsEventProfileSettings logCodec)
-        : base(logCodec)
+    public WindowsEventProfileSettingsViewModel(WindowsEventProfileSettings profileSettings)
+        : base(profileSettings)
     {
         // Dependencies:
-        _windowsEventLogCodec = logCodec.NotNull();
+        _windowsEventProfileSettings = profileSettings.NotNull();
 
         // Members initialization:
         _sources = new Lazy<ObservableCollection<string>>(() =>
-            new ObservableCollection<string>(EventLog.GetEventLogs().Select(x => x.LogDisplayName))
+            new ObservableCollection<string>(EventLog.GetEventLogs().Select(x => x.Log))
         );
+        SelectedSources = new ObservableCollection<string>(_windowsEventProfileSettings.Sources);
 
-        // Actions:
-        PickSourceCommand = new ActionCommand(arg =>
-        {
-            // TODO: ...
-        });
-
-        // Subscriptions:
-        // TODO: ...
+        ResetForm();
     }
 
     public override bool CommitChanges()
     {
-        // TODO: Do nothing for now
+        Validate();
+        if (HasErrors)
+            return false;
+
+        _windowsEventProfileSettings.Sources = SelectedSources.ToArray();
+        _windowsEventProfileSettings.SelectCount = SelectCount;
+
         return true;
     }
 
     public override void ResetForm()
     {
-        // TODO: Do nothing for now
+        SelectedSources.ReplaceItems(_windowsEventProfileSettings.Sources);
+        SelectCount = _windowsEventProfileSettings.SelectCount;
     }
 
-    internal override void CopySettingsFrom(ProfileSettingsBaseViewModel logCodec)
+    internal override void CopySettingsFrom(ProfileSettingsBaseViewModel otherProfileSettings)
     {
-        // TODO: Do nothing for now
+        if (otherProfileSettings is not WindowsEventProfileSettingsViewModel settings)
+            return;
+
+        SelectedSources.ReplaceItems(settings.Sources);
+        SelectCount = settings.SelectCount;
     }
 
     public ObservableCollection<string> Sources => _sources.Value;
-    public IActionCommand PickSourceCommand { get; }
+    public ObservableCollection<string> SelectedSources { get; }
+    public int SelectCount
+    {
+        get => GetOrDefault(100);
+        set => RaiseAndSetIfChanged(value);
+    }
 }
