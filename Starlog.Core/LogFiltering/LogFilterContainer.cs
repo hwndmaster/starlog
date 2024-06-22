@@ -27,7 +27,7 @@ public interface ILogFilterContainer
 
 internal sealed class LogFilterContainer : ILogFilterContainer
 {
-    private readonly Dictionary<Guid /* LogFilter.Id */, LogFilterRecord> _registeredFilters = new();
+    private readonly Dictionary<LogFilterId, LogFilterRecord> _registeredFilters = new();
 
     private readonly IFilterProcessor[] _filterProcessors;
 

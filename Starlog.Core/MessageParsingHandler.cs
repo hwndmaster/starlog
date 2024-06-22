@@ -22,9 +22,9 @@ internal sealed partial class MessageParsingHandler : IMessageParsingHandler, ID
     private readonly ILogFilterContainer _logFilterContainer;
     private readonly IQuickFilterProvider _quickFilterProvider;
 
-    private readonly ConcurrentDictionary<Guid, string[]> _columnsCache = new();
-    private readonly ConcurrentDictionary<Guid, Regex?> _regexCache = new();
-    private readonly ConcurrentDictionary<Guid, (ProfileFilterBase?, IFilterProcessor?)> _filterCache = new();
+    private readonly ConcurrentDictionary<MessageParsingId, string[]> _columnsCache = new();
+    private readonly ConcurrentDictionary<MessageParsingId, Regex?> _regexCache = new();
+    private readonly ConcurrentDictionary<MessageParsingFilterId, (ProfileFilterBase?, IFilterProcessor?)> _filterCache = new();
 
     public MessageParsingHandler(
         ICurrentProfile currentProfile,

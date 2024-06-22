@@ -3,11 +3,13 @@ using System.Text.RegularExpressions;
 using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
+using RegexPatternHash = int;
+
 namespace Genius.Starlog.Core.LogFiltering;
 
 public sealed class MessageFilterProcessor : IFilterProcessor
 {
-    private static readonly ConcurrentDictionary<int, Regex> _regexes = new();
+    private static readonly ConcurrentDictionary<RegexPatternHash, Regex> _regexes = new();
 
     public bool IsMatch(ProfileFilterBase profileFilter, LogRecord log)
     {

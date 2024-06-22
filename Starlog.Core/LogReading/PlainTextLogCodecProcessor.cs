@@ -51,7 +51,7 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
             _ => throw new NotSupportedException($"Pattern type '{patternValue.Type}' is not supported.")
         };
 
-        Dictionary<int, LogLevelRecord> logLevels = [];
+        Dictionary<LogLevelHash, LogLevelRecord> logLevels = [];
         List<LogRecord> records = [];
 
         LogRecord? lastRecord = null;

@@ -33,6 +33,7 @@
     <PackageVersion Include="WpfAnimatedGif" Version="2.0.2" />
 
     <!-- Misc dependencies -->
+    <PackageVersion Include="System.Diagnostics.EventLog" Version="8.0.0" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
 
     <!-- Automated Testing components -->

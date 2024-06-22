@@ -11,6 +11,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>12.0</LangVersion>
 
+    <!-- To avoid builder creating non-english resource folders -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+
     <RootNamespace>Genius.$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>$(RootNamespace)</AssemblyName>
 

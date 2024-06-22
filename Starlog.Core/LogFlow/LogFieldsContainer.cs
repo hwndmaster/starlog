@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 
+using FieldNameHash = int;
+
 namespace Genius.Starlog.Core.LogFlow;
 
 public interface ILogFieldsContainerReadonly
@@ -13,30 +15,30 @@ public interface ILogFieldsContainerReadonly
     ///   Returns a field name per specified <paramref name="fieldId" />.
     /// </summary>
     /// <param name="fieldId">The field id (a zero-based index).</param>
-    string GetFieldName(int fieldId);
+    string GetFieldName(FieldId fieldId);
 
     /// <summary>
     ///   Returns fields with their id's and names.
     /// </summary>
-    ImmutableArray<(int FieldId, string FieldName)> GetFields();
+    ImmutableArray<(FieldId FieldId, string FieldName)> GetFields();
 
     /// <summary>
     ///   Returns a field value.
     /// </summary>
     /// <param name="fieldId">The field id (a zero-based index).</param>
     /// <param name="fieldValueId">The field value id (a zero-based index).</param>
-    string GetFieldValue(int fieldId, int fieldValueId);
+    string GetFieldValue(FieldId fieldId, FieldValueId fieldValueId);
 
     /// <summary>
     ///   Returns all field values per specified <paramref name="fieldId" />.
     /// </summary>
     /// <param name="fieldId">The field id (a zero-based index).</param>
-    ImmutableArray<string> GetFieldValues(int fieldId);
+    ImmutableArray<string> GetFieldValues(FieldId fieldId);
 
     /// <summary>
     ///   Returns a field identifier with its name of the "THREAD" field, if it is available in the profile's context.
     /// </summary>
-    (int FieldId, string FieldName)? GetThreadFieldIfAny();
+    (FieldId FieldId, string FieldName)? GetThreadFieldIfAny();
 }
 
 internal interface ILogFieldsContainer : ILogFieldsContainerReadonly
@@ -47,23 +49,21 @@ internal interface ILogFieldsContainer : ILogFieldsContainerReadonly
     /// <param name="fieldId">The field id (a zero-based index).</param>
     /// <param name="value">The value of the field.</param>
     /// <returns>An index of the field value.</returns>
-    int AddFieldValue(int fieldId, string value);
+    FieldValueId AddFieldValue(FieldId fieldId, string value);
     void Clear();
-    int GetOrAddFieldId(string fieldName);
-    void RemoveFieldValue(int fieldId, int fieldValueId);
+    FieldId GetOrAddFieldId(string fieldName);
+    void RemoveFieldValue(FieldId fieldId, FieldValueId fieldValueId);
 }
 
 internal sealed class LogFieldsContainer : ILogFieldsContainer
 {
     private readonly object fieldAccessingLock = new();
-    private readonly Dictionary<int, int> _fieldIdPerFieldNameHash = [];
+    private readonly Dictionary<FieldNameHash, FieldId> _fieldIdPerFieldNameHash = [];
     private List<string> _fieldMapping = [];
     private List<List<string>> _fieldValues = [];
-    private List<Dictionary<string, int>> _fieldValuesToIndicesMapping = [];
+    private List<Dictionary<string, FieldValueId>> _fieldValuesToIndicesMapping = [];
 
-    public LogFieldsContainer() {}
-
-    public int AddFieldValue(int fieldId, string value)
+    public FieldValueId AddFieldValue(FieldId fieldId, string value)
     {
         lock (fieldAccessingLock)
         {
@@ -91,18 +91,18 @@ internal sealed class LogFieldsContainer : ILogFieldsContainer
     public int GetFieldCount()
         => _fieldMapping.Count;
 
-    public string GetFieldName(int fieldId)
+    public string GetFieldName(FieldId fieldId)
     {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(_fieldMapping.Count, fieldId);
         return _fieldMapping[fieldId];
     }
 
-    public ImmutableArray<(int FieldId, string FieldName)> GetFields()
+    public ImmutableArray<(FieldId FieldId, string FieldName)> GetFields()
     {
         return _fieldMapping.Select((fieldName, fieldId) => (fieldId, fieldName)).ToImmutableArray();
     }
 
-    public string GetFieldValue(int fieldId, int fieldValueId)
+    public string GetFieldValue(FieldId fieldId, FieldValueId fieldValueId)
     {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(_fieldValues.Count, fieldId);
         var fieldValues = _fieldValues[fieldId];
@@ -111,13 +111,13 @@ internal sealed class LogFieldsContainer : ILogFieldsContainer
         return fieldValues[fieldValueId];
     }
 
-    public ImmutableArray<string> GetFieldValues(int fieldId)
+    public ImmutableArray<string> GetFieldValues(FieldId fieldId)
     {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(_fieldValues.Count, fieldId);
         return _fieldValues[fieldId].ToImmutableArray();
     }
 
-    public int GetOrAddFieldId(string fieldName)
+    public FieldId GetOrAddFieldId(string fieldName)
     {
         lock (fieldAccessingLock)
         {
@@ -136,7 +136,7 @@ internal sealed class LogFieldsContainer : ILogFieldsContainer
         }
     }
 
-    public (int FieldId, string FieldName)? GetThreadFieldIfAny()
+    public (FieldId FieldId, string FieldName)? GetThreadFieldIfAny()
     {
         for (var fieldId = 0; fieldId < _fieldMapping.Count; fieldId++)
         {
@@ -148,7 +148,7 @@ internal sealed class LogFieldsContainer : ILogFieldsContainer
         return null;
     }
 
-    public void RemoveFieldValue(int fieldId, int fieldValueId)
+    public void RemoveFieldValue(FieldId fieldId, int fieldValueId)
     {
         var fieldValue = _fieldValues[fieldId][fieldValueId];
         _fieldValuesToIndicesMapping[fieldId].Remove(fieldValue);

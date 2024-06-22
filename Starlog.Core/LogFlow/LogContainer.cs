@@ -9,7 +9,7 @@ namespace Genius.Starlog.Core.LogFlow;
 internal class LogContainer : ILogContainerWriter, IDisposable
 {
     protected readonly Disposer _disposer = new();
-    private readonly ConcurrentDictionary<string, LogSourceBase> _sources = new();
+    private readonly ConcurrentDictionary<LogSourceName, LogSourceBase> _sources = new();
     private readonly List<LogRecord> _logs = [];
     private readonly ConcurrentBag<LogLevelRecord> _logLevels = [];
     private readonly LogFieldsContainer _fields = new();

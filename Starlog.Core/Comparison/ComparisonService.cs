@@ -118,7 +118,7 @@ internal sealed partial class ComparisonService : IComparisonService
         return new LogComparisonContext(logContainer, initialTime, logsCalculated);
     }
 
-    private int CalculateHash(LogRecord logRecord, Dictionary<int, string> filesDict)
+    private static int CalculateHash(LogRecord logRecord, Dictionary<int, string> filesDict)
     {
         var fileName = filesDict[logRecord.Source.DisplayName.GetHashCode()];
 

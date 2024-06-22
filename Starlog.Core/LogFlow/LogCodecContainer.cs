@@ -23,7 +23,7 @@ internal sealed class LogCodecContainer : ILogCodecContainerInternal, IQueryServ
 {
     private readonly record struct LogCodecRecord(LogCodec Codec, Type ProfileSettingsType, Type ProcessorType);
 
-    private readonly Dictionary<Guid /* LogCodec.Id */, LogCodecRecord> _registeredLogCodecs = new();
+    private readonly Dictionary<LogCodecId, LogCodecRecord> _registeredLogCodecs = [];
 
     private readonly Lazy<IEnumerable<ILogCodecProcessor>> _processors;
 
