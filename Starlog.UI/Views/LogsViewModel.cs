@@ -4,6 +4,7 @@ using System.Reactive.Linq;
 using System.Windows.Data;
 using System.Windows.Documents;
 using DynamicData;
+using Genius.Atom.Infrastructure.Tasks;
 using Genius.Atom.UI.Forms.Controls.AutoGrid;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
@@ -41,7 +42,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private readonly CompositeDisposable _subscriptions = new();
     private readonly int _predefinedGroupByOptionsCount;
     private LogRecordMatcherContext? _filterContext;
-    private bool _suspendUpdate;
+    private bool _profileLoadingUpdateSuspended;
+    private bool _refreshFilteredItemsSuspended;
 
     public LogsViewModel(
         ICurrentProfile currentProfile,
@@ -87,7 +89,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         ReloadProfileCommand = new ActionCommand(async _ =>
             {
                 if (_currentProfile.Profile is null) return;
-                _suspendUpdate = true;
+                _profileLoadingUpdateSuspended = true;
                 await profileLoadingController.LoadProfileAsync(_currentProfile.Profile);
             });
 
@@ -95,7 +97,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         _currentProfile.ProfileClosed
             .Subscribe(_ =>
             {
-                _suspendUpdate = true;
+                _profileLoadingUpdateSuspended = true;
                 _uiDispatcher.Invoke(() =>
                 {
                     IsProfileReady = false;
@@ -133,31 +135,30 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                         GroupByOptions.Add(new GroupByRecord("Group by " + fieldName, LogItemGroupingOptions.ByField, fieldId));
 
                     IsProfileReady = true;
-                    _suspendUpdate = false;
+                    _profileLoadingUpdateSuspended = false;
                 });
             }).DisposeWith(_subscriptions);
         _currentProfile.UnknownChangesDetected
             .Subscribe(_ => IsRefreshVisible = true)
             .DisposeWith(_subscriptions);
         _logContainer.LogsAdded
-            .Where(_ => !_suspendUpdate)
-            .Subscribe(x => _uiDispatcher.Invoke(() => AddLogs(x)))
+            .Where(_ => !_profileLoadingUpdateSuspended)
+            .Subscribe(x => AddLogs(x))
             .DisposeWith(_subscriptions);
         _logContainer.LogsRemoved
-            .Where(_ => !_suspendUpdate)
-            .Subscribe(x => _uiDispatcher.Invoke(() => RemoveLogs(x)))
+            .Where(_ => !_profileLoadingUpdateSuspended)
+            .SubscribeOnUiThread(x => RemoveLogs(x))
             .DisposeWith(_subscriptions);
         _logContainer.SourceRenamed
-            .Subscribe(args =>
+            .SubscribeOnUiThread(args =>
             {
-                _uiDispatcher.Invoke(() => {
-                    foreach (var logItem in LogItems)
+                foreach (var logItem in LogItems)
+                {
+                    if (logItem.Record.Source.DisplayName.Equals(args.OldRecord.DisplayName, StringComparison.Ordinal))
                     {
-                        if (logItem.Record.Source.DisplayName.Equals(args.OldRecord.DisplayName, StringComparison.Ordinal))
-                        {
-                            logItem.HandleSourceRenamed(args.NewRecord);
-                        }
-                    }});
+                        logItem.HandleSourceRenamed(args.NewRecord);
+                    }
+                }
             }).DisposeWith(_subscriptions);
         _logContainer.SourcesCountChanged
             .Subscribe(sourcesCount =>
@@ -230,39 +231,51 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     private void AddLogs(ICollection<LogRecord> logs)
     {
-        if (!logs.Any())
+        if (logs.Count == 0)
         {
             return;
         }
+
+        _refreshFilteredItemsSuspended = true;
 
         Search.Reconcile(LogItems.Count, logs);
 
         var fields = _logContainer.GetFields();
         var hasFields = fields.GetFieldCount() > 0;
 
-        using (var suppressed = LogItems.DelayNotifications())
+        List<LogItemViewModel> viewModelsToAdd = [];
+        foreach (var log in logs.OrderBy(x => x.DateTime))
         {
-            foreach (var log in logs.OrderBy(x => x.DateTime))
+            var logItemVm = new LogItemViewModel(_logContainer, log, _artifactsFormatter);
+
+            if (hasFields)
             {
-                var logItemVm = new LogItemViewModel(_logContainer, log, _artifactsFormatter);
-
-                if (hasFields)
+                logItemVm.FieldEntries = new DynamicColumnEntriesViewModel(() =>
                 {
-                    logItemVm.FieldEntries = new DynamicColumnEntriesViewModel(() =>
+                    string[] fieldValues = new string[log.FieldValueIndices.Length];
+                    for (var fieldId = 0; fieldId < log.FieldValueIndices.Length; fieldId++)
                     {
-                        string[] fieldValues = new string[log.FieldValueIndices.Length];
-                        for (var fieldId = 0; fieldId < log.FieldValueIndices.Length; fieldId++)
-                        {
-                            fieldValues[fieldId] = fields.GetFieldValue(fieldId, log.FieldValueIndices[fieldId]);
-                        }
-                        return fieldValues;
-                    });
-                }
-
-                suppressed.Add(logItemVm);
+                        fieldValues[fieldId] = fields.GetFieldValue(fieldId, log.FieldValueIndices[fieldId]);
+                    }
+                    return fieldValues;
+                });
             }
+
+            viewModelsToAdd.Add(logItemVm);
         }
 
+        _uiDispatcher.Invoke(() =>
+        {
+            using (var suppressed = LogItems.DelayNotifications())
+            {
+                foreach (var logItemVm in viewModelsToAdd)
+                {
+                    suppressed.Add(logItemVm);
+                }
+            }
+        });
+
+        _refreshFilteredItemsSuspended = false;
         RefreshFilteredItems();
     }
 
@@ -300,6 +313,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     private void RefreshFilteredItems()
     {
+        if (_refreshFilteredItemsSuspended)
+        {
+            return;
+        }
+
         _filterContext = new LogRecordMatcherContext(
             Filtering.CreateContext(),
             Search.CreateContext()
@@ -337,7 +355,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             messageParsingColumnsToSet = new DynamicColumnsViewModel(extractedColumns.Select(x => x.extractedColumn).ToArray());
         }
 
-        _uiDispatcher.Invoke(() =>
+        _uiDispatcher.InvokeAsync(() =>
         {
             if (messageParsingColumnsToSet is not null)
             {
@@ -357,7 +375,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             //       INFO:    kk
             //       WARN:   yyy
             //       ERROR:    z
-        });
+        }).RunAndForget();
     }
 
     public bool IsProfileReady
