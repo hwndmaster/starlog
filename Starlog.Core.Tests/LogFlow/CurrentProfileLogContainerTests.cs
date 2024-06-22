@@ -40,8 +40,12 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     {
         new SupportMutableValueTypesCustomization().Customize(_fixture);
 
-        var profileLoaderFactory = new ProfileLoaderFactory(_directoryMonitor, _eventBus, _fileService, _fileWatcherFactory,
-            _logCodecContainerMock, _fileBasedProfileLogger, _scheduler);
+        var profileLoaderFactory = new ProfileLoaderFactory(
+            _directoryMonitor, _eventBus, _fileService, _fileWatcherFactory,
+            _logCodecContainerMock,
+            _fileBasedProfileLogger,
+            new TestLogger<WindowsEventProfileLoader>(),
+            _scheduler);
         _sut = new CurrentProfileLogContainer(_eventBus, profileLoaderFactory);
 
         _sampleProfile = new Profile

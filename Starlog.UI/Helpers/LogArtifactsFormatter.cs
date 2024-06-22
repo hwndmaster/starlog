@@ -12,6 +12,8 @@ public interface ILogArtifactsFormatter
 
 public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
 {
+    private static readonly Lazy<FontFamily> ConsolasFontFamily = new(() => new FontFamily("Consolas"));
+
     public FlowDocument CreateArtifactsDocument(SourceArtifacts? fileArtifacts, string? logArtifacts)
     {
         var document = new FlowDocument();
@@ -54,13 +56,15 @@ public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
             }
 
             Brush brush = Brushes.Black;
+            FontFamily? fontFamily = null;
             if (match.Groups["str"].Success || match.Groups["str2"].Success)
             {
                 brush = Brushes.ForestGreen;
             }
-            else if (match.Groups["num"].Success)
+            else if (match.Groups["num"].Success || match.Groups["guid"].Success)
             {
                 brush = Brushes.Cyan;
+                fontFamily = ConsolasFontFamily.Value;
             }
             else if (match.Groups["exc"].Success)
             {
@@ -79,7 +83,14 @@ public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
                 brush = Brushes.Gray;
             }
 
-            paragraph.Inlines.Add(new Run(match.Value) { Foreground = brush });
+            var run = new Run(match.Value) {
+                Foreground = brush
+            };
+            if (fontFamily is not null)
+            {
+                run.FontFamily = fontFamily;
+            }
+            paragraph.Inlines.Add(run);
 
             indexFrom = match.Index + match.Length;
             if (match.Value[^1] == '\r')
@@ -93,6 +104,6 @@ public sealed partial class LogArtifactsFormatter : ILogArtifactsFormatter
         }
     }
 
-    [GeneratedRegex("(?<date>(\\d{4}-\\d{2}-\\d{2})|(\\d{2}-\\d{2}-\\d{4})|(\\d+\\s\\w{3,}\\s\\d{4})|(\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?))|(?<str>(?<!\\w)'[^']+')|(?<str2>(?<!\\w)\"[^\"]+\")|(?<num>(?<!\\w)[\\d\\.,]*\\d(?!\\w))|(?<at>[ ]{3}at\\s.+)|(?<exc>\\w+Exception)|(?<url>\\w+:(\\/\\/|\\\\)[\\w\\.\\/\\\\\\?=_+&%~@#\\(\\)]+)")]
+    [GeneratedRegex("(?<date>(\\d{4}-\\d{2}-\\d{2})|(\\d{2}-\\d{2}-\\d{4})|(\\d+\\s\\w{3,}\\s\\d{4})|(\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?))|(?<str>(?<!\\w)'[^']+')|(?<str2>(?<!\\w)\"[^\"]+\")|(?<num>(?<!\\w)[\\d\\.,]*\\d(?!\\w))|(?<at>[ ]{3}at\\s.+)|(?<exc>\\w+Exception)|(?<url>\\w+:(\\/\\/|\\\\)[\\w\\.\\/\\\\\\?=_+&%~@#\\-\\(\\)]+)|(?<guid>[0-9a-fA-F]{8}\\-?[0-9a-fA-F]{4}\\-?[0-9a-fA-F]{4}\\-?[0-9a-fA-F]{4}\\-?[0-9a-fA-F]{12})")]
     private static partial Regex FormattedStringRegex();
 }

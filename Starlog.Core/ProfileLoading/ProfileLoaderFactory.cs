@@ -20,6 +20,7 @@ internal sealed class ProfileLoaderFactory : IProfileLoaderFactory
     private readonly IFileSystemWatcherFactory _fileSystemWatcherFactory;
     private readonly ILogCodecContainerInternal _logCodecContainer;
     private readonly ILogger<FileBasedProfileLoader> _fileBasedLogger;
+    private readonly ILogger<WindowsEventProfileLoader> _genericLoaderLogger;
     private readonly ISynchronousScheduler _scheduler;
 
     public ProfileLoaderFactory(
@@ -30,15 +31,17 @@ internal sealed class ProfileLoaderFactory : IProfileLoaderFactory
         ILogCodecContainerInternal logCodecContainer,
 #pragma warning disable S6672 // Generic logger injection should match enclosing type
         ILogger<FileBasedProfileLoader> fileBasedLogger,
+        ILogger<WindowsEventProfileLoader> genericLoaderLogger,
 #pragma warning restore S6672 // Generic logger injection should match enclosing type
         ISynchronousScheduler scheduler)
     {
         _directoryMonitor = directoryMonitor.NotNull();
         _eventBus = eventBus.NotNull();
+        _fileBasedLogger = fileBasedLogger.NotNull();
         _fileService = fileService.NotNull();
         _fileSystemWatcherFactory = fileSystemWatcherFactory.NotNull();
+        _genericLoaderLogger = genericLoaderLogger.NotNull();
         _logCodecContainer = logCodecContainer.NotNull();
-        _fileBasedLogger = fileBasedLogger.NotNull();
         _scheduler = scheduler.NotNull();
     }
 
@@ -47,6 +50,10 @@ internal sealed class ProfileLoaderFactory : IProfileLoaderFactory
         if (profile.Settings is PlainTextProfileSettings)
         {
             return new FileBasedProfileLoader(_directoryMonitor, _eventBus, _fileService, _fileSystemWatcherFactory, _logCodecContainer, _fileBasedLogger, _scheduler);
+        }
+        if (profile.Settings is WindowsEventProfileSettings)
+        {
+            return new WindowsEventProfileLoader(_eventBus, _logCodecContainer, _genericLoaderLogger);
         }
 
         return null;

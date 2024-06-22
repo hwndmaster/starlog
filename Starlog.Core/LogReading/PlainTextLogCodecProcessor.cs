@@ -83,7 +83,7 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
                 FlushRecentRecord();
             }
 
-            var level = match.Value.Level;
+            // Common fields
             var dateTimeParsed = DateTimeOffset.TryParseExact(match.Value.DateTime,
                 profileSettings.DateTimeFormat,
                 Thread.CurrentThread.CurrentCulture,
@@ -96,6 +96,7 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
             }
             var message = match.Value.Message;
 
+            // Custom fields
             var fieldValueIndices = new int[fields.GetFieldCount() + match.Value.Fields.Length];
             for (var i = 0; i < match.Value.Fields.Length; i++)
             {
@@ -103,9 +104,10 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
                 var fieldId = fields.GetOrAddFieldId(parsedField.FieldName);
                 fieldValueIndices[fieldId] = fields.AddFieldValue(fieldId, parsedField.Value);
             }
-
             fieldValueIndices = fieldValueIndices[0..fields.GetFieldCount()];
 
+            // Level
+            var level = match.Value.Level;
             var logLevelHash = level.GetHashCode();
             if (!logLevels.TryGetValue(logLevelHash, out var logLevelRecord))
             {
@@ -113,6 +115,7 @@ internal sealed class PlainTextLogCodecProcessor : ILogCodecProcessor
                 logLevels.Add(logLevelHash, logLevelRecord);
             }
 
+            // Create record
             lastRecord = new LogRecord(dateTime, logLevelRecord, source, fieldValueIndices.ToImmutableArray(), message, null);
         }
 

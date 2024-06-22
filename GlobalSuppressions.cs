@@ -15,5 +15,6 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "<Pending>")]
 [assembly: SuppressMessage("", "S3358:Ternary operators should not be nested", Justification = "<Pending>")]
 [assembly: SuppressMessage("", "S3963:\"static\" fields should be initialized inline", Justification = "<Pending>")]
+[assembly: SuppressMessage("", "S6602:\"Find\" method should be used instead of the \"FirstOrDefault\" extension", Justification = "<Pending>")]
 [assembly: SuppressMessage("", "S6605:Collection-specific \"Exists\" method should be used instead of the \"Any\" extension", Justification = "<Pending>")]
 [assembly: SuppressMessage("", "S6667:Logging in a catch clause should pass the caught exception as a parameter", Justification = "<Pending>")]

@@ -22,8 +22,8 @@
             <DockPanel>
                 <Label>Select top X entries:</Label>
                 <mah:NumericUpDown Value="{Binding SelectCount}"
-                    Minimum="5" Maximum="1000"
-                    Width="70" HorizontalAlignment="Left" />
+                    Minimum="5" Maximum="100000"
+                    Width="100" HorizontalAlignment="Left" />
                 <TextBlock Margin="5,0,0,0" VerticalAlignment="Center">(per source)</TextBlock>
             </DockPanel>
         </StackPanel>
