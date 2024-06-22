@@ -1,0 +1,19 @@
+<UserControl x:Class="Genius.Starlog.UI.Views.LogsBookmarkablePopup"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        mc:Ignorable="d">
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <Button ToolTip="Go to previous bookmark" Command="{Binding PreviousBookmark}" Padding="0" Margin="0,0,0,5">
+                <Image Source="{StaticResource BookmarkUp32}" Width="32" />
+            </Button>
+            <Button ToolTip="Go to next bookmark" Command="{Binding NextBookmark}" Padding="0">
+                <Image Source="{StaticResource BookmarkDown32}" Width="32" />
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

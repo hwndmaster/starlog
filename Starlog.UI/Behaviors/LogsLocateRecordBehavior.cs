@@ -2,6 +2,7 @@ using System.Reactive.Linq;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Genius.Atom.UI.Forms.Wpf;
+using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using Microsoft.Xaml.Behaviors;
 
@@ -79,21 +80,7 @@ public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>, IDisposable
         vm.SelectedLogItems.Add(item);
 
         var selectedItemIndex = vm.LogItems.IndexOf(item);
-        var verticalOffset = selectedItemIndex == vm.LogItems.Count - 1
-            ? selectedItemIndex // Scroll to it if it is last
-            : Math.Max(0, selectedItemIndex - 1); // Scroll to previous item or at 0
-        var scrollViewer = AssociatedObject.FindVisualChildren<ScrollViewer>().First();
 
-        _subscription?.Dispose();
-        _subscription = Observable.FromEventPattern<EventHandler, EventArgs>(
-            h => AssociatedObject.LayoutUpdated += h, h => AssociatedObject.LayoutUpdated -= h)
-
-            // Only scroll when the DataGrid got fully reloaded.
-            .Where(_ => AssociatedObject.Items.Count == vm.LogItems.Count)
-            .Take(1)
-            .SubscribeOnUiThread(_ =>
-            {
-                scrollViewer.ScrollToVerticalOffset(verticalOffset);
-            });
+        DataGridNavigation.ScrollToItem(AssociatedObject, selectedItemIndex, vm.LogItems.Count);
     }
 }
