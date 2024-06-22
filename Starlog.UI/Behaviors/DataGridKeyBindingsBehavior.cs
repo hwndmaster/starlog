@@ -27,14 +27,15 @@ public sealed class DataGridKeyBindingsBehavior : Behavior<DataGrid>
             return;
         }
 
-        if (e.Key == Key.Home)
+        var isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+        if (e.Key == Key.Home && !isCtrlPressed)
         {
             AssociatedObject.SelectedItem = AssociatedObject.Items[0];
             AssociatedObject.UpdateLayout();
             AssociatedObject.ScrollIntoView(AssociatedObject.SelectedItem);
             e.Handled = true;
         }
-        else if (e.Key == Key.End)
+        else if (e.Key == Key.End && !isCtrlPressed)
         {
             AssociatedObject.SelectedItem = AssociatedObject.Items[^1];
             AssociatedObject.UpdateLayout();

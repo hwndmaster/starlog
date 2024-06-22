@@ -66,20 +66,37 @@ public sealed class LogsBookmarkableBehavior : Behavior<DataGrid>
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
+        var isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+
         if (e.Key == Key.LeftCtrl)
         {
             ShowPopup();
-            return;
         }
-        if (e.Key == Key.F8)
+        else if (e.Key == Key.F8)
         {
             BookmarkItem();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Up && isCtrlPressed)
+        {
+            GoToBookmark(-1);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Down && isCtrlPressed)
+        {
+            GoToBookmark(1);
             e.Handled = true;
         }
     }
 
     private void OnPreviewKeyUp(object sender, KeyEventArgs e)
     {
+        var isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+        if (isCtrlPressed && (e.Key == Key.Up || e.Key == Key.Down))
+        {
+            // To keep the popup visible when navigating between bookmarked items
+            return;
+        }
         _popup.IsOpen = false;
     }
 

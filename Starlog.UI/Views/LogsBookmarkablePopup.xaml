@@ -8,10 +8,10 @@
         mc:Ignorable="d">
     <Grid>
         <StackPanel Orientation="Vertical">
-            <Button ToolTip="Go to previous bookmark" Command="{Binding PreviousBookmark}" Padding="0" Margin="0,0,0,5">
+            <Button ToolTip="Go to previous bookmark (Ctrl+Up)" Command="{Binding PreviousBookmark}" Padding="0" Margin="0,0,0,5">
                 <Image Source="{StaticResource BookmarkUp32}" Width="32" />
             </Button>
-            <Button ToolTip="Go to next bookmark" Command="{Binding NextBookmark}" Padding="0">
+            <Button ToolTip="Go to next bookmark (Ctrl+Dn)" Command="{Binding NextBookmark}" Padding="0">
                 <Image Source="{StaticResource BookmarkDown32}" Width="32" />
             </Button>
         </StackPanel>
