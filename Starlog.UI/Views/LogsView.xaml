@@ -68,7 +68,7 @@
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="5" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -77,7 +77,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <DockPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2">
+            <DockPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="3">
                 <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
                     <DockPanel>
                         <Label>Logs in list:</Label>
@@ -88,7 +88,7 @@
                 <logfilteringviews:LogsFilteringView DataContext="{Binding Filtering}" />
             </DockPanel>
 
-            <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" />
+            <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" HorizontalAlignment="Stretch" />
 
             <DataGrid Grid.Row="0" Grid.Column="2"
                     autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
@@ -112,11 +112,14 @@
                 </i:Interaction.Behaviors>
             </DataGrid>
 
-            <Grid Grid.Row="1" Grid.Column="2">
+            <GridSplitter Grid.Row="1" Grid.Column="2" VerticalAlignment="Stretch"
+                          Name="ArtifactsSplitter" />
+
+            <Grid Grid.Row="2" Grid.Column="2">
                 <RichTextBox atom:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
                              IsReadOnly="True"
                              MaxHeight="300"
-                             BorderThickness="0,1,0,0" />
+                             Name="Artifacts" />
             </Grid>
         </Grid>
     </Grid>
