@@ -122,7 +122,7 @@ internal sealed class ProfileLoadingController : IProfileLoadingController
 
             if (_currentProfile.Profile is not null)
             {
-                await _commandBus.SendAsync(new SettingsUpdateAutoLoadingProfileCommand(profile.Id));
+                await _commandBus.SendAsync(new ReportProfileOpeningCommand(profile.Id));
                 _mainController.ShowLogsTab();
             }
         })

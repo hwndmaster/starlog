@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Atom.Infrastructure.Events;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
@@ -24,6 +25,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
 {
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
+    private readonly IEventBus _eventBus;
     private readonly ILogContainer _logContainer;
     private readonly IMainController _mainController;
     private readonly IMessageParsingHandler _messageParsingHandler;
@@ -36,6 +38,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
     public ViewModelFactory(
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
+        IEventBus eventBus,
         ILogContainer logContainer,
         IMainController mainController,
         IMessageParsingHandler messageParsingHandler,
@@ -47,6 +50,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
     {
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
+        _eventBus = eventBus.NotNull();
         _logContainer = logContainer.NotNull();
         _mainController = mainController.NotNull();
         _messageParsingHandler = messageParsingHandler.NotNull();
@@ -71,7 +75,7 @@ internal sealed class ViewModelFactory : IViewModelFactory
 
     public IProfileViewModel CreateProfile(Profile? profile)
     {
-        return new ProfileViewModel(profile, _commandBus, _mainController, _profileLoadingController,
+        return new ProfileViewModel(profile, _commandBus, _eventBus, _mainController, _profileLoadingController,
             _profileQuery, _profileSettingsViewModelFactory, _ui);
     }
 }

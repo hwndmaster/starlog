@@ -1,6 +1,9 @@
+using System.Reactive.Linq;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Atom.Infrastructure.Events;
 using Genius.Atom.UI.Forms.Validation;
 using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Controllers;
@@ -22,7 +25,7 @@ public interface IProfileViewModel : ISelectable
     IActionCommand LocateCommand { get; }
 }
 
-public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
+public sealed class ProfileViewModel : DisposableViewModelBase, IProfileViewModel
 {
     private readonly ICommandBus _commandBus;
     private readonly IProfileQueryService _profileQuery;
@@ -34,12 +37,14 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     public ProfileViewModel(
         Profile? profile,
         ICommandBus commandBus,
+        IEventBus eventBus,
         IMainController controller,
         IProfileLoadingController profileLoadingController,
         IProfileQueryService profileQuery,
         IProfileSettingsViewModelFactory vmFactory,
         IUserInteraction ui)
     {
+        Guard.NotNull(eventBus);
         Guard.NotNull(profileLoadingController);
         Guard.NotNull(vmFactory);
 
@@ -59,6 +64,12 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
         {
             ResetForm();
         });
+
+        // Subscriptions:
+        eventBus.WhenFired<ProfileLastOpenedUpdatedEvent>()
+            .Where(eventArgs => _profile is not null && eventArgs.ProfileId == _profile.Id)
+            .Subscribe(args => LastOpened = args.LastOpened)
+            .DisposeWith(Disposer);
 
         // Actions:
         CommitProfileCommand = new ActionCommand(async _ => await CommitProfileAsync());
@@ -119,6 +130,7 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     private void ResetForm()
     {
         Name = _profile?.Name ?? Name;
+        LastOpened = _profile?.LastOpened;
 
         ProfileSettings.ResetForm();
     }
@@ -137,6 +149,12 @@ public sealed class ProfileViewModel : ViewModelBase, IProfileViewModel
     public string Source
     {
         get => ProfileSettings.Source;
+    }
+
+    public DateTime? LastOpened
+    {
+        get => GetOrDefault<DateTime?>();
+        set => RaiseAndSetIfChanged(value);
     }
 
     public IProfileSettingsViewModel ProfileSettings { get; private set; }

@@ -76,7 +76,7 @@ public static class Module
         services.AddScoped<ICommandHandler<ProfileFilterCreateOrUpdateCommand, ProfileFilterCreateOrUpdateCommandResult>, ProfileFilterCreateOrUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ProfileFilterDeleteCommand>, ProfileFilterDeleteCommandHandler>();
         services.AddScoped<ICommandHandler<SettingsUpdateCommand>, SettingsUpdateCommandHandler>();
-        services.AddScoped<ICommandHandler<SettingsUpdateAutoLoadingProfileCommand>, SettingsUpdateAutoLoadingProfileCommandHandler>();
+        services.AddScoped<ICommandHandler<ReportProfileOpeningCommand>, ReportProfileOpeningCommandHandler>();
 
         // Other components
         services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();

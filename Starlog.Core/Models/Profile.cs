@@ -38,4 +38,9 @@ public sealed class Profile : EntityBase
     ///   The user-defined message parsings.
     /// </summary>
     public IList<MessageParsing> MessageParsings { get; set; } = new List<MessageParsing>();
+
+    /// <summary>
+    ///   The date and time of when the profile has been opened last time.
+    /// </summary>
+    public DateTime? LastOpened { get; set; }
 }
