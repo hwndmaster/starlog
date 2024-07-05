@@ -45,10 +45,12 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
 
         foreach (var logFilter in logFilterContainer.GetLogFilters())
         {
+            /* TODO: To keep it for a while and check why I have added it before. With this condition
+                     it fails when adding a custom field filter from smart contextmenu
             if (logFilter.Id == FieldProfileFilter.LogFilterId && logContainer.GetFields().GetThreadFieldIfAny() is null)
             {
                 continue;
-            }
+            }*/
             FilterTypes.Add(vmFactory.CreateProfileFilterSettings(logFilter, _profileFilter));
         }
 
