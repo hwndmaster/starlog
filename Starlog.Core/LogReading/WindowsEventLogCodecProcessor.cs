@@ -47,7 +47,8 @@ internal sealed class WindowsEventLogCodecProcessor : ILogCodecProcessor
                 var logLevelHash = (int)(entry.Level ?? 0);
                 if (!logLevels.TryGetValue(logLevelHash, out var logLevelRecord))
                 {
-                    logLevelRecord = new LogLevelRecord(logLevelHash, entry.LevelDisplayName);
+                    var logLevelName = ExtractLogLevelName(entry.Level);
+                    logLevelRecord = new LogLevelRecord(logLevelHash, logLevelName);
                     logLevels.Add(logLevelHash, logLevelRecord);
                 }
 
@@ -113,5 +114,19 @@ internal sealed class WindowsEventLogCodecProcessor : ILogCodecProcessor
     public bool ReadFromCommandLineArguments(ProfileSettingsBase profileSettings, string[] codecSettings)
     {
         return false;
+    }
+
+    private static string ExtractLogLevelName(byte? level)
+    {
+        // Mapping reference: https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.eventing.reader.standardeventlevel
+        return level switch
+        {
+            1 => "Critical",
+            2 => "Error",
+            3 => "Warning",
+            4 => "Info",
+            5 => "Verbose",
+            _ => "Unknown"
+        };
     }
 }

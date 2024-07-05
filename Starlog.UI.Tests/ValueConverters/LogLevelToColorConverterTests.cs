@@ -58,6 +58,7 @@ public sealed class LogLevelToColorConverterTests : IDisposable
     public void Convert_WhenLogLevelSeverityIsCritical_ThenCorrectColorReturned()
     {
         TestForLogLevel("fatal", LogLevelToColorConverter.ColorForCritical);
+        TestForLogLevel("critical", LogLevelToColorConverter.ColorForCritical);
     }
 
     [StaFact]
@@ -99,7 +100,7 @@ public sealed class LogLevelToColorConverterTests : IDisposable
             TreatAsMinor = ["debug", "trace", "statistics"],
             TreatAsWarning = ["warn", "warning"],
             TreatAsError = ["err", "error", "exception"],
-            TreatAsCritical = ["fatal"],
+            TreatAsCritical = ["fatal", "critical"],
         });
 
         var services = new ServiceCollection();
