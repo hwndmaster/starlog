@@ -3,7 +3,7 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.Core.Commands;
 
-public sealed class SettingsUpdateCommand : ICommandMessage
+internal sealed class SettingsUpdateCommand : ICommandMessage
 {
     public SettingsUpdateCommand(Settings settings)
     {

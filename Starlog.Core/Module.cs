@@ -19,6 +19,7 @@ using Genius.Starlog.Core.Models.VersionUpgraders;
 using Genius.Starlog.Core.Serialization;
 using Genius.Starlog.Core.Comparison;
 using Genius.Starlog.Core.ProfileLoading;
+using Genius.Starlog.Core.Clients;
 
 namespace Genius.Starlog.Core;
 
@@ -77,6 +78,10 @@ public static class Module
         services.AddScoped<ICommandHandler<ProfileFilterDeleteCommand>, ProfileFilterDeleteCommandHandler>();
         services.AddScoped<ICommandHandler<SettingsUpdateCommand>, SettingsUpdateCommandHandler>();
         services.AddScoped<ICommandHandler<ReportProfileOpeningCommand>, ReportProfileOpeningCommandHandler>();
+
+        // Clients
+        services.AddSingleton<IProfileClient, ProfileClient>();
+        services.AddSingleton<ISettingsClient, SettingsClient>();
 
         // Other components
         services.AddTransient<IDirectoryMonitor, DirectoryMonitor>();

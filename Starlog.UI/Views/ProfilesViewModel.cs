@@ -1,11 +1,12 @@
+using System.Collections.Immutable;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
-using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.Infrastructure.Tasks;
+using Genius.Atom.UI.Forms.Controls.AutoGrid;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
-using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.Clients;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
@@ -32,20 +33,22 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     private readonly CompositeDisposable _disposables = new();
 
     public ProfilesViewModel(
-        ICommandBus commandBus,
         IComparisonController comparisonController,
         ICurrentProfile currentProfile,
         IMainController controller,
+        IProfileClient profileClient,
         IProfileLoadingController profileLoadingController,
         IProfileQueryService profileQuery,
+        ISettingsClient settingsClient,
         IUiDispatcher uiDispatcher,
         IViewModelFactory viewModelFactory,
         IUserInteraction ui,
         ProfileAutoGridBuilder autoGridBuilder)
     {
-        Guard.NotNull(commandBus);
         Guard.NotNull(currentProfile);
+        Guard.NotNull(profileClient);
         Guard.NotNull(profileLoadingController);
+        Guard.NotNull(settingsClient);
         Guard.NotNull(ui);
         Guard.NotNull(uiDispatcher);
 
@@ -74,6 +77,10 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                     }
                 })
         };
+
+        SortedColumns = settingsClient.GetProfilesViewSettings().GetSortedColumns()
+            .Select(x => new ColumnSortingInfo(x.ColumnName, x.SortAsc))
+            .ToImmutableList();
 
         // Actions:
         CompareSelectedCommand = new ActionCommand(async _ => {
@@ -133,7 +140,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 
             if (selectedProfile.Id is not null)
             {
-                await commandBus.SendAsync(new ProfileDeleteCommand(selectedProfile.Id.Value));
+                await profileClient.DeleteAsync(selectedProfile.Id.Value);
             }
         });
 
@@ -141,6 +148,13 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         Deactivated.Executed
             .Subscribe(_ => IsAddEditProfileVisible = false)
             .DisposeWith(_disposables);
+        this.WhenChanged(x => x.SortedColumns)
+            .Subscribe(async _ =>
+            {
+                var viewSettings = settingsClient.GetProfilesViewSettings();
+                viewSettings.SetSortedColumns(SortedColumns.Select(x => (x.ColumnName, x.SortAsc)));
+                await settingsClient.UpdateProfilesViewSettingsAsync(viewSettings);
+            });
 
         // Final preparation:
         uiDispatcher.InvokeAsync(ReloadListAsync).RunAndForget();
@@ -189,6 +203,12 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     public ICollection<DropAreaViewModel> DropAreas
     {
         get => GetOrDefault<ICollection<DropAreaViewModel>>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public ImmutableList<ColumnSortingInfo> SortedColumns
+    {
+        get => GetOrDefault(ImmutableList<ColumnSortingInfo>.Empty);
         set => RaiseAndSetIfChanged(value);
     }
 

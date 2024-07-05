@@ -1,8 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
-using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.Infrastructure.Events;
-using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.Clients;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
@@ -16,20 +15,20 @@ public interface ISettingsViewModel : ITabViewModel
 
 internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel, IDisposable
 {
-    private readonly ICommandBus _commandBus;
+    private readonly ISettingsClient _settingsClient;
     private readonly Disposer _disposer = new();
     private readonly IUserInteraction _ui;
     private Settings _model;
 
     public SettingsViewModel(
-        ICommandBus commandBus,
+        ISettingsClient settingsClient,
         ISettingsQueryService settingsQuery,
         IEventBus eventBus,
         IUserInteraction ui,
         PlainTextLinePatternsAutoGridBuilder plainTextLinePatternsGridBuilder)
     {
         // Dependencies:
-        _commandBus = commandBus.NotNull();
+        _settingsClient = settingsClient.NotNull();
         _ui = ui.NotNull();
         PlainTextLogCodecLinePatternsBuilder = plainTextLinePatternsGridBuilder.NotNull();
 
@@ -65,7 +64,7 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel, 
 
     private async Task SendUpdateAsync()
     {
-        await _commandBus.SendAsync(new SettingsUpdateCommand(_model));
+        await _settingsClient.UpdateAsync(_model);
     }
 
     private void AddPlainTextLogCodecLinePattern(PatternValue patternValue)

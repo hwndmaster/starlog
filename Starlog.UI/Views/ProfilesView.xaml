@@ -50,6 +50,7 @@
         <DataGrid Grid.Row="1" Style="{StaticResource Starlog.TabRootContent.DataGrid}"
                   autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
                   autogrid:Properties.ItemsSource="{Binding Profiles}"
+                  autogrid:Properties.SortedColumns="{Binding SortedColumns, Mode=TwoWay}"
                   IsReadOnly="True">
             <DataGrid.InputBindings>
                 <MouseBinding
