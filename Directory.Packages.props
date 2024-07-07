@@ -4,7 +4,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
     <FrameworkPackageVersion>8.0.0</FrameworkPackageVersion>
-    <AtomPackageVersion>0.0.39</AtomPackageVersion>
+    <AtomPackageVersion>0.0.40</AtomPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
