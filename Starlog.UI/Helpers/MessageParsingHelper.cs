@@ -17,8 +17,7 @@ public class MessageParsingHelper(
 
         // TODO: Check if there were changes in `filterContext.MessageParsings`
         //       to prevent re-initialization in case of no changes.
-        var messageParsings = filterContext.MessageParsings;
-        var extractedColumns = (from messageParsing in messageParsings
+        var extractedColumns = (from messageParsing in filterContext.MessageParsings
                                 from extractedColumn in _messageParsingHandler.RetrieveColumns(messageParsing)
                                 select (messageParsing, extractedColumn)).ToArray();
 
@@ -27,7 +26,7 @@ public class MessageParsingHelper(
             logItem.MessageParsingEntries = new DynamicColumnEntriesViewModel(() =>
             {
                 List<string> parsedEntriesCombined = [];
-                foreach (var messageParsing in messageParsings)
+                foreach (var messageParsing in filterContext.MessageParsings)
                 {
                     var parsedEntries = _messageParsingHandler.ParseMessage(messageParsing, logItem.Record);
                     parsedEntriesCombined.AddRange(parsedEntries);

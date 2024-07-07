@@ -345,9 +345,10 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         );
 
         // `MessageParsingColumns` needs to be updated in a UI thread to avoid WPF binding errors.
-        DynamicColumnsViewModel? messageParsingColumnsToSet = MessageParsingColumns is not null
-            ? _messageParsingHelper.CreateDynamicMessageParsingEntries(_filterContext.Filter, LogItems)
-            : null;
+        DynamicColumnsViewModel? messageParsingColumnsToSet =
+            _filterContext.Filter.MessageParsings.Length > 0 || MessageParsingColumns is not null
+                ? _messageParsingHelper.CreateDynamicMessageParsingEntries(_filterContext.Filter, LogItems)
+                : null;
 
         _uiDispatcher.InvokeAsync(() =>
         {
