@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using Genius.Atom.Infrastructure.Io;
 using Genius.Starlog.Core.Models;
@@ -69,7 +70,7 @@ internal sealed class MainController : IMainController
                 : Path.GetDirectoryName(plainTextProfileSettings.Path);
             if (path is null)
                 return;
-            System.Diagnostics.Process.Start("explorer.exe", path);
+            Process.Start("explorer.exe", path);
         }
         else if (profile.Settings is XmlProfileSettings xmlProfileSettings)
         {
@@ -77,7 +78,14 @@ internal sealed class MainController : IMainController
         }
         else if (profile.Settings is WindowsEventProfileSettings windowsEventProfileSettings)
         {
-            throw new NotImplementedException();
+            var source = windowsEventProfileSettings.Sources.FirstOrDefault();
+            var eventViewerApp = Path.Combine(Environment.SystemDirectory, "eventvwr.exe");
+            var psi = new ProcessStartInfo(eventViewerApp)
+            {
+                UseShellExecute = true,
+                Arguments = source is null ? string.Empty : "/c:" + source
+            };
+            Process.Start(psi);
         }
         else
         {

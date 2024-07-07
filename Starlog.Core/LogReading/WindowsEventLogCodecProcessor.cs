@@ -57,7 +57,7 @@ internal sealed class WindowsEventLogCodecProcessor : ILogCodecProcessor
                 string? logArtifacts = null;
                 if (message.Length > 80)
                 {
-                    var newLineIndex = message.IndexOf('\r');
+                    var newLineIndex = message.IndexOfAny(['\r', '\n']);
                     if (newLineIndex > 0)
                     {
                         logArtifacts = message;

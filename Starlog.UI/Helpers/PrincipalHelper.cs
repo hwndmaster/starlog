@@ -3,6 +3,7 @@ using System.Security.Principal;
 
 namespace Genius.Starlog.UI.Helpers;
 
+// TODO: Not used yet
 [ExcludeFromCodeCoverage]
 public static class PrincipalHelper
 {
