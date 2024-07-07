@@ -1,18 +1,19 @@
+using System.Globalization;
+
 namespace Genius.Starlog.UI.Helpers;
 
-// TODO: Cover with unit tests
 public static class LogFilterHelpers
 {
     private const int MaxNameLength = 50;
 
     public static string LimitNameLength(string name)
     {
-        if (name.Length > MaxNameLength)
+        if (name is not null && name.Length > MaxNameLength)
         {
             return name[..(MaxNameLength - 1)] + "…";
         }
 
-        return name;
+        return name!;
     }
 
     public static string ProposeNameForStringList(string title, IEnumerable<string> stringList, bool exclude)
@@ -27,8 +28,8 @@ public static class LogFilterHelpers
 
     public static string ProposeNameForTimeRange(DateTime timeFrom, DateTime timeTo)
     {
-        return "Time from " + timeFrom.ToString() + " to " + (
-            timeTo.Date == timeFrom.Date ? timeTo.ToLongTimeString() : timeTo.ToString()
+        return "Time from " + timeFrom.ToString(CultureInfo.CurrentCulture) + " to " + (
+            timeTo.Date == timeFrom.Date ? timeTo.ToLongTimeString() : timeTo.ToString(CultureInfo.CurrentCulture)
         );
     }
 }

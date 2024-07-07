@@ -3,7 +3,6 @@ using System.Windows.Data;
 
 namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
 
-// TODO: Cover with unit tests
 public class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase, ILogFilterNodeViewModel
     where TChildViewModel : ILogFilterNodeViewModel
 {
@@ -34,7 +33,16 @@ public class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase, ILogFi
     {
         foreach (var item in items)
         {
-            CategoryItems.Add(item);
+            CategoryItems.Remove(item);
+        }
+        CategoryItemsView.View.Refresh();
+    }
+
+    internal void RemoveAll()
+    {
+        while (CategoryItems.Count > 0)
+        {
+            CategoryItems.RemoveAt(0);
         }
         CategoryItemsView.View.Refresh();
     }
@@ -58,7 +66,7 @@ public class LogFilterCategoryViewModel<TChildViewModel> : ViewModelBase, ILogFi
         set => RaiseAndSetIfChanged(value);
     }
 
-    public bool IsPinned { get; set; } = false;
+    public bool IsPinned { get; set; }
 
     public ObservableCollection<TChildViewModel> CategoryItems { get; } = new();
     public CollectionViewSource CategoryItemsView { get; } = new CollectionViewSource();

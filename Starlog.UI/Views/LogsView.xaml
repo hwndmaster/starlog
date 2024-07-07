@@ -9,14 +9,10 @@
         xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
         xmlns:logfilteringviews="clr-namespace:Genius.Starlog.UI.Views.LogSearchAndFiltering"
         xmlns:v="clr-namespace:Genius.Starlog.UI.Views"
-        xmlns:vc="clr-namespace:Genius.Starlog.UI.ValueConverters"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d">
     <UserControl.Resources>
-        <vc:TicksToDateTimeConverter x:Key="TicksToDateTimeConverter" />
-        <vc:TickRangeToTimeConverter x:Key="TickRangeToTimeConverter" />
         <Thickness x:Key="TopBarMargin">10 0 0 0</Thickness>
-        <Thickness x:Key="TopBarMarginHalf">5 0 0 0</Thickness>
     </UserControl.Resources>
     <Grid IsEnabled="{Binding IsProfileReady}">
         <Grid.RowDefinitions>
@@ -33,9 +29,6 @@
                 <ColumnDefinition Width="55" />   <!-- Refresh button -->
                 <ColumnDefinition Width="Auto" /> <!-- Search text -->
                 <ColumnDefinition Width="*" />    <!-- Time slider -->
-                <ColumnDefinition Width="Auto" /> <!-- Time slider limit button -->
-                <ColumnDefinition Width="Auto" /> <!-- Time slider limit button -->
-                <ColumnDefinition Width="Auto" /> <!-- Time slider reset button -->
             </Grid.ColumnDefinitions>
 
             <Button ToolTip="Share the selected logs items"
@@ -45,21 +38,14 @@
             </Button>
 
             <ComboBox Margin="{StaticResource TopBarMargin}" Grid.Column="1"
-                      SelectedValue="{Binding ColorizeBy}" SelectedValuePath="Tag">
-                <ComboBoxItem Tag="L">Colorize by Level</ComboBoxItem>
-                <ComboBoxItem Tag="T">Colorize by Thread</ComboBoxItem>
-            </ComboBox>
+                      ItemsSource="{Binding ColorizeByOptions}"
+                      DisplayMemberPath="Title"
+                      SelectedValue="{Binding ColorizeBy}" />
 
             <ComboBox Margin="{StaticResource TopBarMargin}" Grid.Column="2"
-                      SelectedValue="{Binding GroupBy}" SelectedValuePath="Tag">
-                <ComboBoxItem Tag="">No grouping</ComboBoxItem>
-                <ComboBoxItem Tag="M">Group by messages</ComboBoxItem>
-                <!--
-                    TODO: To be implemented
-                    <ComboBoxItem Tag="MF">Group by messages (fuzzy)</ComboBoxItem>
-                -->
-                <ComboBoxItem Tag="L">Group by loggers</ComboBoxItem>
-            </ComboBox>
+                      ItemsSource="{Binding GroupByOptions}"
+                      DisplayMemberPath="Title"
+                      SelectedValue="{Binding GroupBy}" />
 
             <mah:ToggleSwitch Grid.Column="3"
                               Margin="{StaticResource TopBarMargin}"
@@ -75,86 +61,14 @@
                     Visibility="{Binding IsRefreshVisible, Converter={atom:BooleanToVisibilityConverter}}"
                     Command="{Binding ReloadProfileCommand}" />
 
-            <TextBox Text="{Binding Search.Text}" Margin="{StaticResource TopBarMargin}" Grid.Column="5"
-                     Name="SearchBox"
-                     Width="290"
-                     mah:TextBoxHelper.Watermark="Type search text here and press ENTER (Ctrl+F)."
-                     mah:TextBoxHelper.ClearTextButton="True"
-                     mah:TextBoxHelper.IsClearTextButtonBehaviorEnabled="False"
-                     mah:TextBoxHelper.ButtonCommand="{Binding Search.UseRegexSwitchCommand, Mode=OneWay}">
-                <mah:TextBoxHelper.ButtonContent>
-                    <Image ToolTip="Use Regular Expression (Alt+R)">
-                        <i:Interaction.Behaviors>
-                            <atom:ImageConditionalSourceBehavior FlagValue="{Binding Search.UseRegex}"
-                                                                          WhenTrue="{DynamicResource Regex32}"
-                                                                          WhenFalse="{DynamicResource RegexBw32}" />
-                        </i:Interaction.Behaviors>
-                    </Image>
-                </mah:TextBoxHelper.ButtonContent>
-                <i:Interaction.Behaviors>
-                    <atom:FilterBoxBehavior />
-                    <behaviors:SearchBoxRegexBindingBehavior />
-                </i:Interaction.Behaviors>
-            </TextBox>
-
-            <mah:RangeSlider Grid.Column="6"
-                             Minimum="{Binding Search.MinDateTimeTicks}"
-                             Maximum="{Binding Search.MaxDateTimeTicks}"
-                             LowerValue="{Binding Search.SelectedDateTimeFromTicks}"
-                             UpperValue="{Binding Search.SelectedDateTimeToTicks}"
-                             Orientation="Horizontal"
-                             Margin="{StaticResource TopBarMargin}"
-                             Style="{DynamicResource MahApps.Styles.RangeSlider.Win10}"
-                             AutoToolTipPlacement="TopLeft"
-                             mah:SliderHelper.EnableMouseWheel="MouseHover">
-                <mah:RangeSlider.AutoToolTipLowerValueTemplate>
-                    <DataTemplate DataType="mah:RangeSliderAutoTooltipValues">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock HorizontalAlignment="Right" Text="From: " />
-                            <TextBlock HorizontalAlignment="Right" Text="{Binding ., Converter={StaticResource TicksToDateTimeConverter}}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </mah:RangeSlider.AutoToolTipLowerValueTemplate>
-                <mah:RangeSlider.AutoToolTipUpperValueTemplate>
-                    <DataTemplate DataType="mah:RangeSliderAutoTooltipValues">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock HorizontalAlignment="Right" Text="To: " />
-                            <TextBlock HorizontalAlignment="Right" Text="{Binding ., Converter={StaticResource TicksToDateTimeConverter}}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </mah:RangeSlider.AutoToolTipUpperValueTemplate>
-                <mah:RangeSlider.AutoToolTipRangeValuesTemplate>
-                    <DataTemplate DataType="mah:RangeSliderAutoTooltipValues">
-                        <UniformGrid Columns="2" Rows="3">
-                            <TextBlock HorizontalAlignment="Right" Text="From: " />
-                            <TextBlock HorizontalAlignment="Right" Text="{Binding LowerValue, Converter={StaticResource TicksToDateTimeConverter}}" />
-                            <TextBlock HorizontalAlignment="Right" Text="To: " />
-                            <TextBlock HorizontalAlignment="Right" Text="{Binding UpperValue, Converter={StaticResource TicksToDateTimeConverter}}" />
-                            <TextBlock HorizontalAlignment="Right" Text="Range: " />
-                            <TextBlock HorizontalAlignment="Right">
-                                <TextBlock.Text>
-                                    <MultiBinding Converter="{StaticResource TickRangeToTimeConverter}">
-                                        <Binding Path="LowerValue" />
-                                        <Binding Path="UpperValue" />
-                                    </MultiBinding>
-                                </TextBlock.Text>
-                            </TextBlock>
-                        </UniformGrid>
-                    </DataTemplate>
-                </mah:RangeSlider.AutoToolTipRangeValuesTemplate>
-            </mah:RangeSlider>
-            <Button Content="1 min" Grid.Column="7" Margin="{StaticResource TopBarMarginHalf}"
-                    Command="{Binding Search.SetTimeRangeTo1MinuteCommand}" />
-            <Button Content="5 sec" Grid.Column="8" Margin="{StaticResource TopBarMarginHalf}"
-                    Command="{Binding Search.SetTimeRangeTo5SecondCommand}" />
-            <Button Content="Reset" Grid.Column="9" Margin="{StaticResource TopBarMarginHalf}"
-                    Command="{Binding Search.ResetTimeRangeCommand}" />
+            <logfilteringviews:LogsSearchTextView Grid.Column="5" DataContext="{Binding Search}" />
+            <logfilteringviews:LogsSearchTimeSliderView Grid.Column="6" DataContext="{Binding Search}" />
         </Grid>
 
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="5" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -163,7 +77,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <DockPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2">
+            <DockPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="3">
                 <StackPanel Orientation="Vertical" DockPanel.Dock="Bottom">
                     <DockPanel>
                         <Label>Logs in list:</Label>
@@ -174,48 +88,17 @@
                 <logfilteringviews:LogsFilteringView DataContext="{Binding Filtering}" />
             </DockPanel>
 
-            <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" />
+            <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" HorizontalAlignment="Stretch" />
 
             <DataGrid Grid.Row="0" Grid.Column="2"
                     autogrid:Properties.AutoGridBuilder="{Binding AutoGridBuilder}"
-                    autogrid:Properties.ItemsSource="{Binding LogItemsView.View}"
+                    autogrid:Properties.ItemsSource="{Binding LogItemsView}"
                     IsReadOnly="True"
                     VirtualizingPanel.IsVirtualizing="True"
                     VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                     EnableRowVirtualization="True"
                     EnableColumnVirtualization="False"
                     ScrollViewer.CanContentScroll="True">
-                <DataGrid.GroupStyle>
-                    <GroupStyle>
-                        <!-- <GroupStyle.Panel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel Orientation="Vertical" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Standard"/>
-                            </ItemsPanelTemplate>
-                        </GroupStyle.Panel> -->
-                        <GroupStyle.ContainerStyle>
-                            <Style TargetType="GroupItem">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="{x:Type GroupItem}">
-                                            <Expander IsExpanded="True">
-                                                <Expander.Header>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock FontWeight="Bold" FontSize="16"
-                                                            Text="{Binding Name}" Margin="0,0,0,3"/>
-                                                        <TextBlock Text=" ("/>
-                                                        <TextBlock Text="{Binding Path=ItemCount}"/>
-                                                        <TextBlock Text=")"/>
-                                                    </StackPanel>
-                                                </Expander.Header>
-                                                <ItemsPresenter />
-                                            </Expander>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </GroupStyle.ContainerStyle>
-                    </GroupStyle>
-                </DataGrid.GroupStyle>
                 <i:Interaction.Behaviors>
                     <autogrid:AttachingBehavior />
                     <atom:DataGridSelectedItemsBehavior SelectedItems="{Binding SelectedLogItems}" />
@@ -225,14 +108,18 @@
                     <behaviors:LogsBookmarkableBehavior />
                     <behaviors:LogsLocateRecordBehavior />
                     <behaviors:DataGridAutoScrollBehavior AutoScroll="{Binding AutoScroll}" />
+                    <behaviors:DataGridKeyBindingsBehavior />
                 </i:Interaction.Behaviors>
             </DataGrid>
 
-            <Grid Grid.Row="1" Grid.Column="2">
+            <GridSplitter Grid.Row="1" Grid.Column="2" VerticalAlignment="Stretch"
+                          Name="ArtifactsSplitter" />
+
+            <Grid Grid.Row="2" Grid.Column="2">
                 <RichTextBox atom:RichTextDocumentBehavior.BindableDocument="{Binding SelectedLogArtifacts}"
                              IsReadOnly="True"
                              MaxHeight="300"
-                             BorderThickness="0,1,0,0" />
+                             Name="Artifacts" />
             </Grid>
         </Grid>
     </Grid>

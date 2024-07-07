@@ -1,8 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
-using Genius.Atom.Infrastructure.Commands;
 using Genius.Atom.Infrastructure.Events;
-using Genius.Starlog.Core.Commands;
+using Genius.Starlog.Core.Clients;
 using Genius.Starlog.Core.Messages;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
@@ -14,22 +13,22 @@ namespace Genius.Starlog.UI.Views;
 public interface ISettingsViewModel : ITabViewModel
 { }
 
-// TODO: Cover with unit tests
-internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
+internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel, IDisposable
 {
-    private readonly ICommandBus _commandBus;
+    private readonly ISettingsClient _settingsClient;
+    private readonly Disposer _disposer = new();
     private readonly IUserInteraction _ui;
     private Settings _model;
 
     public SettingsViewModel(
-        ICommandBus commandBus,
+        ISettingsClient settingsClient,
         ISettingsQueryService settingsQuery,
         IEventBus eventBus,
         IUserInteraction ui,
         PlainTextLinePatternsAutoGridBuilder plainTextLinePatternsGridBuilder)
     {
         // Dependencies:
-        _commandBus = commandBus.NotNull();
+        _settingsClient = settingsClient.NotNull();
         _ui = ui.NotNull();
         PlainTextLogCodecLinePatternsBuilder = plainTextLinePatternsGridBuilder.NotNull();
 
@@ -48,8 +47,8 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
             {
                 _model = @event.Settings;
                 Reconcile();
-            });
-        this.WhenAnyChanged().Subscribe(async _ => await SendUpdate());
+            }).DisposeWith(_disposer);
+        WhenAnyChangedNoDispose([], SendUpdateAsync);
     }
 
     private void Reconcile()
@@ -63,35 +62,40 @@ internal sealed class SettingsViewModel : TabViewModelBase, ISettingsViewModel
         }
     }
 
-    private async Task SendUpdate()
+    private async Task SendUpdateAsync()
     {
-        await _commandBus.SendAsync(new SettingsUpdateCommand(_model));
+        await _settingsClient.UpdateAsync(_model);
     }
 
     private void AddPlainTextLogCodecLinePattern(PatternValue patternValue)
     {
         var vm = new PatternValueViewModel(patternValue);
-        vm.DeleteCommand.Executed.Subscribe(async _ =>
+        vm.DeleteCommand.Executed.SubscribeOnUiThread(async _ =>
         {
             if (!_ui.AskForConfirmation($"Confirm removing '{vm.Name}'", "Deletion confirmation"))
                 return;
             PlainTextLogCodecLinePatterns.Remove(vm);
             await RebindAndSendAsync();
-        });
-        vm.WhenAnyChanged().Subscribe(async _ =>
+        }).DisposeWith(_disposer);
+        vm.WhenAnyChanged().SubscribeOnUiThread(async _ =>
         {
             if (PlainTextLogCodecLinePatterns.Any(x => x.HasErrors))
                 return;
 
             await RebindAndSendAsync();
-        });
+        }).DisposeWith(_disposer);
         PlainTextLogCodecLinePatterns.Add(vm);
 
         async Task RebindAndSendAsync()
         {
             _model.PlainTextLogCodecLinePatterns = PlainTextLogCodecLinePatterns.Select(x => x.Commit()).ToList();
-            await SendUpdate();
+            await SendUpdateAsync();
         }
+    }
+
+    public void Dispose()
+    {
+        _disposer.Dispose();
     }
 
     public bool AutoLoadPreviouslyOpenedProfile

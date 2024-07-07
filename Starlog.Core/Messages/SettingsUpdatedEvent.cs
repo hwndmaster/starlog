@@ -5,7 +5,7 @@ namespace Genius.Starlog.Core.Messages;
 
 public sealed class SettingsUpdatedEvent : IEventMessage
 {
-    public SettingsUpdatedEvent(Settings settings)
+    internal SettingsUpdatedEvent(Settings settings)
     {
         Settings = settings;
     }

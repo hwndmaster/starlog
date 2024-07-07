@@ -9,9 +9,10 @@ namespace Genius.Starlog.Core.Tests.LogFiltering;
 
 public sealed class QuickFilterProviderTests
 {
-    private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
     private readonly LogFilterContainer _logFilterContainer;
     private readonly QuickFilterProvider _sut;
+    private readonly ILogFieldsContainer _logFieldContainerFake = A.Fake<ILogFieldsContainer>();
 
     public QuickFilterProviderTests()
     {
@@ -19,9 +20,10 @@ public sealed class QuickFilterProviderTests
 
         _logFilterContainer.RegisterLogFilter<LogLevelsProfileFilter, TestFilterProcessor>(_fixture.Create<LogFilter>());
         _logFilterContainer.RegisterLogFilter<MessageProfileFilter, TestFilterProcessor>(_fixture.Create<LogFilter>());
-        _logFilterContainer.RegisterLogFilter<ThreadsProfileFilter, TestFilterProcessor>(_fixture.Create<LogFilter>());
+        _logFilterContainer.RegisterLogFilter<FieldProfileFilter, TestFilterProcessor>(_fixture.Create<LogFilter>());
 
-        var logLevelMappingConfig = Mock.Of<IOptions<LogLevelMappingConfiguration>>(x => x.Value == new LogLevelMappingConfiguration
+        var logLevelMappingConfig = A.Fake<IOptions<LogLevelMappingConfiguration>>();
+        A.CallTo(() => logLevelMappingConfig.Value).Returns(new LogLevelMappingConfiguration
         {
             TreatAsMinor = _fixture.CreateMany<string>().ToArray(),
             TreatAsWarning = _fixture.CreateMany<string>().ToArray(),
@@ -29,13 +31,17 @@ public sealed class QuickFilterProviderTests
             TreatAsCritical = _fixture.CreateMany<string>().ToArray(),
         });
 
-        _sut = new QuickFilterProvider(_logFilterContainer, logLevelMappingConfig);
+        var logContainer = A.Fake<ILogContainer>();
+        A.CallTo(() => logContainer.GetFields()).Returns(_logFieldContainerFake);
+
+        _sut = new QuickFilterProvider(logContainer, _logFilterContainer, logLevelMappingConfig);
     }
 
     [Fact]
     public void GetQuickFilters_IdentifiersArePreserved()
     {
         // Arrange
+        A.CallTo(() => _logFieldContainerFake.GetThreadFieldIfAny()).Returns((_fixture.Create<int>(), _fixture.Create<string>()));
 
         // Act
         var actual1 = _sut.GetQuickFilters().ToList();
@@ -44,6 +50,23 @@ public sealed class QuickFilterProviderTests
         // Verify
         Assert.Equal(5, actual1.Count);
         Assert.Equal(actual1.Select(x => x.Id), actual2.Select(x => x.Id));
+    }
+
+    [Fact]
+    public void GetQuickFilters_ForThreads_FieldIsSupplied()
+    {
+        // Arrange
+        var threadField = (_fixture.Create<int>(), _fixture.Create<string>());
+        A.CallTo(() => _logFieldContainerFake.GetThreadFieldIfAny()).Returns(threadField);
+
+        // Act
+        var actual = _sut.GetQuickFilters().ToArray()[^2..];
+
+        // Verify
+        Assert.True(actual[0] is FieldProfileFilter);
+        Assert.True(actual[1] is FieldProfileFilter);
+        Assert.Equal(threadField.Item1, ((FieldProfileFilter)actual[0]).FieldId);
+        Assert.Equal(threadField.Item1, ((FieldProfileFilter)actual[1]).FieldId);
     }
 
     private sealed class TestFilterProcessor : IFilterProcessor

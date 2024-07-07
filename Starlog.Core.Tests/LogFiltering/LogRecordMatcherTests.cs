@@ -24,7 +24,7 @@ public sealed class LogRecordMatcherTests
                 recordTime - TimeSpan.FromMilliseconds(_filterHarness.Fixture.Create<int>()),
                 recordTime + TimeSpan.FromMilliseconds(_filterHarness.Fixture.Create<int>())));
         var logRecord = _filterHarness.Fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
+            .With(x => x.Source, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
             .With(x => x.DateTime, recordTime)
             .With(x => x.Message, _filterHarness.Fixture.Create<string>() + context.Search.SearchText + _filterHarness.Fixture.Create<string>())
             .Create();
@@ -50,7 +50,7 @@ public sealed class LogRecordMatcherTests
                 recordTime - TimeSpan.FromMilliseconds(_filterHarness.Fixture.Create<int>()),
                 recordTime + TimeSpan.FromMilliseconds(_filterHarness.Fixture.Create<int>())));
         var logRecord = _filterHarness.Fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
+            .With(x => x.Source, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
             .With(x => x.DateTime, recordTime)
             .With(x => x.Message, "message test with content")
             .Create();
@@ -89,7 +89,7 @@ public sealed class LogRecordMatcherTests
             LogRecordFilterContext.CreateEmpty() with { FilesSelected = _filterHarness.Fixture.CreateMany<string>().ToHashSet() },
             LogRecordSearchContext.CreateEmpty());
         var logRecord = _filterHarness.Fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), _filterHarness.Fixture.Create<Generator<string>>().First(g => !context.Filter.FilesSelected.Contains(g))), 0))
+            .With(x => x.Source, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), _filterHarness.Fixture.Create<Generator<string>>().First(g => !context.Filter.FilesSelected.Contains(g))), 0))
             .Create();
 
         // Act
@@ -135,7 +135,7 @@ public sealed class LogRecordMatcherTests
             LogRecordFilterContext.CreateEmpty() with { FiltersSelected = filters },
             LogRecordSearchContext.CreateEmpty());
         var logRecord = _filterHarness.Fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), _filterHarness.Fixture.Create<Generator<string>>().First(g => !context.Filter.FilesSelected.Contains(g))), 0))
+            .With(x => x.Source, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), _filterHarness.Fixture.Create<Generator<string>>().First(g => !context.Filter.FilesSelected.Contains(g))), 0))
             .Create();
         SetupFilters(filters, logRecord, filter => filter != filters.Last()); // To fail on the last filter.
 
@@ -156,7 +156,7 @@ public sealed class LogRecordMatcherTests
             new LogRecordFilterContext(true, _filterHarness.Fixture.CreateMany<string>().ToHashSet(), filters, _filterHarness.Fixture.Create<bool>(), UseOrCombination: true, _filterHarness.Fixture.CreateMany<MessageParsing>().ToImmutableArray()),
             LogRecordSearchContext.CreateEmpty());
         var logRecord = _filterHarness.Fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
+            .With(x => x.Source, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
             .Create();
         SetupFilters(filters, logRecord, filter => filter == filters[2]); // Only last filter is matching
 
@@ -177,7 +177,7 @@ public sealed class LogRecordMatcherTests
             new LogRecordFilterContext(true, _filterHarness.Fixture.CreateMany<string>().ToHashSet(), filters, _filterHarness.Fixture.Create<bool>(), UseOrCombination: true, _filterHarness.Fixture.CreateMany<MessageParsing>().ToImmutableArray()),
             LogRecordSearchContext.CreateEmpty());
         var logRecord = _filterHarness.Fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
+            .With(x => x.Source, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
             .Create();
         SetupFilters(filters, logRecord, _ => false);
 
@@ -198,7 +198,7 @@ public sealed class LogRecordMatcherTests
             new LogRecordFilterContext(true, _filterHarness.Fixture.CreateMany<string>().ToHashSet(), filters, _filterHarness.Fixture.Create<bool>(), UseOrCombination: true, _filterHarness.Fixture.CreateMany<MessageParsing>().ToImmutableArray()),
             LogRecordSearchContext.CreateEmpty());
         var logRecord = _filterHarness.Fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
+            .With(x => x.Source, new FileRecord(Path.Combine(_filterHarness.Fixture.Create<string>(), context.Filter.FilesSelected.First()), 0))
             .Create();
         SetupFilters(filters, logRecord, filter =>
         {
@@ -207,7 +207,7 @@ public sealed class LogRecordMatcherTests
                 return false;
             if (filter == filters[1])
                 return true;
-            throw new Exception();
+            throw new InvalidOperationException();
         });
 
         // Act

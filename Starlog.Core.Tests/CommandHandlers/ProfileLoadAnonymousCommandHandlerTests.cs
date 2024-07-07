@@ -25,10 +25,9 @@ public sealed class ProfileLoadAnonymousCommandHandlerTests
         await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.SetAnonymous(It.Is<Profile>(x =>
+        A.CallTo(() => _harness.ProfileRepo.SetAnonymous(A<Profile>.That.Matches(x =>
             x.Id == Profile.AnonymousProfileId
             && x.Name == "Unnamed"
-            && x.Path == command.Path
-            && x.Settings == command.Settings)));
+            && x.Settings == command.Settings))).MustHaveHappened();
     }
 }

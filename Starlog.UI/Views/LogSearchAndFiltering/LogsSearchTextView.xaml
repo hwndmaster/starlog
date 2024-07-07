@@ -1,0 +1,37 @@
+<UserControl x:Class="Genius.Starlog.UI.Views.LogSearchAndFiltering.LogsSearchTextView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:atom="clr-namespace:Genius.Atom.UI.Forms;assembly=Genius.Atom.UI.Forms"
+        xmlns:behaviors="clr-namespace:Genius.Starlog.UI.Behaviors"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        mc:Ignorable="d">
+    <UserControl.Resources>
+        <Thickness x:Key="TopBarMargin">10 0 0 0</Thickness>
+    </UserControl.Resources>
+    <Grid>
+        <TextBox Text="{Binding Text}" Margin="{StaticResource TopBarMargin}" Grid.Column="5"
+                 Name="SearchBox"
+                 Width="290"
+                 mah:TextBoxHelper.Watermark="Type search text here and press ENTER (Ctrl+F)."
+                 mah:TextBoxHelper.ClearTextButton="True"
+                 mah:TextBoxHelper.IsClearTextButtonBehaviorEnabled="False"
+                 mah:TextBoxHelper.ButtonCommand="{Binding UseRegexSwitchCommand, Mode=OneWay}">
+            <mah:TextBoxHelper.ButtonContent>
+                <Image ToolTip="Use Regular Expression (Alt+R)">
+                    <i:Interaction.Behaviors>
+                        <atom:ImageConditionalSourceBehavior FlagValue="{Binding UseRegex}"
+                                                             WhenTrue="{DynamicResource Regex32}"
+                                                             WhenFalse="{DynamicResource RegexBw32}" />
+                    </i:Interaction.Behaviors>
+                </Image>
+            </mah:TextBoxHelper.ButtonContent>
+            <i:Interaction.Behaviors>
+                <atom:FilterBoxBehavior />
+                <behaviors:SearchBoxRegexBindingBehavior />
+            </i:Interaction.Behaviors>
+        </TextBox>
+    </Grid>
+</UserControl>

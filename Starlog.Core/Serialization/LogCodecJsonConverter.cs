@@ -1,10 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Genius.Atom.Data.Persistence;
-using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
-namespace Genius.Starlog.Core.Repositories;
+namespace Genius.Starlog.Core.Serialization;
 
 internal sealed class LogCodecJsonConverter : JsonConverter<LogCodec>, IJsonConverter
 {

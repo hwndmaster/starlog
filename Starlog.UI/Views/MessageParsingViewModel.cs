@@ -13,7 +13,7 @@ using Genius.Starlog.UI.AutoGridBuilders;
 
 namespace Genius.Starlog.UI.Views;
 
-public interface IMessageParsingViewModel
+public interface IMessageParsingViewModel : IDisposable
 {
     MessageParsing? MessageParsing { get; }
     IActionCommand CommitCommand { get; }
@@ -30,8 +30,7 @@ public sealed class MessageParsingTestViewModel : ViewModelBase
     public DynamicColumnEntriesViewModel? Entries { get; set; }
 }
 
-// TODO: Cover with unit tests
-public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingViewModel
+public sealed class MessageParsingViewModel : DisposableViewModelBase, IMessageParsingViewModel
 {
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
@@ -69,9 +68,9 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Pattern)));
         AddValidationRule(new IsRegexValidationRule(nameof(Pattern)), shouldValidatePropertyName: nameof(IsRegex));
         Filters = quickFilterProvider.GetQuickFilters()
-            .Concat(_currentProfile.Profile.Filters)
+            .Concat(_currentProfile.Profile?.Filters ?? [])
             .Select(x => new ReferenceDto(x.Id, x.Name)).ToList();
-        SelectedFilters = new ObservableCollection<ReferenceDto>();
+        SelectedFilters = [];
 
         InitializeProperties(() =>
         {
@@ -84,15 +83,17 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
 
         // Subscriptions:
         this.WhenChanged(x => x.Method)
-            .Subscribe(_ =>
-            {
-                IsRegex = Method == PatternType.RegularExpression.ToString();
-            });
-        this.WhenAnyChanged(x => x.Pattern, x => x.Method).Subscribe(_ => ShowTestEntries());
-        SelectedFilters.WhenCollectionChanged().Subscribe(_ => ShowTestEntries());
+            .Subscribe(_ => IsRegex = Method == PatternType.RegularExpression.ToString())
+            .DisposeWith(Disposer);
+        this.WhenAnyChanged(x => x.Pattern, x => x.Method)
+            .Subscribe(_ => ShowTestEntries())
+            .DisposeWith(Disposer);
+        SelectedFilters.WhenCollectionChanged()
+            .Subscribe(_ => ShowTestEntries())
+            .DisposeWith(Disposer);
 
         // Actions:
-        CommitCommand = new ActionCommand(_ => Commit());
+        CommitCommand = new ActionCommand(_ => CommitAsync());
         ResetCommand = new ActionCommand(_ => Reconcile(), _ => _messageParsing is not null);
     }
 
@@ -121,7 +122,7 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
         }
     }
 
-    private async Task<bool> Commit()
+    private async Task<bool> CommitAsync()
     {
         Guard.NotNull(_currentProfile.Profile);
 
@@ -129,7 +130,7 @@ public sealed class MessageParsingViewModel : ViewModelBase, IMessageParsingView
 
         if (HasErrors)
         {
-            _ui.ShowWarning("Cannot proceed while there are errors in the form.");
+            _ui.ShowWarning(StringResources.ValidationError);
             return false;
         }
 

@@ -56,7 +56,7 @@ internal sealed class SettingsRepository : ISettingsRepository
                 Id = new Guid("bfd6380c-22a1-4808-b1f4-5e3146c1e5c1"),
                 Name = "LEVEL DATETIME [Thread] Logger - Message",
                 Type = PatternType.RegularExpression,
-                Pattern = @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>\w+)\]\s(?<logger>[^\s]+)\s-\s(?<message>.+)"
+                Pattern = @"(?<level>\w+)\s(?<datetime>[\d\-:\.]+\s[\d\-:\.]+)\s\[(?<thread>[\w\.]+)\]\s(?<logger>[^\s]+)\s-\s(?<message>.+)"
             },
             new PatternValue
             {

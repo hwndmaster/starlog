@@ -4,12 +4,12 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
     <FrameworkPackageVersion>8.0.0</FrameworkPackageVersion>
-    <AtomPackageVersion>0.0.39</AtomPackageVersion>
+    <AtomPackageVersion>0.0.40</AtomPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Microsoft common dependencies -->
-    <PackageVersion Include="System.Reactive" Version="6.0.0" />
+    <PackageVersion Include="System.Reactive" Version="6.0.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(FrameworkPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(FrameworkPackageVersion)"/>
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(FrameworkPackageVersion)" />
@@ -27,22 +27,29 @@
     <!-- WPF/UI related dependencies -->
     <PackageVersion Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
     <PackageVersion Include="MahApps.Metro" Version="2.4.10" />
-    <PackageVersion Include="ReactiveUI" Version="19.5.31" />
-    <PackageVersion Include="ReactiveUI.WPF" Version="19.5.31" />
+    <PackageVersion Include="ReactiveUI" Version="20.1.1" />
+    <PackageVersion Include="ReactiveUI.WPF" Version="20.1.1" />
     <PackageVersion Include="ReactiveUI.Events.WPF" Version="15.1.1" />
     <PackageVersion Include="WpfAnimatedGif" Version="2.0.2" />
 
     <!-- Misc dependencies -->
+    <PackageVersion Include="System.Diagnostics.EventLog" Version="8.0.0" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
 
     <!-- Automated Testing components -->
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageVersion Include="xunit" Version="2.6.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.5" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageVersion Include="xunit" Version="2.8.1" />
+    <PackageVersion Include="xunit.analyzers" Version="1.14.0" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.1" />
     <PackageVersion Include="Xunit.StaFact" Version="1.1.11" />
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
-    <PackageVersion Include="AutoFixture.AutoMoq" Version="4.18.1" />
-    <PackageVersion Include="Moq" Version="4.18.2" />
+    <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
+    <PackageVersion Include="FakeItEasy" Version="8.2.0" />
     <PackageVersion Include="SpecFlow.xUnit" Version="3.9.74" />
+
+    <!-- Code analyzers -->
+    <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.10.48" />
+    <PackageVersion Include="Roslynator.Analyzers" Version="4.12.4" />
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="9.24.0.89429" />
   </ItemGroup>
 </Project>

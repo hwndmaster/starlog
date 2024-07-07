@@ -1,12 +1,12 @@
+using System.Collections.Immutable;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
-using Genius.Atom.Infrastructure.Commands;
-using Genius.Atom.Infrastructure.Events;
+using Genius.Atom.Infrastructure.Tasks;
+using Genius.Atom.UI.Forms.Controls.AutoGrid;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
-using Genius.Starlog.Core.Commands;
-using Genius.Starlog.Core.Messages;
+using Genius.Starlog.Core.Clients;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.AutoGridBuilders;
 using Genius.Starlog.UI.Controllers;
@@ -24,36 +24,39 @@ public interface IProfilesViewModel : ITabViewModel, IDisposable
     ICommand DeleteProfileCommand { get; }
 }
 
-// TODO: Cover with unit tests
 public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 {
     private readonly IComparisonController _comparisonController;
     private readonly IMainController _controller;
     private readonly IProfileQueryService _profileQuery;
-    private readonly IViewModelFactory _vmFactory;
+    private readonly IViewModelFactory _viewModelFactory;
     private readonly CompositeDisposable _disposables = new();
 
     public ProfilesViewModel(
-        ICommandBus commandBus,
         IComparisonController comparisonController,
         ICurrentProfile currentProfile,
-        IEventBus eventBus,
         IMainController controller,
+        IProfileClient profileClient,
+        IProfileLoadingController profileLoadingController,
         IProfileQueryService profileQuery,
-        IViewModelFactory vmFactory,
+        ISettingsClient settingsClient,
+        IUiDispatcher uiDispatcher,
+        IViewModelFactory viewModelFactory,
         IUserInteraction ui,
         ProfileAutoGridBuilder autoGridBuilder)
     {
-        Guard.NotNull(commandBus);
         Guard.NotNull(currentProfile);
-        Guard.NotNull(eventBus);
+        Guard.NotNull(profileClient);
+        Guard.NotNull(profileLoadingController);
+        Guard.NotNull(settingsClient);
         Guard.NotNull(ui);
+        Guard.NotNull(uiDispatcher);
 
         // Dependencies:
         _comparisonController = comparisonController.NotNull();
         _controller = controller.NotNull();
         _profileQuery = profileQuery.NotNull();
-        _vmFactory = vmFactory.NotNull();
+        _viewModelFactory = viewModelFactory.NotNull();
         AutoGridBuilder = autoGridBuilder.NotNull();
 
         // Member initialization:
@@ -70,10 +73,14 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                 {
                     if (dropObj is string[] fileDrop)
                     {
-                        _controller.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0]);
+                        profileLoadingController.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0]).RunAndForget();
                     }
                 })
         };
+
+        SortedColumns = settingsClient.GetProfilesViewSettings().GetSortedColumns()
+            .Select(x => new ColumnSortingInfo(x.ColumnName, x.SortAsc))
+            .ToImmutableList();
 
         // Actions:
         CompareSelectedCommand = new ActionCommand(async _ => {
@@ -93,10 +100,10 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
             IsAddEditProfileVisible = !IsAddEditProfileVisible;
             if (IsAddEditProfileVisible)
             {
-                EditingProfile = vmFactory.CreateProfile(null);
+                EditingProfile = viewModelFactory.CreateProfile(null);
                 EditingProfile.CommitProfileCommand
                     .OnOneTimeExecutedBooleanAction()
-                    .Subscribe(async _ => {
+                    .SubscribeOnUiThread(async _ => {
                         IsAddEditProfileVisible = false;
                         await ReloadListAsync();
                     })
@@ -133,7 +140,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
 
             if (selectedProfile.Id is not null)
             {
-                await commandBus.SendAsync(new ProfileDeleteCommand(selectedProfile.Id.Value));
+                await profileClient.DeleteAsync(selectedProfile.Id.Value);
             }
         });
 
@@ -141,13 +148,16 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         Deactivated.Executed
             .Subscribe(_ => IsAddEditProfileVisible = false)
             .DisposeWith(_disposables);
-
-        eventBus.WhenFired<ProfileLoadingErrorEvent>()
-            .Subscribe(args => ui.ShowWarning(args.Reason))
-            .DisposeWith(_disposables);
+        this.WhenChanged(x => x.SortedColumns)
+            .Subscribe(async _ =>
+            {
+                var viewSettings = settingsClient.GetProfilesViewSettings();
+                viewSettings.SetSortedColumns(SortedColumns.Select(x => (x.ColumnName, x.SortAsc)));
+                await settingsClient.UpdateProfilesViewSettingsAsync(viewSettings);
+            });
 
         // Final preparation:
-        Task.Run(() => ReloadListAsync());
+        uiDispatcher.InvokeAsync(ReloadListAsync).RunAndForget();
     }
 
     public void Dispose()
@@ -159,7 +169,7 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     {
         IsAddEditProfileVisible = false;
         var profileVms = (await _profileQuery.GetAllAsync())
-            .Select(x => _vmFactory.CreateProfile(x))
+            .Select(x => _viewModelFactory.CreateProfile(x))
             .ToList();
         Profiles.ReplaceItems(profileVms);
 
@@ -193,6 +203,12 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     public ICollection<DropAreaViewModel> DropAreas
     {
         get => GetOrDefault<ICollection<DropAreaViewModel>>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public ImmutableList<ColumnSortingInfo> SortedColumns
+    {
+        get => GetOrDefault(ImmutableList<ColumnSortingInfo>.Empty);
         set => RaiseAndSetIfChanged(value);
     }
 

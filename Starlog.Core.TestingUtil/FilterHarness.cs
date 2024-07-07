@@ -7,37 +7,37 @@ namespace Genius.Starlog.Core.TestingUtil;
 
 public sealed class FilterHarness
 {
-    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly Mock<ILogFilterContainer> _logFilterContainerMock = new();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
+    private readonly ILogFilterContainer _logFilterContainerMock = A.Fake<ILogFilterContainer>();
 
     private readonly List<(ProfileFilterBase, LogRecord)> _matchingCheckedFor = new();
 
     public IFilterProcessor SetupFilterProcessor(ProfileFilterBase filter, LogRecord? matchingRecord = null)
     {
-        var filterProcessorMock = new Mock<IFilterProcessor>();
-        _logFilterContainerMock.Setup(x => x.GetFilterProcessor(filter)).Returns(filterProcessorMock.Object);
+        var filterProcessorMock = A.Fake<IFilterProcessor>();
+        A.CallTo(() => _logFilterContainerMock.GetFilterProcessor(filter)).Returns(filterProcessorMock);
         if (matchingRecord is not null)
         {
-            filterProcessorMock.Setup(x => x.IsMatch(filter, matchingRecord.Value))
-                .Returns(true)
-                .Callback(() => _matchingCheckedFor.Add((filter, matchingRecord.Value)));
+            A.CallTo(() => filterProcessorMock.IsMatch(filter, matchingRecord.Value))
+                .Invokes(() => _matchingCheckedFor.Add((filter, matchingRecord.Value)))
+                .Returns(true);
         }
-        return filterProcessorMock.Object;
+        return filterProcessorMock;
     }
 
     public IFilterProcessor SetupFilterProcessor(ProfileFilterBase filter, LogRecord matchingRecord, Func<ProfileFilterBase, bool> matchHandler)
     {
-        var filterProcessorMock = new Mock<IFilterProcessor>();
-        _logFilterContainerMock.Setup(x => x.GetFilterProcessor(filter)).Returns(filterProcessorMock.Object);
+        var filterProcessorMock = A.Fake<IFilterProcessor>();
+        A.CallTo(() => _logFilterContainerMock.GetFilterProcessor(filter)).Returns(filterProcessorMock);
 
-        filterProcessorMock.Setup(x => x.IsMatch(filter, matchingRecord))
-            .Returns(() => matchHandler(filter))
-            .Callback(() => _matchingCheckedFor.Add((filter, matchingRecord)));
+        A.CallTo(() => filterProcessorMock.IsMatch(filter, matchingRecord))
+            .Invokes(() => _matchingCheckedFor.Add((filter, matchingRecord)))
+            .ReturnsLazily(() => matchHandler(filter));
 
-        return filterProcessorMock.Object;
+        return filterProcessorMock;
     }
 
     public IFixture Fixture => _fixture;
     public IEnumerable<(ProfileFilterBase, LogRecord)> MatchingCheckedFor => _matchingCheckedFor;
-    public ILogFilterContainer LogFilterContainer => _logFilterContainerMock.Object;
+    public ILogFilterContainer LogFilterContainer => _logFilterContainerMock;
 }

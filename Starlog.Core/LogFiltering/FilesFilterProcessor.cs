@@ -7,9 +7,10 @@ public sealed class FilesFilterProcessor : IFilterProcessor
 {
     public bool IsMatch(ProfileFilterBase profileFilter, LogRecord log)
     {
-        var filter = (FilesProfileFilter)profileFilter;
+        Guard.NotNull(profileFilter);
 
-        var result = filter.FileNames.Contains(log.File.FileName, StringComparer.OrdinalIgnoreCase);
+        var filter = (FilesProfileFilter)profileFilter;
+        var result = filter.FileNames.Contains(log.Source.DisplayName, StringComparer.OrdinalIgnoreCase);
 
         return filter.Exclude ? !result : result;
     }

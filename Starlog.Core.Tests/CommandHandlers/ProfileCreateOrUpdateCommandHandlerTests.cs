@@ -23,13 +23,12 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         var command = _harness.Fixture.Create<ProfileCreateCommand>();
 
         // Act
-        var guid = await _sut.ProcessAsync(command);
+        await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(It.Is<Profile>(x =>
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(A<Profile>.That.Matches(x =>
             x.Name == command.Name
-            && x.Path == command.Path
-            && x.Settings == command.Settings)));
+            && x.Settings == command.Settings))).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
     }
 
@@ -41,19 +40,17 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         var command = new ProfileUpdateCommand(profile.Id)
         {
             Name = _harness.Fixture.Create<string>(),
-            Path = _harness.Fixture.Create<string>(),
-            Settings = _harness.Fixture.Create<ProfileSettings>()
+            Settings = _harness.Fixture.Create<ProfileSettingsBase>()
         };
 
         // Act
         await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(It.Is<Profile>(x =>
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(A<Profile>.That.Matches(x =>
             x.Id == command.ProfileId
             && x.Name == command.Name
-            && x.Path == command.Path
-            && x.Settings == command.Settings)));
+            && x.Settings == command.Settings))).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
     }
 
@@ -64,8 +61,7 @@ public sealed class ProfileCreateOrUpdateCommandHandlerTests
         var command = new ProfileUpdateCommand(_harness.Fixture.Create<Guid>())
         {
             Name = _harness.Fixture.Create<string>(),
-            Path = _harness.Fixture.Create<string>(),
-            Settings = _harness.Fixture.Create<ProfileSettings>()
+            Settings = _harness.Fixture.Create<ProfileSettingsBase>()
         };
 
         // Act

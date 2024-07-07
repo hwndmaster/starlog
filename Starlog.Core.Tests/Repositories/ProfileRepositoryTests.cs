@@ -11,7 +11,7 @@ public sealed class ProfileRepositoryTests
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly TestEventBus _eventBus = new();
-    private readonly Mock<IJsonPersister> _persisterMock = new();
+    private readonly IJsonPersister _persisterMock = A.Fake<IJsonPersister>();
 
     [Fact]
     public async Task DeleteAsync_WhenIdIsForAnonymousProfile_ThenSetsAnonymousProfileToNull()
@@ -19,7 +19,7 @@ public sealed class ProfileRepositoryTests
         // Arrange
         var profiles = _fixture.CreateMany<Profile>().ToArray();
         var anonProfile = _fixture.Build<Profile>().With(x => x.Id, Profile.AnonymousProfileId).Create();
-        var sut = CreateSystemUnderTest(profiles);
+        using var sut = CreateSystemUnderTest(profiles);
         sut.SetAnonymous(anonProfile);
 
         // Pre-verify
@@ -41,7 +41,7 @@ public sealed class ProfileRepositoryTests
         // Arrange
         var profiles = _fixture.CreateMany<Profile>().ToArray();
         var anonProfile = _fixture.Build<Profile>().With(x => x.Id, Profile.AnonymousProfileId).Create();
-        var sut = CreateSystemUnderTest(profiles);
+        using var sut = CreateSystemUnderTest(profiles);
         sut.SetAnonymous(anonProfile);
         var profileToDelete = profiles[0];
 
@@ -71,7 +71,7 @@ public sealed class ProfileRepositoryTests
         // Arrange
         var profiles = _fixture.CreateMany<Profile>().ToArray();
         var anonProfile = _fixture.Build<Profile>().With(x => x.Id, Profile.AnonymousProfileId).Create();
-        var sut = CreateSystemUnderTest(profiles);
+        using var sut = CreateSystemUnderTest(profiles);
         sut.SetAnonymous(anonProfile);
 
         // Act
@@ -91,7 +91,7 @@ public sealed class ProfileRepositoryTests
         // Arrange
         var profiles = _fixture.CreateMany<Profile>().ToArray();
         var anonProfile = _fixture.Build<Profile>().With(x => x.Id, Profile.AnonymousProfileId).Create();
-        var sut = CreateSystemUnderTest(profiles);
+        using var sut = CreateSystemUnderTest(profiles);
         sut.SetAnonymous(anonProfile);
 
         // Act
@@ -103,9 +103,9 @@ public sealed class ProfileRepositoryTests
 
     private ProfileRepository CreateSystemUnderTest(Profile[] profiles)
     {
-        _persisterMock.Setup(x => x.LoadCollection<Profile>(It.IsAny<string>()))
+        A.CallTo(() => _persisterMock.LoadCollection<Profile>(A<string>.Ignored))
             .Returns(profiles);
-        return new ProfileRepository(_eventBus, _persisterMock.Object,
-            new TestLogger<ProfileRepository>(), Mock.Of<ISettingsRepository>());
+        return new ProfileRepository(_eventBus, _persisterMock,
+            new TestLogger<ProfileRepository>(), A.Fake<ISettingsRepository>());
     }
 }

@@ -4,7 +4,7 @@ using System.Reactive.Linq;
 using System.Windows.Data;
 using System.Windows.Documents;
 using DynamicData;
-using Genius.Atom.UI.Forms.Controls;
+using Genius.Atom.Infrastructure.Tasks;
 using Genius.Atom.UI.Forms.Controls.AutoGrid;
 using Genius.Atom.UI.Forms.Controls.AutoGrid.Builders;
 using Genius.Starlog.Core;
@@ -23,22 +23,28 @@ public interface ILogsViewModel : ITabViewModel, IDisposable
     void UnBookmarkAll();
 
     ILogsFilteringViewModel Filtering { get; }
+    DelayedObservableCollection<ILogItemViewModel> LogItems { get; }
     ILogsSearchViewModel Search { get; }
     ObservableCollection<ILogItemViewModel> SelectedLogItems { get; }
 }
 
-// TODO: Cover with unit tests
 public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 {
+    public record ColorizeByRecord(string Title, bool ForField, int? FieldId);
+    public record GroupByRecord(string Title, LogItemGroupingOptions GroupingOption, int? FieldId);
+
     private readonly ICurrentProfile _currentProfile;
     private readonly ILogContainer _logContainer;
     private readonly ILogRecordMatcher _logRecordMatcher;
     private readonly ILogArtifactsFormatter _artifactsFormatter;
-    private readonly IMessageParsingHandler _messageParsingHandler;
+    private readonly MessageParsingHelper _messageParsingHelper;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly CompositeDisposable _subscriptions;
+    private readonly Disposer _subscriptions = new();
+    private readonly int _predefinedGroupByOptionsCount;
     private LogRecordMatcherContext? _filterContext;
-    private bool _suspendUpdate = false;
+    private bool _profileLoadingUpdateSuspended;
+    private bool _refreshFilteredItemsSuspended;
+    private bool _isReloadingProfile;
 
     public LogsViewModel(
         ICurrentProfile currentProfile,
@@ -49,10 +55,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         ILogsFilteringViewModel logsFilteringViewModel,
         ILogsSearchViewModel logsSearchViewModel,
         IMainController controller,
-        IMessageParsingHandler messageParsingHandler,
+        MessageParsingHelper messageParsingHelper,
+        IProfileLoadingController profileLoadingController,
         IUiDispatcher uiDispatcher)
     {
         Guard.NotNull(controller);
+        Guard.NotNull(profileLoadingController);
 
         // Dependencies:
         AutoGridBuilder = autoGridBuilder.NotNull();
@@ -60,7 +68,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
         _logRecordMatcher = logRecordMatcher.NotNull();
-        _messageParsingHandler = messageParsingHandler.NotNull();
+        _messageParsingHelper = messageParsingHelper.NotNull();
         _uiDispatcher = uiDispatcher.NotNull();
         Filtering = logsFilteringViewModel.NotNull();
         Search = logsSearchViewModel.NotNull();
@@ -68,110 +76,163 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         // Members initialization:
         LogItemsView.Source = LogItems;
         LogItemsView.Filter += OnLogItemsViewFilter;
+        ColorizeByOptions.Add(new ColorizeByRecord("Colorize by Level", false, null));
+        ColorizeBy = ColorizeByOptions[0];
+        GroupByOptions.Add(new GroupByRecord("No grouping", LogItemGroupingOptions.NoGrouping, null));
+        GroupByOptions.Add(new GroupByRecord("Group by messages", LogItemGroupingOptions.ByMessage, null));
+        GroupByOptions.Add(new GroupByRecord("Group by messages (omit digits)", LogItemGroupingOptions.ByMessageTrimmed, null));
+        _predefinedGroupByOptionsCount = GroupByOptions.Count;
+        ResetGrouping();
 
         // Actions:
         ShareCommand = new ActionCommand(async _ =>
             await controller.ShowShareViewAsync(SelectedLogItems));
         ReloadProfileCommand = new ActionCommand(async _ =>
             {
-                if (_currentProfile.Profile is null) return;
-                _suspendUpdate = true;
-                await controller.LoadProfileAsync(_currentProfile.Profile);
+                if (_currentProfile.Profile is null)
+                    return;
+                _profileLoadingUpdateSuspended = true;
+                _isReloadingProfile = true;
+                Filtering.SuspendResumeProfileReload(true);
+                await profileLoadingController.LoadProfileAsync(_currentProfile.Profile);
+                _isReloadingProfile = false;
+                Filtering.SuspendResumeProfileReload(false);
             });
 
         // Subscriptions:
-        _subscriptions = new(
-            _currentProfile.ProfileClosed
-                .Subscribe(_ =>
-                {
-                    _suspendUpdate = true;
-                    _uiDispatcher.BeginInvoke(() =>
-                    {
-                        IsProfileReady = false;
-                        IsRefreshVisible = false;
-                        LogItems.Clear();
-                        SelectedLogItems.Clear();
-                        SelectedLogItem = null;
-                        Search.DropAllSearches();
-                    });
-                }),
-            _currentProfile.ProfileChanged
-                .Subscribe(profile =>
-                {
-                    if (profile is null) return;
-
-                    _uiDispatcher.BeginInvoke(() =>
-                    {
-                        AddLogs(_logContainer.GetLogs());
-                        IsProfileReady = true;
-                        _suspendUpdate = false;
-                    });
-                }),
-            _currentProfile.UnknownChangesDetected
-                .Subscribe(_ => IsRefreshVisible = true),
-            _logContainer.LogsAdded
-                .Where(_ => !_suspendUpdate)
-                .Subscribe(x => _uiDispatcher.BeginInvoke(() => AddLogs(x))),
-            _logContainer.LogsRemoved
-                .Where(_ => !_suspendUpdate)
-                .Subscribe(x => _uiDispatcher.BeginInvoke(() => RemoveLogs(x))),
-            _logContainer.FileRenamed
-                .Subscribe(args =>
-                {
-                    _uiDispatcher.BeginInvoke(() => {
-                        foreach (var logItem in LogItems)
-                        {
-                            if (logItem.Record.File.FileName.Equals(args.OldRecord.FileName, StringComparison.Ordinal))
-                            {
-                                logItem.HandleFileRenamed(args.NewRecord);
-                            }
-                        }});
-                }),
-            _logContainer.FilesCountChanged
-                .Subscribe(filesCount =>
-                {
-                    IsFileColumnVisible = filesCount > 1;
-                }),
-            Filtering.FilterChanged.Merge(Search.SearchChanged)
-                .Subscribe(_ => RefreshFilteredItems()),
-            this.WhenChanged(x => x.ColorizeBy).Subscribe(_ =>
+        _currentProfile.ProfileClosed
+            .Subscribe(_ =>
             {
-                var colorizeByThread = ColorizeBy.Equals("T", StringComparison.Ordinal);
+                _profileLoadingUpdateSuspended = true;
+                _uiDispatcher.Invoke(() =>
+                {
+                    IsProfileReady = false;
+                    IsRefreshVisible = false;
+                    LogItems.Clear();
+                    SelectedLogItems.Clear();
+                    SelectedLogItem = null;
+
+                    if (_isReloadingProfile)
+                        return;
+
+                    Search.DropAllSearches();
+                });
+            }).DisposeWith(_subscriptions);
+        _currentProfile.ProfileChanged
+            .Subscribe(profile =>
+            {
+                if (profile is null) return;
+
+                var fieldsContainer = _logContainer.GetFields();
+                var fields = fieldsContainer.GetFields();
+                var fieldNames = fields.Select(x => x.FieldName).ToArray();
+
+                _uiDispatcher.Invoke(() =>
+                {
+                    AddLogs(_logContainer.GetLogs());
+                    FieldColumns = new DynamicColumnsViewModel(fieldNames);
+
+                    if (!_isReloadingProfile)
+                    {
+                        ColorizeBy = ColorizeByOptions[0];
+                        while (ColorizeByOptions.Count > 1)
+                            ColorizeByOptions.RemoveAt(1);
+                        foreach (var field in fields)
+                            ColorizeByOptions.Add(new ColorizeByRecord("Colorize by " + field.FieldName, true, field.FieldId));
+
+                        ResetGrouping();
+                        while (GroupByOptions.Count > _predefinedGroupByOptionsCount)
+                            GroupByOptions.RemoveAt(_predefinedGroupByOptionsCount);
+                        foreach (var (fieldId, fieldName) in fields)
+                            GroupByOptions.Add(new GroupByRecord("Group by " + fieldName, LogItemGroupingOptions.ByField, fieldId));
+                    }
+                    else
+                    {
+                        RefreshGrouping();
+                    }
+
+                    IsProfileReady = true;
+                    _profileLoadingUpdateSuspended = false;
+                });
+            }).DisposeWith(_subscriptions);
+        _currentProfile.UnknownChangesDetected
+            .Subscribe(_ => IsRefreshVisible = true)
+            .DisposeWith(_subscriptions);
+        _logContainer.LogsAdded
+            .Where(_ => !_profileLoadingUpdateSuspended)
+            .Subscribe(x => AddLogs(x))
+            .DisposeWith(_subscriptions);
+        _logContainer.LogsRemoved
+            .Where(_ => !_profileLoadingUpdateSuspended)
+            .SubscribeOnUiThread(x => RemoveLogs(x))
+            .DisposeWith(_subscriptions);
+        _logContainer.SourceRenamed
+            .SubscribeOnUiThread(args =>
+            {
                 foreach (var logItem in LogItems)
                 {
-                    logItem.ColorizeByThread = colorizeByThread;
+                    if (logItem.Record.Source.DisplayName.Equals(args.OldRecord.DisplayName, StringComparison.Ordinal))
+                    {
+                        logItem.HandleSourceRenamed(args.NewRecord);
+                    }
                 }
-            }),
-            this.WhenChanged(x => x.GroupBy).Subscribe(_ =>
+            }).DisposeWith(_subscriptions);
+        _logContainer.SourcesCountChanged
+            .Subscribe(sourcesCount =>
             {
-                LogItemsView.GroupDescriptions.Clear();
+                IsFileColumnVisible = sourcesCount > 1;
+            }).DisposeWith(_subscriptions);
+        Filtering.FilterChanged.Merge(Search.SearchChanged)
+            .Subscribe(_ => RefreshFilteredItems())
+            .DisposeWith(_subscriptions);
+        this.WhenChanged(x => x.ColorizeBy).Subscribe(_ =>
+        {
+            foreach (var logItem in LogItems)
+            {
+                logItem.ColorizeByFieldId = ColorizeBy.ForField ? ColorizeBy.FieldId : null;
+                logItem.ColorizeByField = ColorizeBy.ForField;
+            }
+        }).DisposeWith(_subscriptions);
+        this.WhenChanged(x => x.GroupBy)
+            .Subscribe(_ => RefreshGrouping())
+            .DisposeWith(_subscriptions);
+        SelectedLogItems.WhenCollectionChanged()
+            .Subscribe(_ => SelectedLogItem = SelectedLogItems.FirstOrDefault())
+            .DisposeWith(_subscriptions);
+        this.WhenChanged(x => x.SelectedLogItem)
+            .Subscribe(_ => SelectedLogArtifacts = SelectedLogItem?.Artifacts)
+            .DisposeWith(_subscriptions);
+    }
 
-                if (string.IsNullOrEmpty(GroupBy))
+    private void RefreshGrouping()
+    {
+        var doGrouping = GroupBy.GroupingOption != LogItemGroupingOptions.NoGrouping;
+        if (doGrouping)
+        {
+            var groups = LogItems.GroupBy(x => x.GetGroupValueId(GroupBy.GroupingOption, GroupBy.FieldId));
+            foreach (var group in groups)
+            {
+                var groupableVm = group.First().CreateGrouping(GroupBy.GroupingOption, GroupBy.FieldId);
+                foreach (var item in group)
                 {
-                    return;
+                    item.GroupableField = groupableVm;
                 }
+            }
+        }
 
-                var propertyName = GroupBy switch
-                {
-                    "M" => nameof(ILogItemViewModel.Message),
-                    // TODO: Implement fuzzy grouping
-                    "MF" => nameof(ILogItemViewModel.Message),
-                    "L" => nameof(ILogItemViewModel.Logger),
-                    _ => throw new NotSupportedException($"Field ID '{GroupBy}' is unknown.")
-                };
-
-                LogItemsView.GroupDescriptions.Add(new PropertyGroupDescription(propertyName));
-            }),
-            SelectedLogItems.WhenCollectionChanged()
-                .Subscribe(_ => SelectedLogItem = SelectedLogItems.FirstOrDefault()),
-            this.WhenChanged(x => x.SelectedLogItem)
-                .Subscribe(_ => SelectedLogArtifacts = SelectedLogItem?.Artifacts)
-        );
+        if (DoGrouping == doGrouping)
+        {
+            OnPropertyChanged(nameof(DoGrouping));
+        }
+        else
+        {
+            DoGrouping = doGrouping;
+        }
     }
 
     public void ResetGrouping()
     {
-        GroupBy = string.Empty;
+        GroupBy = GroupByOptions[0];
     }
 
     public void UnBookmarkAll()
@@ -191,30 +252,60 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     private void AddLogs(ICollection<LogRecord> logs)
     {
-        if (!logs.Any())
+        if (logs.Count == 0)
         {
             return;
         }
 
-        Search.Reconcile(LogItems.Count, logs);
+        _refreshFilteredItemsSuspended = true;
 
-        using (var suppressed = LogItems.DelayNotifications())
+        var resetSelected = !_isReloadingProfile
+            && LogItems.Count == 0;
+        Search.Reconcile(resetSelected, logs);
+
+        var fields = _logContainer.GetFields();
+        var hasFields = fields.GetFieldCount() > 0;
+
+        List<LogItemViewModel> viewModelsToAdd = [];
+        foreach (var log in logs.OrderBy(x => x.DateTime))
         {
-            foreach (var log in logs.OrderBy(x => x.DateTime))
+            var logItemVm = new LogItemViewModel(_logContainer, log, _artifactsFormatter);
+
+            if (hasFields)
             {
-                suppressed.Add(new LogItemViewModel(log, _artifactsFormatter));
+                logItemVm.FieldEntries = new DynamicColumnEntriesViewModel(() =>
+                {
+                    string[] fieldValues = new string[log.FieldValueIndices.Length];
+                    for (var fieldId = 0; fieldId < log.FieldValueIndices.Length; fieldId++)
+                    {
+                        fieldValues[fieldId] = fields.GetFieldValue(fieldId, log.FieldValueIndices[fieldId]);
+                    }
+                    return fieldValues;
+                });
             }
+
+            viewModelsToAdd.Add(logItemVm);
         }
 
+        _uiDispatcher.Invoke(() =>
+        {
+            using (var suppressed = LogItems.DelayNotifications())
+            {
+                foreach (var logItemVm in viewModelsToAdd)
+                {
+                    suppressed.Add(logItemVm);
+                }
+            }
+        });
+
+        _refreshFilteredItemsSuspended = false;
         RefreshFilteredItems();
     }
 
     private void RemoveLogs(ICollection<LogRecord> logs)
     {
-        if (!logs.Any())
-        {
+        if (logs.Count == 0)
             return;
-        }
 
         using (var suppressed = LogItems.DelayNotifications())
         {
@@ -243,44 +334,23 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     private void RefreshFilteredItems()
     {
+        if (_refreshFilteredItemsSuspended)
+        {
+            return;
+        }
+
         _filterContext = new LogRecordMatcherContext(
             Filtering.CreateContext(),
             Search.CreateContext()
         );
 
         // `MessageParsingColumns` needs to be updated in a UI thread to avoid WPF binding errors.
-        DynamicColumnsViewModel? messageParsingColumnsToSet = null;
+        DynamicColumnsViewModel? messageParsingColumnsToSet =
+            _filterContext.Filter.MessageParsings.Length > 0 || MessageParsingColumns is not null
+                ? _messageParsingHelper.CreateDynamicMessageParsingEntries(_filterContext.Filter, LogItems)
+                : null;
 
-        // TODO: Cover with unit tests
-        if (_filterContext.Filter.MessageParsings.Length > 0
-            || MessageParsingColumns is not null)
-        {
-            // TODO: Check if there were changes in `_filterContext.Filter.MessageParsings`
-            //       to prevent re-initialization in case of no changes.
-
-            var messageParsings = _filterContext.Filter.MessageParsings;
-            var extractedColumns = (from messageParsing in messageParsings
-                                    from extractedColumn in _messageParsingHandler.RetrieveColumns(messageParsing)
-                                    select (messageParsing, extractedColumn)).ToArray();
-
-            foreach (var logItem in LogItems)
-            {
-                logItem.MessageParsingEntries = new DynamicColumnEntriesViewModel(() =>
-                {
-                    List<string> parsedEntriesCombined = new();
-                    foreach (var messageParsing in messageParsings)
-                    {
-                        var parsedEntries = _messageParsingHandler.ParseMessage(messageParsing, logItem.Record);
-                        parsedEntriesCombined.AddRange(parsedEntries);
-                    }
-                    return parsedEntriesCombined;
-                });
-            }
-
-            messageParsingColumnsToSet = new DynamicColumnsViewModel(extractedColumns.Select(x => x.extractedColumn).ToArray());
-        }
-
-        _uiDispatcher.BeginInvoke(() =>
+        _uiDispatcher.InvokeAsync(() =>
         {
             if (messageParsingColumnsToSet is not null)
             {
@@ -300,7 +370,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             //       INFO:    kk
             //       WARN:   yyy
             //       ERROR:    z
-        });
+        }).RunAndForget();
     }
 
     public bool IsProfileReady
@@ -319,17 +389,27 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     public ILogsSearchViewModel Search { get; }
 
-    public string ColorizeBy
+    public ColorizeByRecord ColorizeBy
     {
-        get => GetOrDefault("L");
+        get => GetOrDefault<ColorizeByRecord>();
         set => RaiseAndSetIfChanged(value);
     }
 
-    public string GroupBy
+    public ObservableCollection<ColorizeByRecord> ColorizeByOptions { get; } = new();
+
+    public bool DoGrouping
     {
-        get => GetOrDefault(string.Empty);
+        get => GetOrDefault(false);
         set => RaiseAndSetIfChanged(value);
     }
+
+    public GroupByRecord GroupBy
+    {
+        get => GetOrDefault<GroupByRecord>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public ObservableCollection<GroupByRecord> GroupByOptions { get; } = new();
 
     public IAutoGridBuilder AutoGridBuilder { get; }
 
@@ -385,6 +465,12 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     public bool SearchUseRegex
     {
         get => GetOrDefault<bool>();
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public DynamicColumnsViewModel? FieldColumns
+    {
+        get => GetOrDefault<DynamicColumnsViewModel?>();
         set => RaiseAndSetIfChanged(value);
     }
 

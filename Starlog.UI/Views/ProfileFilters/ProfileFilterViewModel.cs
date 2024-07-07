@@ -3,6 +3,7 @@ using Genius.Atom.Infrastructure.Commands;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFiltering;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
@@ -13,12 +14,10 @@ public interface IProfileFilterViewModel
     IActionCommand CommitFilterCommand { get; }
 }
 
-// TODO: Cover with unit tests
 public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewModel
 {
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
-    private readonly ILogFilterContainer _logFilterContainer;
     private readonly IUserInteraction _ui;
     private ProfileFilterBase? _profileFilter;
 
@@ -26,21 +25,32 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         ProfileFilterBase? profileFilter,
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
+        ILogContainer logContainer,
         ILogFilterContainer logFilterContainer,
         IUserInteraction ui,
-        IViewModelFactory vmFactory)
+        IProfileFilterViewModelFactory vmFactory)
     {
+        Guard.NotNull(logContainer);
+        Guard.NotNull(logFilterContainer);
+        Guard.NotNull(vmFactory);
+
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
-        _logFilterContainer = logFilterContainer.NotNull();
         _ui = ui.NotNull();
 
         // Members initialization:
         _profileFilter = profileFilter;
+        FilterTypeCanBeChanged = _profileFilter is null;
 
-        foreach (var logFilter in _logFilterContainer.GetLogFilters())
+        foreach (var logFilter in logFilterContainer.GetLogFilters())
         {
+            /* TODO: To keep it for a while and check why I have added it before. With this condition
+                     it fails when adding a custom field filter from smart contextmenu
+            if (logFilter.Id == FieldProfileFilter.LogFilterId && logContainer.GetFields().GetThreadFieldIfAny() is null)
+            {
+                continue;
+            }*/
             FilterTypes.Add(vmFactory.CreateProfileFilterSettings(logFilter, _profileFilter));
         }
 
@@ -54,7 +64,7 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         });
 
         // Actions:
-        CommitFilterCommand = new ActionCommand(_ => CommitFilter());
+        CommitFilterCommand = new ActionCommand(async _ => await CommitFilterAsync());
         ResetCommand = new ActionCommand(_ => FilterSettings.ResetChanges(), _ => _profileFilter is not null);
     }
 
@@ -68,13 +78,13 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
         FilterSettings = FilterTypes.First(x => x.ProfileFilter.LogFilter.Id == _profileFilter.LogFilter.Id);
     }
 
-    private async Task<bool> CommitFilter()
+    private async Task<bool> CommitFilterAsync()
     {
         Guard.NotNull(_currentProfile.Profile);
 
         if (HasErrors || FilterSettings.HasErrors)
         {
-            _ui.ShowWarning("Cannot proceed while there are errors in the form.");
+            _ui.ShowWarning(StringResources.ValidationError);
             return false;
         }
 
@@ -91,6 +101,8 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
             _profileFilter = _currentProfile.Profile.Filters.First(x => x.Id == commandResult.ProfileFiltersAdded[0]);
         }
 
+        FilterTypeCanBeChanged = false;
+
         return true;
     }
 
@@ -103,6 +115,12 @@ public sealed class ProfileFilterViewModel : ViewModelBase, IProfileFilterViewMo
     public IProfileFilterSettingsViewModel FilterSettings
     {
         get => GetOrDefault(FilterTypes[0]);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool FilterTypeCanBeChanged
+    {
+        get => GetOrDefault(true);
         set => RaiseAndSetIfChanged(value);
     }
 

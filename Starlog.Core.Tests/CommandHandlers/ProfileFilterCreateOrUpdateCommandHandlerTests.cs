@@ -1,9 +1,7 @@
 using Genius.Starlog.Core.CommandHandlers;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.Messages;
-using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.TestingUtil;
-using Starlog.Core.TestingUtil;
 
 namespace Genius.Starlog.Core.Tests.CommandHandlers;
 
@@ -31,7 +29,7 @@ public sealed class ProfileFilterCreateOrUpdateCommandHandlerTests
         var result = await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile));
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(profile)).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
         Assert.Equal(profileFiltersCount + 1, profile.Filters.Count);
         Assert.Equal(command.ProfileFilter, profile.Filters[^1]);
@@ -58,7 +56,7 @@ public sealed class ProfileFilterCreateOrUpdateCommandHandlerTests
         var result = await _sut.ProcessAsync(command);
 
         // Verify
-        Mock.Get(_harness.ProfileRepo).Verify(x => x.StoreAsync(profile));
+        A.CallTo(() => _harness.ProfileRepo.StoreAsync(profile)).MustHaveHappened();
         _harness.VerifyEventPublished<ProfilesAffectedEvent>();
         Assert.Equal(profileFiltersCount, profile.Filters.Count);
         Assert.Equal(command.ProfileFilter, profile.Filters[0]);

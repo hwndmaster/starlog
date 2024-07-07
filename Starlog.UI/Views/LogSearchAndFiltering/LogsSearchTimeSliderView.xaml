@@ -1,0 +1,76 @@
+<UserControl x:Class="Genius.Starlog.UI.Views.LogSearchAndFiltering.LogsSearchTimeSliderView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:vc="clr-namespace:Genius.Starlog.UI.ValueConverters"
+        mc:Ignorable="d">
+    <UserControl.Resources>
+        <vc:TicksToDateTimeConverter x:Key="TicksToDateTimeConverter" />
+        <vc:TickRangeToTimeConverter x:Key="TickRangeToTimeConverter" />
+        <Thickness x:Key="TopBarMargin">10 0 0 0</Thickness>
+        <Thickness x:Key="TopBarMarginHalf">5 0 0 0</Thickness>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />    <!-- Time slider -->
+            <ColumnDefinition Width="Auto" /> <!-- Time slider limit button -->
+            <ColumnDefinition Width="Auto" /> <!-- Time slider limit button -->
+            <ColumnDefinition Width="Auto" /> <!-- Time slider reset button -->
+        </Grid.ColumnDefinitions>
+
+        <mah:RangeSlider Grid.Column="0"
+                            Minimum="{Binding MinDateTimeTicks}"
+                            Maximum="{Binding MaxDateTimeTicks}"
+                            LowerValue="{Binding SelectedDateTimeFromTicks}"
+                            UpperValue="{Binding SelectedDateTimeToTicks}"
+                            Orientation="Horizontal"
+                            Margin="{StaticResource TopBarMargin}"
+                            Style="{DynamicResource MahApps.Styles.RangeSlider.Win10}"
+                            AutoToolTipPlacement="TopLeft"
+                            mah:SliderHelper.EnableMouseWheel="MouseHover">
+            <mah:RangeSlider.AutoToolTipLowerValueTemplate>
+                <DataTemplate DataType="mah:RangeSliderAutoTooltipValues">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock HorizontalAlignment="Right" Text="From: " />
+                        <TextBlock HorizontalAlignment="Right" Text="{Binding ., Converter={StaticResource TicksToDateTimeConverter}}" />
+                    </StackPanel>
+                </DataTemplate>
+            </mah:RangeSlider.AutoToolTipLowerValueTemplate>
+            <mah:RangeSlider.AutoToolTipUpperValueTemplate>
+                <DataTemplate DataType="mah:RangeSliderAutoTooltipValues">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock HorizontalAlignment="Right" Text="To: " />
+                        <TextBlock HorizontalAlignment="Right" Text="{Binding ., Converter={StaticResource TicksToDateTimeConverter}}" />
+                    </StackPanel>
+                </DataTemplate>
+            </mah:RangeSlider.AutoToolTipUpperValueTemplate>
+            <mah:RangeSlider.AutoToolTipRangeValuesTemplate>
+                <DataTemplate DataType="mah:RangeSliderAutoTooltipValues">
+                    <UniformGrid Columns="2" Rows="3">
+                        <TextBlock HorizontalAlignment="Right" Text="From: " />
+                        <TextBlock HorizontalAlignment="Right" Text="{Binding LowerValue, Converter={StaticResource TicksToDateTimeConverter}}" />
+                        <TextBlock HorizontalAlignment="Right" Text="To: " />
+                        <TextBlock HorizontalAlignment="Right" Text="{Binding UpperValue, Converter={StaticResource TicksToDateTimeConverter}}" />
+                        <TextBlock HorizontalAlignment="Right" Text="Range: " />
+                        <TextBlock HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{StaticResource TickRangeToTimeConverter}">
+                                    <Binding Path="LowerValue" />
+                                    <Binding Path="UpperValue" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </UniformGrid>
+                </DataTemplate>
+            </mah:RangeSlider.AutoToolTipRangeValuesTemplate>
+        </mah:RangeSlider>
+        <Button Content="1 min" Grid.Column="1" Margin="{StaticResource TopBarMarginHalf}"
+                Command="{Binding SetTimeRangeTo1MinuteCommand}" />
+        <Button Content="5 sec" Grid.Column="2" Margin="{StaticResource TopBarMarginHalf}"
+                Command="{Binding SetTimeRangeTo5SecondCommand}" />
+        <Button Content="Reset" Grid.Column="3" Margin="{StaticResource TopBarMarginHalf}"
+                Command="{Binding ResetTimeRangeCommand}" />
+    </Grid>
+</UserControl>

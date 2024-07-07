@@ -13,10 +13,10 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
     public void Parse_HappyFlowScenario()
     {
         // Arrange
-        var pattern = @"%{datetime} %{level} %{thread} %{logger} - %{message}";
-        var dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
-        var line = "12-34-56 11:22:33.444 INFO 888 Component1 - Some Message with 123 numbers, 50% percents + $ymb\\ols!";
-        var sut = new PlainTextLogCodecLineMaskPatternParser(dateTimeFormat, pattern, _logger);
+        const string pattern = "%{datetime} %{level} %{thread} %{logger} - %{message}";
+        const string dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
+        const string line = "12-34-56 11:22:33.444 INFO 888 Component1 - Some Message with 123 numbers, 50% percents + $[y]mb\\ols!";
+        var sut = CreateSystemUnderTest(dateTimeFormat, pattern);
 
         // Act
         var result = sut.Parse(line);
@@ -25,18 +25,20 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
         Assert.NotNull(result);
         Assert.Equal("12-34-56 11:22:33.444", result.Value.DateTime);
         Assert.Equal("INFO", result.Value.Level);
-        Assert.Equal("888", result.Value.Thread);
-        Assert.Equal("Component1", result.Value.Logger);
-        Assert.Equal("Some Message with 123 numbers, 50% percents + $ymb\\ols!", result.Value.Message);
+        Assert.Equal("thread", result.Value.Fields[0].FieldName);
+        Assert.Equal("888", result.Value.Fields[0].Value);
+        Assert.Equal("logger", result.Value.Fields[1].FieldName);
+        Assert.Equal("Component1", result.Value.Fields[1].Value);
+        Assert.Equal("Some Message with 123 numbers, 50% percents + $[y]mb\\ols!", result.Value.Message);
     }
 
     [Fact]
     public void Parse_WhenInvalidGroup_ReturnsNull()
     {
         // Arrange
-        var pattern = @"%{datetime %{level} %{thread} %{logger} - %{message}";
-        var dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
-        var sut = new PlainTextLogCodecLineMaskPatternParser(dateTimeFormat, pattern, _logger);
+        const string pattern = @"%{datetime %{level} %{thread} %{logger} - %{message}";
+        const string dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
+        var sut = CreateSystemUnderTest(dateTimeFormat, pattern);
 
         // Act
         var result = sut.Parse(_fixture.Create<string>());
@@ -50,9 +52,9 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
     public void Parse_WhenInvalidGroupAtTheEndOfLine_ReturnsNull()
     {
         // Arrange
-        var pattern = @"%{datetime} %{level} %{thread} %{logger} - %{message";
-        var dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
-        var sut = new PlainTextLogCodecLineMaskPatternParser(dateTimeFormat, pattern, _logger);
+        const string pattern = @"%{datetime} %{level} %{thread} %{logger} - %{message";
+        const string dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
+        var sut = CreateSystemUnderTest(dateTimeFormat, pattern);
 
         // Act
         var result = sut.Parse(_fixture.Create<string>());
@@ -60,5 +62,10 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
         // Verify
         Assert.Null(result);
         Assert.Equal(LogLevel.Warning, _logger.Logs.Single().LogLevel);
+    }
+
+    private PlainTextLogCodecLineMaskPatternParser CreateSystemUnderTest(string dateTimeFormat, string pattern)
+    {
+        return new PlainTextLogCodecLineMaskPatternParser(dateTimeFormat, pattern, new MaskPatternParser(new TestLogger<MaskPatternParser>()), _logger);
     }
 }

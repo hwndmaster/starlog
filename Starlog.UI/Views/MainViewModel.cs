@@ -12,14 +12,14 @@ public interface IMainViewModel : IViewModel
     bool IsComparisonAvailable { get; set; }
 }
 
-// TODO: Cover with unit tests
-internal sealed class MainViewModel : ViewModelBase, IMainViewModel
+internal sealed class MainViewModel : DisposableViewModelBase, IMainViewModel
 {
     public MainViewModel(
         IProfilesViewModel profiles,
         ILogsViewModel logs,
         IComparisonViewModel compare,
         ISettingsViewModel settings,
+        IErrorsViewModel errors,
         ICurrentProfile currentProfile)
     {
         Guard.NotNull(profiles);
@@ -28,6 +28,8 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
         Guard.NotNull(settings);
         Guard.NotNull(currentProfile);
 
+        // Member initialization:
+        Errors = errors.NotNull();
         Tabs = new ITabViewModel[] {
             profiles,
             logs,
@@ -35,18 +37,35 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
             settings
         }.ToImmutableArray();
 
+        // Actions:
+        OpenLogs = new ActionCommand(_ => IsErrorsFlyoutVisible = !IsErrorsFlyoutVisible);
+
+        // Subscriptions:
         currentProfile.ProfileClosed.Subscribe(_ =>
-            CurrentProfileName = "N/A");
+            CurrentProfileName = "N/A")
+            .DisposeWith(Disposer);
 
         currentProfile.ProfileChanged.Subscribe(profile =>
         {
             CurrentProfileName = profile is null
                 ? "N/A"
-                : $"{profile.Name} ({profile.Path})";
-        });
+                : $"{profile.Name} ({profile.Settings.Source})";
+        }).DisposeWith(Disposer);
+
+        Errors.WhenChanged(x => x.IsErrorsFlyoutVisible)
+            .Subscribe(value => IsErrorsFlyoutVisible = value)
+            .DisposeWith(Disposer);
+        Errors.WhenChanged(x => x.HasAnyError)
+            .Subscribe(value => ShowRecentErrorsButton = value)
+            .DisposeWith(Disposer);
+        this.WhenChanged(x => x.IsErrorsFlyoutVisible)
+            .Subscribe(value => Errors.IsErrorsFlyoutVisible = value)
+            .DisposeWith(Disposer);
     }
 
     public ImmutableArray<ITabViewModel> Tabs { get; }
+
+    public IErrorsViewModel Errors { get; }
 
     public string CurrentProfileName
     {
@@ -75,5 +94,19 @@ internal sealed class MainViewModel : ViewModelBase, IMainViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
+    public bool IsErrorsFlyoutVisible
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
+    public bool ShowRecentErrorsButton
+    {
+        get => GetOrDefault(false);
+        set => RaiseAndSetIfChanged(value);
+    }
+
     public bool ComparisonFeatureEnabled => App.ComparisonFeatureEnabled;
+
+    public IActionCommand OpenLogs { get; }
 }

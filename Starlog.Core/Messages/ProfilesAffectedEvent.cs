@@ -4,4 +4,7 @@ namespace Genius.Starlog.Core.Messages;
 
 public sealed class ProfilesAffectedEvent : IEventMessage
 {
+    internal ProfilesAffectedEvent()
+    {
+    }
 }

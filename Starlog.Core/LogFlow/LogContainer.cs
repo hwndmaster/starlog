@@ -2,42 +2,49 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Genius.Atom.Infrastructure.Threading;
 
 namespace Genius.Starlog.Core.LogFlow;
 
-internal class LogContainer : ILogContainer, ILogContainerWriter
+internal class LogContainer : ILogContainerWriter, IDisposable
 {
-    private readonly ReaderWriterLockSlim _lock = new();
-    private readonly ConcurrentDictionary<string, FileRecord> _files = new();
-    private readonly List<LogRecord> _logs = new();
-    private readonly ConcurrentDictionary<int, LoggerRecord> _loggers = new();
-    private readonly ConcurrentBag<LogLevelRecord> _logLevels = new();
-    private readonly ConcurrentDictionary<string, byte> _logThreads = new();
+    protected readonly Disposer _disposer = new();
+    private readonly ConcurrentDictionary<LogSourceName, LogSourceBase> _sources = new();
+    private readonly List<LogRecord> _logs = [];
+    private readonly ConcurrentBag<LogLevelRecord> _logLevels = [];
+    private readonly LogFieldsContainer _fields = new();
 
-    private readonly Subject<FileRecord> _fileAdded = new();
-    private readonly Subject<(FileRecord OldRecord, FileRecord NewRecord)> _fileRenamed = new();
-    private readonly Subject<FileRecord> _fileRemoved = new();
-    private readonly Subject<int> _filesCountChanged = new();
-    private readonly Subject<ImmutableArray<LogRecord>> _logsAdded = new();
-    private readonly Subject<ImmutableArray<LogRecord>> _logsRemoved = new();
+#pragma warning disable CA2213 // Disposable fields should be disposed
+    // The following objects are being already added to `_disposer`:
+    private readonly ReaderWriterLockSlim _logsAccessingLock;
+    private readonly Subject<LogSourceBase> _sourceAdded;
+    private readonly Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)> _sourceRenamed;
+    private readonly Subject<LogSourceBase> _sourceRemoved;
+    private readonly Subject<int> _sourcesCountChanged;
+    private readonly Subject<ImmutableArray<LogRecord>> _logsAdded;
+    private readonly Subject<ImmutableArray<LogRecord>> _logsRemoved;
+#pragma warning restore CA2213 // Disposable fields should be disposed
 
     public LogContainer()
     {
-        // TODO: Cover with unit tests
-        _fileAdded
-            .Concat(_fileRemoved)
-            .Subscribe(_ => _filesCountChanged.OnNext(FilesCount));
+        _logsAccessingLock = _disposer.Add(new ReaderWriterLockSlim());
+        _logsAdded = _disposer.Add(new Subject<ImmutableArray<LogRecord>>());
+        _logsRemoved = _disposer.Add(new Subject<ImmutableArray<LogRecord>>());
+        _sourceAdded = _disposer.Add(new Subject<LogSourceBase>());
+        _sourceRemoved = _disposer.Add(new Subject<LogSourceBase>());
+        _sourceRenamed = _disposer.Add(new Subject<(LogSourceBase OldRecord, LogSourceBase NewRecord)>());
+        _sourcesCountChanged = _disposer.Add(new Subject<int>());
+
+        _sourceAdded
+            .Concat(_sourceRemoved)
+            .Subscribe(_ => _sourcesCountChanged.OnNext(SourcesCount))
+            .DisposeWith(_disposer);
     }
 
-    public void AddFile(FileRecord fileRecord)
+    public void AddSource(LogSourceBase source)
     {
-        _files.TryAdd(fileRecord.FullPath, fileRecord);
-        _fileAdded.OnNext(fileRecord);
-    }
-
-    public void AddLogger(LoggerRecord logger)
-    {
-        _loggers.TryAdd(logger.Id, logger);
+        _sources.TryAdd(source.Name, source);
+        _sourceAdded.OnNext(source);
     }
 
     public void AddLogLevel(LogLevelRecord logLevel)
@@ -45,146 +52,139 @@ internal class LogContainer : ILogContainer, ILogContainerWriter
         _logLevels.Add(logLevel);
     }
 
-    public void AddThread(string thread)
-    {
-        _logThreads.TryAdd(thread, 0);
-    }
-
     public void AddLogs(ImmutableArray<LogRecord> logRecords)
     {
-        _lock.EnterWriteLock();
-        _logs.AddRange(logRecords);
-        _lock.ExitWriteLock();
+        using (_logsAccessingLock.BeginWriteLock())
+        {
+            _logs.AddRange(logRecords);
+        }
 
         _logsAdded.OnNext(logRecords);
     }
 
-    public ImmutableArray<FileRecord> GetFiles()
-    {
-        return _files.Values.ToImmutableArray();
-    }
+    public ImmutableArray<LogSourceBase> GetSources()
+        => _sources.Values.ToImmutableArray();
 
     public ImmutableArray<LogRecord> GetLogs()
     {
-        _lock.EnterReadLock();
+        _logsAccessingLock.EnterReadLock();
         var result = _logs.ToImmutableArray();
-        _lock.ExitReadLock();
+        _logsAccessingLock.ExitReadLock();
 
         return result;
     }
 
-    public ImmutableArray<LoggerRecord> GetLoggers()
-    {
-        return _loggers.Values.ToImmutableArray();
-    }
-
+    public ILogFieldsContainerReadonly GetFields()
+        => _fields;
+    public ILogFieldsContainer GetFieldsContainer()
+        => _fields;
     public ImmutableArray<LogLevelRecord> GetLogLevels()
-    {
-        return _logLevels.ToImmutableArray();
-    }
+        => _logLevels.ToImmutableArray();
+    public LogSourceBase? GetSource(string name)
+        => _sources.TryGetValue(name, out var source) ? source : null;
 
-    public ImmutableArray<string> GetThreads()
+    public void RemoveSource(string name)
     {
-        return _logThreads.Keys.ToImmutableArray();
-    }
-
-    protected void Clear()
-    {
-        _files.Clear();
-        _loggers.Clear();
-        _logLevels.Clear();
-        _logThreads.Clear();
-        _logs.Clear();
-    }
-
-    protected FileRecord? GetFile(string fullPath)
-    {
-        return _files.TryGetValue(fullPath, out var fileRecord) ? fileRecord : null;
-    }
-
-    // TODO: Cover with unit tests
-    protected void RemoveFile(string fullPath)
-    {
-        if (_files.TryRemove(fullPath, out var record))
+        if (_sources.TryRemove(name, out var record))
         {
-            List<LogRecord> logsRemoved = new();
-            HashSet<int> loggersAffected = new();
-            HashSet<string> logThreadsAffected = new();
+            List<LogRecord> logsRemoved = [];
+            List<HashSet<int>> fieldValuesAffected = [];
 
-            // Step 1: Remove logs
+            while (fieldValuesAffected.Count < _fields.GetFieldCount() + 1)
+                fieldValuesAffected.Add([]);
+
+            // Step 1: Remove logs attached to the removing source
             _logs.RemoveAll(x =>
             {
-                if (x.File.FullPath.Equals(record.FullPath, StringComparison.InvariantCulture))
+                if (x.Source.Name.Equals(record.Name, StringComparison.InvariantCulture))
                 {
                     logsRemoved.Add(x);
-                    loggersAffected.Add(x.Logger.Id);
-                    logThreadsAffected.Add(x.Thread);
+                    for (var i = 0; i < x.FieldValueIndices.Length; i++)
+                        fieldValuesAffected[i].Add(x.FieldValueIndices[i]);
                     return true;
                 }
                 return false;
             });
 
-            // Step 2: Check the validity of the affected sub records
-            var loggersLookup = _logs.ToLookup(x => x.Logger.Id);
-            foreach (var loggerId in loggersAffected)
+            // Step 2: Check field values from remaining log items
+            HashSet<int>[] remainingFieldValues = new HashSet<int>[_fields.GetFieldCount()];
+            for (var i = 0; i < remainingFieldValues.Length; i++)
+                remainingFieldValues[i] = [];
+            for (var logIndex = 0; logIndex < _logs.Count; logIndex++)
+                for (var fieldIndex = 0; fieldIndex < _logs[logIndex].FieldValueIndices.Length; fieldIndex++)
+                    remainingFieldValues[fieldIndex].Add(_logs[logIndex].FieldValueIndices[fieldIndex]);
+
+            // Step 3: Check the validity of the affected sub records
+            for (var fieldId = 0; fieldId < remainingFieldValues.Length; fieldId++)
             {
-                if (!loggersLookup[loggerId].Any())
+                for (var fieldValueIndex = 0; fieldValueIndex < fieldValuesAffected[fieldId].Count; fieldValueIndex++)
                 {
-                    _loggers.TryRemove(loggerId, out var _);
-                }
-            }
-            var threadsLookup = _logs.ToLookup(x => x.Thread);
-            foreach (var thread in logThreadsAffected)
-            {
-                if (!threadsLookup[thread].Any())
-                {
-                    _logThreads.TryRemove(thread, out var _);
+                    var fieldValueId = fieldValuesAffected[fieldId].ElementAt(fieldValueIndex);
+                    if (!remainingFieldValues[fieldId].Contains(fieldValueId))
+                    {
+                        _fields.RemoveFieldValue(fieldId, fieldValueId);
+                    }
                 }
             }
 
-            // Step 3: Raise events
+            // Step 4: Raise events
             _logsRemoved.OnNext(logsRemoved.ToImmutableArray());
-            _fileRemoved.OnNext(record);
+            _sourceRemoved.OnNext(record);
         }
     }
 
-    protected void RenameFile(string oldFullPath, string newFullPath)
+    public void RenameSource(string oldName, string newName)
     {
-        FileRecord newRecord;
-        _lock.EnterWriteLock();
+        LogSourceBase newSource;
+        LogSourceBase? previousSource;
 
-        if (!_files.TryRemove(oldFullPath, out var previousRecord))
+        using (_logsAccessingLock.BeginWriteLock())
         {
-            return;
-        }
+            if (!_sources.TryRemove(oldName, out previousSource))
+            {
+                return;
+            }
 
-        try
-        {
-            newRecord = previousRecord.WithNewName(newFullPath);
-            _files.TryAdd(previousRecord.FileName, newRecord);
+            newSource = previousSource.WithNewName(newName);
+            _sources.TryAdd(previousSource.Name, newSource);
 
             for (var i = 0; i < _logs.Count; i++)
             {
-                if (_logs[i].File == previousRecord)
+                if (_logs[i].Source == previousSource)
                 {
-                    _logs[i] = _logs[i] with { File = newRecord };
+                    _logs[i] = _logs[i] with { Source = newSource };
                 }
             }
         }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
 
-        _fileRenamed.OnNext((previousRecord, newRecord));
+        _sourceRenamed.OnNext((previousSource, newSource));
     }
 
-    public IObservable<FileRecord> FileAdded => _fileAdded;
-    public IObservable<(FileRecord OldRecord, FileRecord NewRecord)> FileRenamed => _fileRenamed;
-    public IObservable<FileRecord> FileRemoved => _fileRemoved;
-    public IObservable<int> FilesCountChanged => _filesCountChanged;
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        _disposer.Dispose();
+    }
+
+    protected void Clear()
+    {
+        _fields.Clear();
+        _sources.Clear();
+        _logLevels.Clear();
+        _logs.Clear();
+    }
+
+    public IObservable<LogSourceBase> SourceAdded => _sourceAdded;
+    public IObservable<(LogSourceBase OldRecord, LogSourceBase NewRecord)> SourceRenamed => _sourceRenamed;
+    public IObservable<LogSourceBase> SourceRemoved => _sourceRemoved;
+    public IObservable<int> SourcesCountChanged => _sourcesCountChanged;
     public IObservable<ImmutableArray<LogRecord>> LogsAdded => _logsAdded;
     public IObservable<ImmutableArray<LogRecord>> LogsRemoved => _logsRemoved;
 
-    public int FilesCount => _files.Count;
+    public int SourcesCount => _sources.Count;
 }

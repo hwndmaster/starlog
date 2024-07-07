@@ -1,4 +1,4 @@
-using Genius.Starlog.Core.LogFlow;
+using Genius.Starlog.Core.Comparison;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.UI.Views;
 using Genius.Starlog.UI.Views.Comparison;

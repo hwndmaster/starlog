@@ -3,19 +3,19 @@ using System.Text;
 using System.Text.Json;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.Models;
-using Genius.Starlog.Core.Repositories;
+using Genius.Starlog.Core.Serialization;
 
-namespace Genius.Starlog.Core.Tests.Repositories;
+namespace Genius.Starlog.Core.Tests.Serialization;
 
 public sealed class LogFilterJsonConverterTests
 {
     private readonly Fixture _fixture = new();
-    private readonly Mock<ILogFilterContainer> _logFilterContainerMock = new();
+    private readonly ILogFilterContainer _logFilterContainerFake = A.Fake<ILogFilterContainer>();
     private readonly LogFilterJsonConverter _sut;
 
     public LogFilterJsonConverterTests()
     {
-        _sut = new LogFilterJsonConverter(_logFilterContainerMock.Object);
+        _sut = new LogFilterJsonConverter(_logFilterContainerFake);
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public sealed class LogFilterJsonConverterTests
     {
         // Arrange
         var value = _fixture.Create<LogFilter>();
-        _logFilterContainerMock.Setup(x => x.GetLogFilters()).Returns(new [] { value });
+        A.CallTo(() => _logFilterContainerFake.GetLogFilters(A<bool>.Ignored)).Returns([value]);
         var input = Encoding.Default.GetBytes($"\"{value.Id}\"");
         var reader = new Utf8JsonReader(input, true, new JsonReaderState());
         reader.Read();

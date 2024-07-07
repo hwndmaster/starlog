@@ -1,5 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.UI.Views;
 
 namespace Genius.Starlog.UI.Helpers;
@@ -11,9 +13,15 @@ public interface IClipboardHelper
     void CopyToClipboard(string content);
 }
 
-// TODO: Cover with unit tests
 internal sealed class ClipboardHelper : IClipboardHelper
 {
+    private readonly ILogContainer _logContainer;
+
+    public ClipboardHelper(ILogContainer logContainer)
+    {
+        _logContainer = logContainer.NotNull();
+    }
+
     public string CreateLogMessagesStringForClipboard(IEnumerable<ILogItemViewModel> items)
     {
         return string.Join(Environment.NewLine, items.Select(x => x.Record.Message).Distinct());
@@ -21,7 +29,10 @@ internal sealed class ClipboardHelper : IClipboardHelper
 
     public string CreateLogsStringForClipboard(IEnumerable<ILogItemViewModel> items)
     {
-        var itemGroups = items.GroupBy(x => x.Record.File.FileName, x => x.Record);
+        var fields = _logContainer.GetFields();
+        var fieldsDict = fields.GetFields().ToDictionary(x => x.FieldId, x => x.FieldName);
+
+        var itemGroups = items.GroupBy(x => x.Record.Source.DisplayName, x => x.Record);
         StringBuilder sb = new();
         foreach (var itemGroup in itemGroups)
         {
@@ -33,7 +44,7 @@ internal sealed class ClipboardHelper : IClipboardHelper
             }
 
             sb.Append("File: ").AppendLine(itemGroup.Key);
-            foreach (var fileArtifact in itemGroup.First().File.Artifacts?.Artifacts ?? Array.Empty<string>())
+            foreach (var fileArtifact in itemGroup.First().Source.Artifacts?.Artifacts ?? Array.Empty<string>())
             {
                 sb.AppendLine(fileArtifact);
             }
@@ -45,8 +56,14 @@ internal sealed class ClipboardHelper : IClipboardHelper
                 {
                     sb.AppendLine();
                 }
-                var d = item.DateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                sb.AppendLine($"{d}\t\t{item.Level.Name}\t{item.Logger.Name}\tThread {item.Thread}\t{item.Message}");
+                var d = item.DateTime.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentCulture);
+                sb.Append(CultureInfo.CurrentCulture, $"{d}\t\t{item.Level.Name}");
+                for (var fieldId = 0; fieldId < item.FieldValueIndices.Length; fieldId++)
+                {
+                    var value = fields.GetFieldValue(fieldId, item.FieldValueIndices[fieldId]);
+                    sb.Append(CultureInfo.CurrentCulture, $"\t{fieldsDict[fieldId]} {value}");
+                }
+                sb.AppendLine(CultureInfo.CurrentCulture, $"\t{item.Message}");
 
                 if (!string.IsNullOrEmpty(item.LogArtifacts))
                 {

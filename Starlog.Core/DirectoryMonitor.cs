@@ -6,7 +6,7 @@ namespace Genius.Starlog.Core;
 
 public interface IDirectoryMonitor : IDisposable
 {
-    void StartMonitoring(string path, string searchPattern);
+    IDisposable StartMonitoring(string path, string searchPattern);
     void StopMonitoring();
     IObservable<long> Pulse { get; }
 }
@@ -26,7 +26,7 @@ internal sealed class DirectoryMonitor : IDirectoryMonitor
         _fileService = fileService.NotNull();
     }
 
-    public void StartMonitoring(string path, string searchPattern)
+    public IDisposable StartMonitoring(string path, string searchPattern)
     {
         Interlocked.Exchange(ref _interrupted, 0);
 
@@ -35,27 +35,33 @@ internal sealed class DirectoryMonitor : IDirectoryMonitor
             throw new InvalidOperationException("Monitoring has already been started.");
         }
 
+        _cancellation?.Cancel();
         _cancellation = new CancellationTokenSource();
 
         _backgroundTask = CreateNeverEndingTask(now => DoWork(path, searchPattern), _cancellation.Token);
-        _backgroundTask.Post(default);
+        _backgroundTask.Post(new object());
+
+        return new DisposableAction(() => StopMonitoring());
     }
 
     public void StopMonitoring()
     {
         Interlocked.Exchange(ref _interrupted, 1);
         _cancellation?.Cancel();
-        _cancellation = null;
         _backgroundTask = null;
     }
 
     public void Dispose()
     {
         StopMonitoring();
+
+        _cancellation?.Dispose();
+        _cancellation = null;
+        _pulse.Dispose();
     }
 
     // Consider detaching from DirectoryMonitor
-    private ITargetBlock<object?> CreateNeverEndingTask(
+    private static ITargetBlock<object?> CreateNeverEndingTask(
         Action<object?> action, CancellationToken cancellationToken)
     {
         Guard.NotNull(action);

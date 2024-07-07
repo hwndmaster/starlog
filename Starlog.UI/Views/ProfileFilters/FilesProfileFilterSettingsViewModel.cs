@@ -7,7 +7,6 @@ using Genius.Starlog.UI.Helpers;
 
 namespace Genius.Starlog.UI.Views.ProfileFilters;
 
-// TODO: Cover with unit tests
 public sealed class FilesProfileFilterSettingsViewModel : ProfileFilterSettingsViewModel<FilesProfileFilter>
 {
     public FilesProfileFilterSettingsViewModel(FilesProfileFilter profileFilter, ILogContainer logContainer)
@@ -16,7 +15,7 @@ public sealed class FilesProfileFilterSettingsViewModel : ProfileFilterSettingsV
         Guard.NotNull(logContainer);
 
         // Members initialization:
-        Files = logContainer.GetFiles().Select(x => x.FileName)
+        Files = logContainer.GetSources().Select(x => x.DisplayName)
             .Union(profileFilter.FileNames)
             .Order()
             .ToArray();

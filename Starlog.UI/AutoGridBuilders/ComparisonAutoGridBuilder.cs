@@ -19,16 +19,16 @@ public sealed class ComparisonAutoGridBuilder : IAutoGridBuilder
         return _contextBuilder
             .WithColumns(columns =>
                 columns
-                    .AddText(x => x.Thread1)
-                    .AddText(x => x.File1)
-                    .AddText(x => x.Logger1, opts => opts.WithToolTipPath(x => x.Logger1))
+                    // TODO: .AddText(x => x.Thread1)
+                    .AddText(x => x.Source1)
+                    // TODO: .AddText(x => x.Logger1, opts => opts.WithToolTipPath(x => x.Logger1))
                     .AddText(x => x.Message1, opts => opts
                         .WithToolTipPath(x => x.Message1)
                         .WithIconSource(new IconSourceRecord<LogItemPairViewModel>(y => y.ArtifactsIcon1))
                         .WithAutoWidth(true))
-                    .AddText(x => x.Thread2)
-                    .AddText(x => x.File2)
-                    .AddText(x => x.Logger2, opts => opts.WithToolTipPath(x => x.Logger2))
+                    // TODO: .AddText(x => x.Thread2)
+                    .AddText(x => x.Source2)
+                    // TODO: .AddText(x => x.Logger2, opts => opts.WithToolTipPath(x => x.Logger2))
                     .AddText(x => x.Message2, opts => opts
                         .WithToolTipPath(x => x.Message2)
                         .WithIconSource(new IconSourceRecord<LogItemPairViewModel>(y => y.ArtifactsIcon2))

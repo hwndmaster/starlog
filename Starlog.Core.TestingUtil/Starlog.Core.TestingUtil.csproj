@@ -9,4 +9,8 @@
     <ReferenceAtomInfrastructure>true</ReferenceAtomInfrastructure>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Genius.Starlog.Core.Tests" />
+  </ItemGroup>
+
 </Project>

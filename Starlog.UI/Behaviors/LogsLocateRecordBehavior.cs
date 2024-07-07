@@ -1,15 +1,16 @@
 using System.Reactive.Linq;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Threading;
 using Genius.Atom.UI.Forms.Wpf;
+using Genius.Starlog.UI.Helpers;
 using Genius.Starlog.UI.Views;
 using Microsoft.Xaml.Behaviors;
 
 namespace Genius.Starlog.UI.Behaviors;
 
-public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>
+public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>, IDisposable
 {
+    private IDisposable? _subscription;
     private readonly MenuItem _menuItemLocate;
 
 
@@ -18,6 +19,11 @@ public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>
         _menuItemLocate = new MenuItem { Header = "Locate without filters",
             InputGestureText = "F12",
             Command = new ActionCommand(_ => LocateItem()) };
+    }
+
+    public void Dispose()
+    {
+        _subscription?.Dispose();
     }
 
     protected override void OnAttached()
@@ -36,6 +42,8 @@ public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>
 
         var contextMenu = WpfHelpers.EnsureDataGridRowContextMenu(AssociatedObject);
         contextMenu.Items.Remove(_menuItemLocate);
+
+        Dispose();
 
         base.OnDetaching();
     }
@@ -69,50 +77,10 @@ public sealed class LogsLocateRecordBehavior : Behavior<DataGrid>
         vm.Search.DropAllSearches();
         vm.ResetGrouping();
 
-        Observable.FromEventPattern<EventHandler, EventArgs>(
-            h => AssociatedObject.LayoutUpdated += h, h => AssociatedObject.LayoutUpdated -= h)
-            .Take(1)
-            .Subscribe(_ =>
-            {
-                Dispatcher.Invoke(() => {
-                    AssociatedObject.Items.MoveCurrentTo(AssociatedObject.SelectedItem);
-                    AssociatedObject.ScrollIntoView(AssociatedObject.SelectedItem);
-                }, DispatcherPriority.ContextIdle);
-            });
-
         vm.SelectedLogItems.Add(item);
 
-        /* UNDONE:
-        var dispatcher = App.ServiceProvider.GetRequiredService<IUiDispatcher>();
+        var selectedItemIndex = vm.LogItems.IndexOf(item);
 
-        dispatcher.BeginInvoke(() => {
-            AssociatedObject.UpdateLayout();
-            ForceUIToUpdate();
-            AssociatedObject.Items.MoveCurrentTo(AssociatedObject.SelectedItem);
-            AssociatedObject.ScrollIntoView(AssociatedObject.SelectedItem);
-
-            var scrollViewer = AssociatedObject.FindChild<ScrollViewer>().NotNull();
-            var element = AssociatedObject.ItemContainerGenerator.ContainerFromItem(AssociatedObject.SelectedItem) as FrameworkElement;
-            if (element is not null)
-            {
-                Point offset = element.TransformToAncestor(scrollViewer).Transform(new Point(0, 0));
-                //var offset = element.TranslatePoint(new Point(0, 0), (UIElement)element.Parent);
-                scrollViewer.ScrollToVerticalOffset(offset.Y);
-            }
-        });
-
-        public static void ForceUIToUpdate()
-        {
-            DispatcherFrame frame = new DispatcherFrame();
-
-            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Render, new DispatcherOperationCallback(delegate(object parameter)
-            {
-                frame.Continue = false;
-                return null;
-            }), null);
-
-            Dispatcher.PushFrame(frame);
-        }
-        */
+        DataGridNavigation.ScrollToItem(AssociatedObject, selectedItemIndex, vm.LogItems.Count);
     }
 }

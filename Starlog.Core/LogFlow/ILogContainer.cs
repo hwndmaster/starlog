@@ -3,14 +3,14 @@ using System.Collections.Immutable;
 namespace Genius.Starlog.Core.LogFlow;
 
 /// <summary>
-///   The container of all log files for the selected profile.
+///   The container of all log sources for the selected profile.
 /// </summary>
 public interface ILogContainer
 {
     /// <summary>
-    ///   Returns all the files, read so far for the selected profile.
+    ///  Returns a container of the fields.
     /// </summary>
-    ImmutableArray<FileRecord> GetFiles();
+    ILogFieldsContainerReadonly GetFields();
 
     /// <summary>
     ///   Returns all the logs, read so far for the selected profile.
@@ -18,39 +18,40 @@ public interface ILogContainer
     ImmutableArray<LogRecord> GetLogs();
 
     /// <summary>
-    ///   Returns all unique loggers, read so far for the selected profile.
-    /// </summary>
-    ImmutableArray<LoggerRecord> GetLoggers();
-
-    /// <summary>
     ///   Returns all unique log levels, read so far for the selected profile.
     /// </summary>
     ImmutableArray<LogLevelRecord> GetLogLevels();
 
     /// <summary>
-    ///   Returns all unique threads, read so far for the selected profile.
+    ///   Returns a source by its name. If not found, returns <c>null</c>.
     /// </summary>
-    ImmutableArray<string> GetThreads();
+    /// <param name="name">The name of the source.</param>
+    LogSourceBase? GetSource(string name);
 
     /// <summary>
-    ///   An observable to handle an event when a new file is read.
+    ///   Returns all the log sources, read so far for the selected profile.
     /// </summary>
-    IObservable<FileRecord> FileAdded { get; }
+    ImmutableArray<LogSourceBase> GetSources();
 
     /// <summary>
-    ///   An observable to handle an event when an existing file has been renamed.
+    ///   An observable to handle an event when a new source is read.
     /// </summary>
-    IObservable<(FileRecord OldRecord, FileRecord NewRecord)> FileRenamed { get; }
+    IObservable<LogSourceBase> SourceAdded { get; }
 
     /// <summary>
-    ///   An observable to handle an event when a file has been removed.
+    ///   An observable to handle an event when an existing source has been renamed.
     /// </summary>
-    IObservable<FileRecord> FileRemoved { get; }
+    IObservable<(LogSourceBase OldRecord, LogSourceBase NewRecord)> SourceRenamed { get; }
 
     /// <summary>
-    ///   An observable to handle events when files count has changed.
+    ///   An observable to handle an event when a source has been removed.
     /// </summary>
-    IObservable<int> FilesCountChanged { get; }
+    IObservable<LogSourceBase> SourceRemoved { get; }
+
+    /// <summary>
+    ///   An observable to handle events when sources count has changed.
+    /// </summary>
+    IObservable<int> SourcesCountChanged { get; }
 
     /// <summary>
     ///   An observable to handle an event when a bunch of log records are added.
@@ -63,7 +64,7 @@ public interface ILogContainer
     IObservable<ImmutableArray<LogRecord>> LogsRemoved { get; }
 
     /// <summary>
-    ///   Gets the count of the currently loaded files.
+    ///   Gets the count of the currently loaded sources.
     /// </summary>
-    int FilesCount { get; }
+    int SourcesCount { get; }
 }

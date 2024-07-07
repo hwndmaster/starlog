@@ -9,7 +9,6 @@ public interface IConsoleParser
     void Process(string[] args);
 }
 
-// TODO: Cover with unit tests
 internal sealed class ConsoleParser : IConsoleParser, IDisposable
 {
     private readonly IConsoleController _consoleController;
@@ -38,12 +37,9 @@ internal sealed class ConsoleParser : IConsoleParser, IDisposable
 
         EnsureHelpWriter();
 
-        var parser = new Parser(cfg =>
-        {
-            cfg.HelpWriter = _helpWriter;
-        });
+        using var parser = new Parser(cfg => cfg.HelpWriter = _helpWriter);
 
-        parser.ParseArguments<LoadPathCommandLineOptions>(args)
+        _ = parser.ParseArguments<LoadPathCommandLineOptions>(args)
             .MapResult(
                 async (LoadPathCommandLineOptions opts) =>
                     {
@@ -56,13 +52,17 @@ internal sealed class ConsoleParser : IConsoleParser, IDisposable
     private void EnsureHelpWriter()
     {
         if (_helpWriter is not null)
-            return;
-
-        _helpWriter = new HelpWriter();
-        _helpWriter.TextWritten.Subscribe(async text =>
         {
-            await _mainController.Loaded;
-            _ui.ShowInformation(text);
-        });
+            return;
+        }
+        else
+        {
+            _helpWriter = new HelpWriter();
+            _helpWriter.TextWritten.Subscribe(async text =>
+            {
+                await _mainController.Loaded;
+                _ui.ShowInformation(text);
+            });
+        }
     }
 }

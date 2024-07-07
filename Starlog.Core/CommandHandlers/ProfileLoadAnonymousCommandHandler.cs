@@ -20,7 +20,6 @@ internal sealed class ProfileLoadAnonymousCommandHandler : ICommandHandler<Profi
         {
             Id = Profile.AnonymousProfileId,
             Name = "Unnamed",
-            Path = command.Path,
             Settings = command.Settings
         };
 

@@ -64,12 +64,22 @@ internal sealed class ProfileRepository : RepositoryBase<Profile>, IProfileRepos
 
     protected override Task FillUpRelationsAsync(Profile entity)
     {
-        // Upgrade PlainTextProfileLogCodec for profiles created before 14-Jan-2024
-        var settings = new Lazy<Settings>(() => _settingsRepository.Get());
-        if (entity.Settings.LogCodec is PlainTextProfileLogCodec plainTextCodec
-            && plainTextCodec.LinePatternId == Guid.Empty)
+        if (entity.Settings is PlainTextProfileSettings plainTextSettings)
         {
-            plainTextCodec.LinePatternId = settings.Value.PlainTextLogCodecLinePatterns.First().Id;
+            // Upgrade PlainTextProfileLogCodec for profiles created before 14-Jan-2024
+            if (plainTextSettings.LinePatternId == Guid.Empty)
+            {
+                var settings = new Lazy<Settings>(_settingsRepository.Get);
+                plainTextSettings.LinePatternId = settings.Value.PlainTextLogCodecLinePatterns.First().Id;
+            }
+
+            // Copy Path from Profile to PlainTextProfileSettings for profiles created before 05-Feb-2024
+#pragma warning disable CS0618 // Type or member is obsolete
+            if (!string.IsNullOrEmpty(entity.Path) && string.IsNullOrEmpty(plainTextSettings.Path))
+            {
+                plainTextSettings.Path = entity.Path;
+            }
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         return base.FillUpRelationsAsync(entity);

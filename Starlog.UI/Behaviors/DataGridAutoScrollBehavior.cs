@@ -14,10 +14,10 @@ public sealed class DataGridAutoScrollBehavior : Behavior<DataGrid>
     private IDisposable? _subscription;
 
     public static void SetAutoScroll(DependencyObject element, bool value)
-        => element.SetValue(AutoScrollProperty, value);
+        => element.NotNull().SetValue(AutoScrollProperty, value);
 
     public static bool GetAutoScroll(DependencyObject element)
-        => (bool)element.GetValue(AutoScrollProperty);
+        => (bool)element.NotNull().GetValue(AutoScrollProperty);
 
     public bool AutoScroll
     {

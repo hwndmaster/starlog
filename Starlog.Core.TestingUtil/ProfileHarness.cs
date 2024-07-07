@@ -8,32 +8,43 @@ namespace Genius.Starlog.Core.TestingUtil;
 public sealed class ProfileHarness
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly Mock<IProfileRepository> _profileRepoMock = new();
-    private readonly Mock<IProfileQueryService> _profileQueryMock = new();
-    private readonly Mock<ICurrentProfile> _currentProfileMock = new();
-    private readonly Mock<IEventBus> _eventBusMock = new();
+    private readonly IProfileRepository _profileRepoMock = A.Fake<IProfileRepository>();
+    private readonly IProfileQueryService _profileQueryMock = A.Fake<IProfileQueryService>();
+    private readonly TestCurrentProfile _currentProfile = new();
+    private readonly IEventBus _eventBusMock = A.Fake<IEventBus>();
+
+    public ProfileHarness()
+    {
+        A.CallTo(() => _profileQueryMock.FindByIdAsync(A<Guid>.Ignored)).Returns(default(Profile));
+    }
 
     public Profile CreateProfile(bool setAsCurrent = false)
     {
         var profile = _fixture.Create<Profile>();
-        _profileQueryMock.Setup(x => x.FindByIdAsync(profile.Id))
-            .ReturnsAsync(profile);
+        A.CallTo(() => _profileQueryMock.FindByIdAsync(profile.Id)).Returns(profile);
         if (setAsCurrent)
         {
-            _currentProfileMock.SetupGet(x => x.Profile).Returns(profile);
+            _currentProfile.LoadProfileAsync(profile).GetAwaiter().GetResult();
         }
         return profile;
     }
 
-    public void VerifyEventPublished<T>(Times? times = null)
+    public void VerifyEventPublished<T>(int? numberOfTimes = null, Times? times = null)
         where T : IEventMessage
     {
-        _eventBusMock.Verify(x => x.Publish(It.IsAny<T>()), times ?? Times.Once());
+        if (numberOfTimes is not null)
+        {
+            A.CallTo(() => _eventBusMock.Publish(A<T>.Ignored)).MustHaveHappened(numberOfTimes.Value, times ?? Times.Exactly);
+        }
+        else
+        {
+            A.CallTo(() => _eventBusMock.Publish(A<T>.Ignored)).MustHaveHappened();
+        }
     }
 
     public IFixture Fixture => _fixture;
-    public ICurrentProfile CurrentProfile => _currentProfileMock.Object;
-    public IProfileRepository ProfileRepo => _profileRepoMock.Object;
-    public IProfileQueryService ProfileQuery => _profileQueryMock.Object;
-    public IEventBus EventBus => _eventBusMock.Object;
+    public ICurrentProfile CurrentProfile => _currentProfile;
+    public IProfileRepository ProfileRepo => _profileRepoMock;
+    public IProfileQueryService ProfileQuery => _profileQueryMock;
+    public IEventBus EventBus => _eventBusMock;
 }

@@ -7,7 +7,7 @@ namespace Genius.Starlog.Core.Tests.LogFiltering;
 
 public sealed class FilesFilterProcessorTests
 {
-    private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
 
     [Fact]
     public void IsMatch_WhenNoExclude_HappyFlowScenario()
@@ -20,7 +20,7 @@ public sealed class FilesFilterProcessorTests
             Exclude = false
         };
         var logRecord = _fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(_fixture.Create<string>() + "\\" + profileFilter.FileNames[1], 0))
+            .With(x => x.Source, new FileRecord(_fixture.Create<string>() + "\\" + profileFilter.FileNames[1], 0))
             .Create();
 
         // Act
@@ -78,7 +78,7 @@ public sealed class FilesFilterProcessorTests
             Exclude = true
         };
         var logRecord = _fixture.Build<LogRecord>()
-            .With(x => x.File, new FileRecord(_fixture.Create<string>() + "\\" + profileFilter.FileNames[1], 0))
+            .With(x => x.Source, new FileRecord(_fixture.Create<string>() + "\\" + profileFilter.FileNames[1], 0))
             .Create();
 
         // Act

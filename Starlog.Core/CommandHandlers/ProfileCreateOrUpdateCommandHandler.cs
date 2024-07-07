@@ -27,7 +27,6 @@ internal sealed class ProfileCreateOrUpdateCommandHandler :
         var profile = new Profile
         {
             Name = command.Name,
-            Path = command.Path,
             Settings = command.Settings
         };
         await _profileRepo.StoreAsync(profile);
@@ -43,7 +42,6 @@ internal sealed class ProfileCreateOrUpdateCommandHandler :
         Guard.NotNull(profile);
 
         profile.Name = command.Name;
-        profile.Path = command.Path;
         profile.Settings = command.Settings;
 
         await _profileRepo.StoreAsync(profile);

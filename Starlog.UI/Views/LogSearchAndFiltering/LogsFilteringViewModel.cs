@@ -5,6 +5,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Commands;
+using Genius.Atom.Infrastructure.Events;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Commands;
 using Genius.Starlog.Core.LogFiltering;
@@ -21,32 +22,41 @@ public interface ILogsFilteringViewModel : IDisposable
     void DropBookmarkedFilter();
     void ShowFlyoutForAddingNewFilter(ProfileFilterBase? profileFilter);
 
+    /// <summary>
+    ///   Suspends or resumes the view model reaction over the profile being closed/opened.
+    /// </summary>
+    /// <param name="suspend"><c>true</c> to suspend event reaction, <c>false</c> to resume.</param>
+    void SuspendResumeProfileReload(bool suspend);
+
     IObservable<Unit> FilterChanged { get; }
 }
 
-// TODO: Cover with unit tests
-public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewModel
+public sealed class LogsFilteringViewModel : DisposableViewModelBase, ILogsFilteringViewModel
 {
     private readonly ICommandBus _commandBus;
     private readonly ICurrentProfile _currentProfile;
+    private readonly IEventBus _eventBus;
     private readonly ILogContainer _logContainer;
+    private readonly IProfileFilterViewModelFactory _logFilterViewModelFactory;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IUserInteraction _ui;
     private readonly IViewModelFactory _vmFactory;
-    private readonly LogFilterCategoryViewModel<LogFileViewModel> _filesCategory = new("Files", "FolderFiles32", sort: true);
+    private readonly LogFilterCategoryViewModel<LogSourceViewModel> _sourcesCategory = new("Sources", "FolderFiles32", sort: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _quickFiltersCategory = new("Quick filters", "FolderDown32", expanded: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _userFiltersCategory = new("User filters", "FolderFavs32", expanded: true, canAddChildren: true);
     private readonly LogFilterCategoryViewModel<LogFilterViewModel> _bookmarkedCategory = new LogFilterBookmarkedCategoryViewModel();
-    private readonly LogFilterCategoryViewModel<ILogFilterNodeViewModel> _messageParsingCategory = new("Message parsing", "MessageParsing32", expanded: true, canAddChildren: true);
-    private readonly CompositeDisposable _subscriptions;
-    private readonly ISubject<Unit> _filterChanged = new Subject<Unit>();
-    private bool _suspendUpdate = false;
+    private readonly LogFilterCategoryViewModel<LogFilterMessageParsingViewModel> _messageParsingCategory = new("Message parsing", "MessageParsing32", expanded: true, canAddChildren: true);
+    private readonly Subject<Unit> _filterChanged = new();
+    private bool _suspendUpdate;
+    private bool _suspendProfileReloadHandling;
 
 
     public LogsFilteringViewModel(
         ICommandBus commandBus,
         ICurrentProfile currentProfile,
+        IEventBus eventBus,
         ILogContainer logContainer,
+        IProfileFilterViewModelFactory logFilterViewModelFactory,
         IQuickFilterProvider quickFilterProvider,
         IUiDispatcher uiDispatcher,
         IUserInteraction ui,
@@ -57,93 +67,103 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         // Dependencies:
         _commandBus = commandBus.NotNull();
         _currentProfile = currentProfile.NotNull();
+        _eventBus = eventBus.NotNull();
         _logContainer = logContainer.NotNull();
+        _logFilterViewModelFactory = logFilterViewModelFactory.NotNull();
         _uiDispatcher = uiDispatcher.NotNull();
         _ui = ui.NotNull();
         _vmFactory = vmFactory.NotNull();
 
         // Members initialization:
-        _quickFiltersCategory.AddItems(quickFilterProvider.GetQuickFilters()
-            .Select(x => new LogFilterViewModel(x, isUserDefined: false)));
-
-        SubscribeToPinningEvents(_quickFiltersCategory.CategoryItems, () => _filterChanged.OnNext(Unit.Default));
-
-        FilterCategories.Add(_filesCategory);
+        FilterCategories.Add(_sourcesCategory);
         FilterCategories.Add(_quickFiltersCategory);
         FilterCategories.Add(_userFiltersCategory);
         FilterCategories.Add(_bookmarkedCategory);
         FilterCategories.Add(_messageParsingCategory);
+        _filterChanged.DisposeWith(Disposer);
 
         // Subscriptions:
-        _subscriptions = new(
-            _currentProfile.ProfileClosed
-                .Subscribe(_ =>
-                {
-                    _suspendUpdate = true;
+        _currentProfile.ProfileClosed
+            .Subscribe(_ =>
+            {
+                if (_suspendProfileReloadHandling)
+                    return;
+                _suspendUpdate = true;
 
-                    _uiDispatcher.BeginInvoke(() =>
-                    {
-                        IsAddEditProfileFilterVisible = false;
-                        _filesCategory.CategoryItems.Clear();
-                        _filesCategory.CategoryItemsView.View.Refresh();
-                        _userFiltersCategory.CategoryItems.Clear();
-                        _messageParsingCategory.CategoryItems.Clear();
-                    });
-                }),
-            _currentProfile.ProfileChanged
-                .Subscribe(profile =>
-                {
-                    if (profile is null)
-                    {
-                        return;
-                    }
-
-                    _uiDispatcher.BeginInvoke(() =>
-                    {
-                        AddFiles(_logContainer.GetFiles());
-                        AddUserFilters(profile.Filters);
-                        AddMessageParsings(profile.MessageParsings);
-                        _suspendUpdate = false;
-                    });
-                }),
-            _logContainer.FileAdded
-                .Where(_ => !_suspendUpdate)
-                .Subscribe(x => _uiDispatcher.BeginInvoke(() =>
-                    AddFiles(new[] { x }))),
-            _logContainer.FileRenamed
-                .Where(_ => !_suspendUpdate)
-                .Subscribe(x =>
-                {
-                    var item = _filesCategory.CategoryItems.FirstOrDefault(ci => ci.File == x.OldRecord);
-                    _uiDispatcher.BeginInvoke(() => item?.HandleFileRenamed(x.NewRecord));
-                }),
-            _logContainer.FileRemoved
-                .Where(_ => !_suspendUpdate)
-                .Subscribe(x =>
-                {
-                    var item = _filesCategory.CategoryItems.FirstOrDefault(ci => ci.File == x);
-                    if (item is not null)
-                        _uiDispatcher.BeginInvoke(() => _filesCategory.RemoveItem(item));
-                }),
-
-            _userFiltersCategory.AddChildCommand.Executed
-                .Subscribe(_ => ShowFlyoutForAddingNewFilter(null)),
-
-            // TODO: Cover with unit tests
-            _messageParsingCategory.AddChildCommand.Executed
-                .Subscribe(_ => ShowFlyoutForAddingNewMessageParsing()),
-
-            SelectedFilters.WhenCollectionChanged()
-                .Throttle(TimeSpan.FromMilliseconds(50))
-                .Subscribe(_ =>
+                _uiDispatcher.Invoke(() =>
                 {
                     IsAddEditProfileFilterVisible = false;
-                    _filterChanged.OnNext(Unit.Default);
-                }),
+                    _sourcesCategory.CategoryItems.Clear();
+                    _sourcesCategory.CategoryItemsView.View.Refresh();
+                    foreach (var item in _userFiltersCategory.CategoryItems)
+                        item.Dispose();
+                    _userFiltersCategory.CategoryItems.Clear();
+                    foreach (var item in _messageParsingCategory.CategoryItems)
+                        item.Dispose();
+                    _messageParsingCategory.CategoryItems.Clear();
+                });
+            }).DisposeWith(Disposer);
+        _currentProfile.ProfileChanged
+            .Subscribe(profile =>
+            {
+                if (_suspendProfileReloadHandling)
+                    return;
+                if (profile is null)
+                    return;
 
-            this.WhenChanged(x => x.IsOr)
-                .Subscribe(_ => _filterChanged.OnNext(Unit.Default))
-        );
+                _uiDispatcher.Invoke(() =>
+                {
+                    _quickFiltersCategory.RemoveAll();
+                    _quickFiltersCategory.AddItems(quickFilterProvider.GetQuickFilters()
+                        .Select(x => new LogFilterViewModel(x, isUserDefined: false, _eventBus)));
+                    SubscribeToPinningEvents(_quickFiltersCategory.CategoryItems, () => _filterChanged.OnNext(Unit.Default));
+                    AddSources(_logContainer.GetSources());
+                    AddUserFilters(profile.Filters);
+                    AddMessageParsings(profile.MessageParsings);
+                    _suspendUpdate = false;
+                });
+            }).DisposeWith(Disposer);
+        _logContainer.SourceAdded
+            .Where(_ => !_suspendUpdate)
+            .Subscribe(x => _uiDispatcher.Invoke(() =>
+                AddSources([x])))
+            .DisposeWith(Disposer);
+        _logContainer.SourceRenamed
+            .Where(_ => !_suspendUpdate)
+            .Subscribe(x =>
+            {
+                var item = _sourcesCategory.CategoryItems.FirstOrDefault(ci => ci.Source == x.OldRecord);
+                _uiDispatcher.Invoke(() => item?.HandleSourceRenamed(x.NewRecord));
+            }).DisposeWith(Disposer);
+        _logContainer.SourceRemoved
+            .Where(_ => !_suspendUpdate)
+            .Subscribe(x =>
+            {
+                var item = _sourcesCategory.CategoryItems.FirstOrDefault(ci => ci.Source == x);
+                if (item is not null)
+                    _uiDispatcher.Invoke(() => _sourcesCategory.RemoveItem(item));
+            }).DisposeWith(Disposer);
+
+        _userFiltersCategory.AddChildCommand.Executed
+            .Subscribe(_ => ShowFlyoutForAddingNewFilter(null))
+            .DisposeWith(Disposer);
+
+        // TODO: Cover with unit tests
+        _messageParsingCategory.AddChildCommand.Executed
+            .Subscribe(_ => ShowFlyoutForAddingNewMessageParsing())
+            .DisposeWith(Disposer);
+
+        SelectedFilters.WhenCollectionChanged()
+            .Throttle(TimeSpan.FromMilliseconds(50))
+            .Subscribe(_ =>
+            {
+                IsAddEditProfileFilterVisible = false;
+                _filterChanged.OnNext(Unit.Default);
+            }).DisposeWith(Disposer);
+
+        this.WhenChanged(x => x.IsOr)
+            .Subscribe(_ => _filterChanged.OnNext(Unit.Default))
+            .DisposeWith(Disposer);
     }
 
     public LogRecordFilterContext CreateContext()
@@ -151,7 +171,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         // TODO: Cover `messageParsings` with unit tests
         var messageParsingVms = SelectedFilters.OfType<LogFilterMessageParsingViewModel>().ToList();
         var messageParsings = messageParsingVms
-            .Union(_messageParsingCategory.CategoryItems.Where(x => x.IsPinned).Cast<LogFilterMessageParsingViewModel>())
+            .Union(_messageParsingCategory.CategoryItems.Where(x => x.IsPinned))
             .Select(x => x.MessageParsing)
             .ToImmutableArray();
 
@@ -164,26 +184,21 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
         var filters = SelectedFilters
             .Except(messageParsingVms)
-            .Union(_filesCategory.CategoryItems.Where(x => x.IsPinned))
+            .Union(_sourcesCategory.CategoryItems.Where(x => x.IsPinned))
             .Union(_quickFiltersCategory.CategoryItems.Where(x => x.IsPinned))
             .Union(_userFiltersCategory.CategoryItems.Where(x => x.IsPinned))
             .ToList();
 
-        var filesSelected = filters.OfType<LogFileViewModel>()
-            .Select(x => x.File.FileName)
+        var sourcesSelected = filters.OfType<LogSourceViewModel>()
+            .Select(x => x.Source.DisplayName)
             .ToHashSet();
         var filtersSelected = filters.OfType<LogFilterViewModel>()
             .Select(x => x.Filter)
             .ToImmutableArray();
 
-        return new(HasAnythingSpecified: filesSelected.Any() || filtersSelected.Any(),
-            filesSelected, filtersSelected, ShowBookmarked: false, UseOrCombination: IsOr,
+        return new(HasAnythingSpecified: sourcesSelected.Any() || filtersSelected.Any(),
+            sourcesSelected, filtersSelected, ShowBookmarked: false, UseOrCombination: IsOr,
             messageParsings);
-    }
-
-    public void Dispose()
-    {
-        _subscriptions.Dispose();
     }
 
     public void DropAllFilters()
@@ -201,19 +216,24 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         IsAddEditProfileFilterVisible = !IsAddEditProfileFilterVisible;
         if (IsAddEditProfileFilterVisible)
         {
-            EditingProfileFilter = _vmFactory.CreateProfileFilter(profileFilter);
+            EditingProfileFilter = _logFilterViewModelFactory.CreateProfileFilter(profileFilter);
             EditingProfileFilter.CommitFilterCommand
                 .OnOneTimeExecutedBooleanAction()
                 .Subscribe(commandResult => {
                     if (!commandResult || EditingProfileFilter.ProfileFilter is null)
                         return;
-                    var vm = AddUserFilters(new [] { EditingProfileFilter.ProfileFilter }).First();
+                    var vm = AddUserFilters([EditingProfileFilter.ProfileFilter]).First();
                     IsAddEditProfileFilterVisible = false;
                     SelectedFilters.Clear();
                     SelectedFilters.Add(vm);
                 })
-                .DisposeWith(_subscriptions!);
+                .DisposeWith(Disposer);
         }
+    }
+
+    public void SuspendResumeProfileReload(bool suspend)
+    {
+        _suspendProfileReloadHandling = suspend;
     }
 
     private void ShowFlyoutForAddingNewMessageParsing()
@@ -232,7 +252,7 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                     SelectedFilters.Clear();
                     SelectedFilters.Add(vm);
                 })
-                .DisposeWith(_subscriptions!);
+                .DisposeWith(Disposer);
         }
     }
 
@@ -250,12 +270,12 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
 
     private IEnumerable<LogFilterViewModel> AddUserFilters(IEnumerable<ProfileFilterBase> userFilters)
     {
-        var vms = userFilters.Select(x =>
+        var vms = userFilters.Select(profileFilter =>
         {
-            var vm = new LogFilterViewModel(x, isUserDefined: true);
+            var vm = new LogFilterViewModel(profileFilter, isUserDefined: true, _eventBus);
             vm.ModifyCommand.Executed.Subscribe(_ =>
             {
-                EditingProfileFilter = _vmFactory.CreateProfileFilter(vm.Filter);
+                EditingProfileFilter = _logFilterViewModelFactory.CreateProfileFilter(vm.Filter);
                 EditingProfileFilter?.CommitFilterCommand
                     .OnOneTimeExecutedBooleanAction()
                     .Subscribe(_ =>
@@ -264,18 +284,21 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
                         vm.Reconcile();
                         _filterChanged.OnNext(Unit.Default);
                     })
-                    .DisposeWith(_subscriptions);
+                    .DisposeWith(Disposer);
                 IsAddEditProfileFilterVisible = EditingProfileFilter is not null;
-            });
-            vm.DeleteCommand.Executed.Subscribe(async _ =>
+            }).DisposeWith(vm.DisposerForExternalSubscriptions);
+            vm.DeleteCommand.Executed.SubscribeOnUiThread(async _ =>
             {
                 if (_ui.AskForConfirmation($"You're about to delete a filter named '{vm.Filter.Name}'. Proceed?", "Deletion confirmation"))
                 {
                     await _commandBus.SendAsync(new ProfileFilterDeleteCommand(_currentProfile.Profile.NotNull().Id, vm.Filter.Id));
+                    vm.Dispose();
                     _userFiltersCategory.RemoveItem(vm);
                 }
-            });
-            vm.WhenChanged(x => x.IsSelected).Subscribe(_ => IsAddEditProfileFilterVisible = false);
+            }).DisposeWith(vm.DisposerForExternalSubscriptions);
+            vm.WhenChanged(x => x.IsSelected)
+                .Subscribe(_ => IsAddEditProfileFilterVisible = false)
+                .DisposeWith(vm.DisposerForExternalSubscriptions);
             return vm;
         }).ToList();
         _userFiltersCategory.AddItems(vms);
@@ -283,35 +306,25 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         return vms;
     }
 
-    // TODO: Cover with unit tests
     private IEnumerable<ILogFilterNodeViewModel> AddMessageParsings(IEnumerable<MessageParsing> messageParsings)
     {
         var vms = messageParsings.Select(x =>
         {
-            var vm = new LogFilterMessageParsingViewModel(x, isUserDefined: true);
-            vm.ModifyCommand.Executed.Subscribe(_ =>
+            var vm = _vmFactory.CreateLogFilterMessageParsing(x, isUserDefined: true);
+            vm.Deleted.Subscribe(viewModel => _messageParsingCategory.RemoveItem(viewModel)).DisposeWith(vm.DisposerExposed);
+            vm.Committed.Subscribe(_ =>
             {
-                EditingMessageParsing = _vmFactory.CreateMessageParsing(vm.MessageParsing);
-                EditingMessageParsing?.CommitCommand
-                    .OnOneTimeExecutedBooleanAction()
-                    .Subscribe(_ =>
-                    {
-                        IsAddEditMessageParsingVisible = false;
-                        vm.Reconcile();
-                        _filterChanged.OnNext(Unit.Default);
-                    })
-                    .DisposeWith(_subscriptions);
-                IsAddEditMessageParsingVisible = EditingMessageParsing is not null;
-            });
-            vm.DeleteCommand.Executed.Subscribe(async _ =>
+                IsAddEditMessageParsingVisible = false;
+                _filterChanged.OnNext(Unit.Default);
+            }).DisposeWith(vm.DisposerExposed);
+            vm.Modifying.Subscribe(editingViewModel =>
             {
-                if (_ui.AskForConfirmation($"You're about to delete a filter named '{vm.MessageParsing.Name}'. Proceed?", "Deletion confirmation"))
-                {
-                    await _commandBus.SendAsync(new MessageParsingDeleteCommand(_currentProfile.Profile.NotNull().Id, vm.MessageParsing.Id));
-                    _messageParsingCategory.RemoveItem(vm);
-                }
-            });
-            vm.WhenChanged(x => x.IsSelected).Subscribe(_ => IsAddEditMessageParsingVisible = false);
+                EditingMessageParsing = editingViewModel;
+                IsAddEditMessageParsingVisible = true;
+            }).DisposeWith(vm.DisposerExposed);
+            vm.WhenChanged(x => x.IsSelected)
+                .Subscribe(_ => IsAddEditMessageParsingVisible = false)
+                .DisposeWith(vm.DisposerExposed);
             return vm;
         }).ToList();
         _messageParsingCategory.AddItems(vms);
@@ -319,18 +332,18 @@ public sealed class LogsFilteringViewModel : ViewModelBase, ILogsFilteringViewMo
         return vms;
     }
 
-    private void AddFiles(IEnumerable<FileRecord> files)
+    private void AddSources(IEnumerable<LogSourceBase> sources)
     {
-        _filesCategory.AddItems(
-            files.OrderBy(x => x.FileName)
-                .Select(x => new LogFileViewModel(x))
+        _sourcesCategory.AddItems(
+            sources.OrderBy(x => x.DisplayName)
+                .Select(x => new LogSourceViewModel(x))
         );
     }
 
     public IObservable<Unit> FilterChanged => _filterChanged;
 
-    public ObservableCollection<ILogFilterNodeViewModel> FilterCategories { get; } = new();
-    public ObservableCollection<ILogFilterNodeViewModel> SelectedFilters { get; } = new();
+    public ObservableCollection<ILogFilterNodeViewModel> FilterCategories { get; } = [];
+    public ObservableCollection<ILogFilterNodeViewModel> SelectedFilters { get; } = [];
 
     public bool IsAddEditProfileFilterVisible
     {

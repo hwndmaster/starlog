@@ -21,7 +21,8 @@ public sealed class ProfileAutoGridBuilder : IAutoGridBuilder
             .WithColumns(columns =>
                 columns
                     .AddText(x => x.Name, opts => opts.Filterable())
-                    .AddText(x => x.Path)
+                    .AddText(x => x.Source)
+                    .AddText(x => x.LastOpened)
                     .AddCommand(x => x.LoadProfileCommand, opts => opts
                         .WithDisplayName(string.Empty)
                         .WithIcon("Play32")

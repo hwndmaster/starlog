@@ -1,4 +1,4 @@
-using Genius.Starlog.Core.LogReading;
+using Genius.Starlog.Core.LogFlow;
 using Genius.Starlog.Core.Models;
 using Genius.Starlog.Core.Repositories;
 using Genius.Starlog.UI.Console;
@@ -21,26 +21,25 @@ internal sealed class ConsoleController : IConsoleController
     private readonly ILogCodecContainer _logCodecContainer;
     private readonly IProfileSettingsTemplateQueryService _templatesQuery;
     private readonly ILogger<ConsoleController> _logger;
-    private readonly IMainController _mainController;
+    private readonly IProfileLoadingController _controller;
 
     public ConsoleController(
         ILogCodecContainer logCodecContainer,
         IProfileSettingsTemplateQueryService templatesQuery,
-        IMainController mainController,
+        IProfileLoadingController controller,
         ILogger<ConsoleController> logger)
     {
         _logCodecContainer = logCodecContainer.NotNull();
-        _mainController = mainController.NotNull();
+        _controller = controller.NotNull();
         _templatesQuery = templatesQuery.NotNull();
         _logger = logger.NotNull();
     }
 
     public async Task LoadPathAsync(LoadPathCommandLineOptions options)
     {
-        ProfileSettings? settings = null;
+        ProfileSettingsBase? settings = null;
         if (!string.IsNullOrEmpty(options.Template))
         {
-            // TODO: Cover this condition with unit tests
             ProfileSettingsTemplate? template = null;
             if (Guid.TryParse(options.Template, out var templateId))
             {
@@ -52,44 +51,49 @@ internal sealed class ConsoleController : IConsoleController
             }
             if (template is not null)
             {
-                settings = template.Settings;
+                settings = template.Settings.Clone();
             }
         }
 
         if (settings is null)
         {
-            var codecName = options.Codec ?? "Plain Text";
+            var codecName = options.Codec ?? PlainTextProfileSettings.CodecName;
             var logCodec = _logCodecContainer.GetLogCodecs().FirstOrDefault(x => x.Name.Equals(codecName, StringComparison.OrdinalIgnoreCase));
             if (logCodec is null)
             {
-                _logger.LogWarning("Couldn't load a profile with unknown codec '{codec}'.", codecName);
+                _logger.LogWarning("Couldn't load a profile with unknown codec '{Codec}'.", codecName);
                 return;
             }
-            var profileLogCodec = _logCodecContainer.CreateProfileLogCodec(logCodec);
-            if (profileLogCodec is null)
+            settings = _logCodecContainer.CreateProfileSettings(logCodec);
+            if (settings is null)
             {
-                // TODO: Cover this condition with unit tests
-                _logger.LogWarning("Couldn't create profile codec settings for codec '{codec}'.", codecName);
+                _logger.LogWarning("Couldn't create profile codec settings for codec '{Codec}'.", codecName);
                 return;
             }
             if (options.CodecSettings is not null)
             {
-                var processor = _logCodecContainer.CreateLogCodecProcessor(profileLogCodec);
-                if (!processor.ReadFromCommandLineArguments(profileLogCodec, options.CodecSettings.ToArray()))
+                var logCodecSettingsReader = _logCodecContainer.FindLogCodecSettingsReader(settings);
+                if (!logCodecSettingsReader.ReadFromCommandLineArguments(settings, options.CodecSettings.ToArray()))
                 {
                     // Couldn't read arguments, terminating...
-                    _logger.LogWarning("Couldn't load a profile from '{path}' with codec '{codec}' and the following settings: {settings}", options.Path, codecName, string.Join(',', options.CodecSettings));
+                    _logger.LogWarning("Couldn't load a profile from '{Path}' with codec '{Codec}' and the following settings: {Settings}", options.Path, codecName, string.Join(',', options.CodecSettings));
                     return;
                 }
             }
-
-            settings = new ProfileSettings
-            {
-                LogCodec = profileLogCodec,
-                FileArtifactLinesCount = options.FileArtifactLinesCount ?? 0
-            };
         }
 
-        await _mainController.LoadPathAsync(options.Path, settings).ConfigureAwait(false);
+        // TODO: To cover with unit tests
+        if (settings is PlainTextProfileSettings plainTextProfileSettings)
+        {
+            plainTextProfileSettings.Path = options.Path;
+
+            // TODO: Might be worth taking it to `processor.ReadFromCommandLineArguments()`
+            if (options.FileArtifactLinesCount is not null)
+            {
+                plainTextProfileSettings.FileArtifactLinesCount = options.FileArtifactLinesCount.Value;
+            }
+        }
+
+        await _controller.LoadProfileSettingsAsync(settings).ConfigureAwait(false);
     }
 }

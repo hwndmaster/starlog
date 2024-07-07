@@ -7,7 +7,7 @@ namespace Genius.Starlog.Core.Tests.LogFiltering;
 
 public sealed class LogFilterContainerTests
 {
-    private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
 
     [Fact]
     public void CreateProfileFilter_ForProfileFilterType_CreatesInstance()
@@ -66,7 +66,7 @@ public sealed class LogFilterContainerTests
     {
         // Arrange
         var sut = CreateSystemUnderTest();
-        var logFilters = RegisterLogFilters(sut);
+        RegisterLogFilters(sut);
 
         // Act & Verify
         Assert.Throws<InvalidOperationException>(() => sut.CreateProfileFilter(_fixture.Create<LogFilter>()));
@@ -98,7 +98,7 @@ public sealed class LogFilterContainerTests
     {
         // Arrange
         var sut = CreateSystemUnderTest();
-        var logFilters = RegisterLogFilters(sut);
+        RegisterLogFilters(sut);
         var profileFilter = new SampleProfileFilter1(_fixture.Create<LogFilter>());
 
         // Act & Verify

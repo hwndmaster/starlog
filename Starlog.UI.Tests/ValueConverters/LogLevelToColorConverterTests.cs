@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Reactive;
 using System.Windows;
 using System.Windows.Media;
+using Genius.Atom.Infrastructure;
+using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core;
 using Genius.Starlog.Core.Configuration;
 using Genius.Starlog.Core.LogFlow;
@@ -12,14 +14,21 @@ using Microsoft.Extensions.Options;
 
 namespace Genius.Starlog.UI.Tests.ValueConverters;
 
-public sealed class LogLevelToColorConverterTests
+public sealed class LogLevelToColorConverterTests : IDisposable
 {
     private static readonly Color _standardColor = Colors.LightGoldenrodYellow;
-    private readonly IFixture _fixture = new Fixture();
+    private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
+    private readonly Disposer _disposer;
 
     public LogLevelToColorConverterTests()
     {
+        _disposer = new();
         SetupServices();
+    }
+
+    public void Dispose()
+    {
+        _disposer.Dispose();
     }
 
     [StaFact]
@@ -49,6 +58,7 @@ public sealed class LogLevelToColorConverterTests
     public void Convert_WhenLogLevelSeverityIsCritical_ThenCorrectColorReturned()
     {
         TestForLogLevel("fatal", LogLevelToColorConverter.ColorForCritical);
+        TestForLogLevel("critical", LogLevelToColorConverter.ColorForCritical);
     }
 
     [StaFact]
@@ -62,7 +72,8 @@ public sealed class LogLevelToColorConverterTests
         // Arrange
         var dummy = _fixture.Create<LogRecord>();
         var logRecord = dummy with { Level = dummy.Level with { Name = logLevel } };
-        var value = Mock.Of<ILogItemViewModel>(x => x.Record == logRecord);
+        var value = A.Fake<ILogItemViewModel>();
+        A.CallTo(() => value.Record).Returns(logRecord);
         var sut = CreateSystemUnderTest();
 
         // Act
@@ -83,21 +94,26 @@ public sealed class LogLevelToColorConverterTests
 
     private void SetupServices()
     {
-        var optionsMock = new Mock<IOptions<LogLevelMappingConfiguration>>();
-        optionsMock.SetupGet(x => x.Value).Returns(new LogLevelMappingConfiguration
+        var optionsMock = A.Fake<IOptions<LogLevelMappingConfiguration>>();
+        A.CallTo(() => optionsMock.Value).Returns(new LogLevelMappingConfiguration
         {
             TreatAsMinor = ["debug", "trace", "statistics"],
             TreatAsWarning = ["warn", "warning"],
             TreatAsError = ["err", "error", "exception"],
-            TreatAsCritical = ["fatal"],
+            TreatAsCritical = ["fatal", "critical"],
         });
 
         var services = new ServiceCollection();
-        services.AddSingleton(optionsMock.Object);
-        services.AddSingleton(Mock.Of<ICurrentProfile>(x => x.ProfileClosed == Mock.Of<IObservable<Unit>>()));
+        services.AddSingleton(optionsMock);
+
+        var currentProfile = A.Fake<ICurrentProfile>();
+        A.CallTo(() => currentProfile.ProfileClosed).Returns(A.Fake<IObservable<Unit>>());
+        services.AddSingleton(currentProfile);
+
+        var serviceProvider = services.BuildServiceProvider().DisposeWith(_disposer);
 
 #pragma warning disable CS0618 // Type or member is obsolete
-        App.OverrideServiceProvider(services.BuildServiceProvider());
+        App.OverrideServiceProvider(serviceProvider);
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 }

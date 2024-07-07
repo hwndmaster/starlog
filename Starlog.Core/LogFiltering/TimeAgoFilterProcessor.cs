@@ -14,8 +14,9 @@ public sealed class TimeAgoFilterProcessor : IFilterProcessor
 
     public bool IsMatch(ProfileFilterBase profileFilter, LogRecord log)
     {
-        var filter = (TimeAgoProfileFilter)profileFilter;
+        Guard.NotNull(profileFilter);
 
+        var filter = (TimeAgoProfileFilter)profileFilter;
         return (_dateTime.NowOffset.UtcDateTime + _dateTime.NowOffset.Offset) - log.DateTime < filter.TimeAgo;
     }
 }
