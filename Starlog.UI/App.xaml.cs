@@ -126,6 +126,7 @@ public partial class App : Application
         services.AddTransient<IClipboardHelper, ClipboardHelper>();
         services.AddTransient<ILogArtifactsFormatter, LogArtifactsFormatter>();
         services.AddTransient<IConsoleParser, ConsoleParser>();
+        services.AddTransient<MessageParsingHelper>();
     }
 
     private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)

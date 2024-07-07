@@ -17,7 +17,7 @@ public interface ILogsSearchViewModel : IViewModel
 {
     LogRecordSearchContext CreateContext();
     void DropAllSearches();
-    void Reconcile(int existingLogsCount, ICollection<LogRecord> addedLogs);
+    void Reconcile(bool resetSelected, ICollection<LogRecord> addedLogs);
 
     IObservable<Unit> SearchChanged { get; }
     string Text { get; set; }
@@ -100,7 +100,7 @@ public sealed class LogsSearchViewModel : DisposableViewModelBase, ILogsSearchVi
         SelectedDateTimeToTicks = MaxDateTimeTicks;
     }
 
-    public void Reconcile(int existingLogsCount, ICollection<LogRecord> addedLogs)
+    public void Reconcile(bool resetSelected, ICollection<LogRecord> addedLogs)
     {
         var wasMinTime = MinDateTimeTicks.Equals(SelectedDateTimeFromTicks);
         var wasMaxTime = MaxDateTimeTicks.Equals(SelectedDateTimeToTicks);
@@ -108,7 +108,7 @@ public sealed class LogsSearchViewModel : DisposableViewModelBase, ILogsSearchVi
         MinDateTimeTicks = Math.Min(MinDateTimeTicks.IsZero() ? long.MaxValue : MinDateTimeTicks, addedLogs.Min(x => x.DateTime).UtcTicks);
         MaxDateTimeTicks = Math.Max(MaxDateTimeTicks, addedLogs.Max(x => x.DateTime).UtcTicks);
 
-        if (existingLogsCount == 0)
+        if (resetSelected)
         {
             SelectedDateTimeFromTicks = MinDateTimeTicks;
             SelectedDateTimeToTicks = MaxDateTimeTicks;

@@ -22,6 +22,12 @@ public interface ILogsFilteringViewModel : IDisposable
     void DropBookmarkedFilter();
     void ShowFlyoutForAddingNewFilter(ProfileFilterBase? profileFilter);
 
+    /// <summary>
+    ///   Suspends or resumes the view model reaction over the profile being closed/opened.
+    /// </summary>
+    /// <param name="suspend"><c>true</c> to suspend event reaction, <c>false</c> to resume.</param>
+    void SuspendResumeProfileReload(bool suspend);
+
     IObservable<Unit> FilterChanged { get; }
 }
 
@@ -42,6 +48,7 @@ public sealed class LogsFilteringViewModel : DisposableViewModelBase, ILogsFilte
     private readonly LogFilterCategoryViewModel<LogFilterMessageParsingViewModel> _messageParsingCategory = new("Message parsing", "MessageParsing32", expanded: true, canAddChildren: true);
     private readonly Subject<Unit> _filterChanged = new();
     private bool _suspendUpdate;
+    private bool _suspendProfileReloadHandling;
 
 
     public LogsFilteringViewModel(
@@ -79,6 +86,8 @@ public sealed class LogsFilteringViewModel : DisposableViewModelBase, ILogsFilte
         _currentProfile.ProfileClosed
             .Subscribe(_ =>
             {
+                if (_suspendProfileReloadHandling)
+                    return;
                 _suspendUpdate = true;
 
                 _uiDispatcher.Invoke(() =>
@@ -97,10 +106,10 @@ public sealed class LogsFilteringViewModel : DisposableViewModelBase, ILogsFilte
         _currentProfile.ProfileChanged
             .Subscribe(profile =>
             {
-                if (profile is null)
-                {
+                if (_suspendProfileReloadHandling)
                     return;
-                }
+                if (profile is null)
+                    return;
 
                 _uiDispatcher.Invoke(() =>
                 {
@@ -220,6 +229,11 @@ public sealed class LogsFilteringViewModel : DisposableViewModelBase, ILogsFilte
                 })
                 .DisposeWith(Disposer);
         }
+    }
+
+    public void SuspendResumeProfileReload(bool suspend)
+    {
+        _suspendProfileReloadHandling = suspend;
     }
 
     private void ShowFlyoutForAddingNewMessageParsing()

@@ -37,13 +37,14 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private readonly ILogContainer _logContainer;
     private readonly ILogRecordMatcher _logRecordMatcher;
     private readonly ILogArtifactsFormatter _artifactsFormatter;
-    private readonly IMessageParsingHandler _messageParsingHandler;
+    private readonly MessageParsingHelper _messageParsingHelper;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly CompositeDisposable _subscriptions = new();
+    private readonly Disposer _subscriptions = new();
     private readonly int _predefinedGroupByOptionsCount;
     private LogRecordMatcherContext? _filterContext;
     private bool _profileLoadingUpdateSuspended;
     private bool _refreshFilteredItemsSuspended;
+    private bool _isReloadingProfile;
 
     public LogsViewModel(
         ICurrentProfile currentProfile,
@@ -54,7 +55,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         ILogsFilteringViewModel logsFilteringViewModel,
         ILogsSearchViewModel logsSearchViewModel,
         IMainController controller,
-        IMessageParsingHandler messageParsingHandler,
+        MessageParsingHelper messageParsingHelper,
         IProfileLoadingController profileLoadingController,
         IUiDispatcher uiDispatcher)
     {
@@ -67,7 +68,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         _currentProfile = currentProfile.NotNull();
         _logContainer = logContainer.NotNull();
         _logRecordMatcher = logRecordMatcher.NotNull();
-        _messageParsingHandler = messageParsingHandler.NotNull();
+        _messageParsingHelper = messageParsingHelper.NotNull();
         _uiDispatcher = uiDispatcher.NotNull();
         Filtering = logsFilteringViewModel.NotNull();
         Search = logsSearchViewModel.NotNull();
@@ -88,9 +89,14 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
             await controller.ShowShareViewAsync(SelectedLogItems));
         ReloadProfileCommand = new ActionCommand(async _ =>
             {
-                if (_currentProfile.Profile is null) return;
+                if (_currentProfile.Profile is null)
+                    return;
                 _profileLoadingUpdateSuspended = true;
+                _isReloadingProfile = true;
+                Filtering.SuspendResumeProfileReload(true);
                 await profileLoadingController.LoadProfileAsync(_currentProfile.Profile);
+                _isReloadingProfile = false;
+                Filtering.SuspendResumeProfileReload(false);
             });
 
         // Subscriptions:
@@ -105,6 +111,10 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                     LogItems.Clear();
                     SelectedLogItems.Clear();
                     SelectedLogItem = null;
+
+                    if (_isReloadingProfile)
+                        return;
+
                     Search.DropAllSearches();
                 });
             }).DisposeWith(_subscriptions);
@@ -122,17 +132,24 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                     AddLogs(_logContainer.GetLogs());
                     FieldColumns = new DynamicColumnsViewModel(fieldNames);
 
-                    ColorizeBy = ColorizeByOptions[0];
-                    while (ColorizeByOptions.Count > 1)
-                        ColorizeByOptions.RemoveAt(1);
-                    foreach (var field in fields)
-                        ColorizeByOptions.Add(new ColorizeByRecord("Colorize by " + field.FieldName, true, field.FieldId));
+                    if (!_isReloadingProfile)
+                    {
+                        ColorizeBy = ColorizeByOptions[0];
+                        while (ColorizeByOptions.Count > 1)
+                            ColorizeByOptions.RemoveAt(1);
+                        foreach (var field in fields)
+                            ColorizeByOptions.Add(new ColorizeByRecord("Colorize by " + field.FieldName, true, field.FieldId));
 
-                    ResetGrouping();
-                    while (GroupByOptions.Count > _predefinedGroupByOptionsCount)
-                        GroupByOptions.RemoveAt(_predefinedGroupByOptionsCount);
-                    foreach (var (fieldId, fieldName) in fields)
-                        GroupByOptions.Add(new GroupByRecord("Group by " + fieldName, LogItemGroupingOptions.ByField, fieldId));
+                        ResetGrouping();
+                        while (GroupByOptions.Count > _predefinedGroupByOptionsCount)
+                            GroupByOptions.RemoveAt(_predefinedGroupByOptionsCount);
+                        foreach (var (fieldId, fieldName) in fields)
+                            GroupByOptions.Add(new GroupByRecord("Group by " + fieldName, LogItemGroupingOptions.ByField, fieldId));
+                    }
+                    else
+                    {
+                        RefreshGrouping();
+                    }
 
                     IsProfileReady = true;
                     _profileLoadingUpdateSuspended = false;
@@ -176,37 +193,41 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                 logItem.ColorizeByField = ColorizeBy.ForField;
             }
         }).DisposeWith(_subscriptions);
-        this.WhenChanged(x => x.GroupBy).Subscribe(_ =>
-        {
-            var doGrouping = GroupBy.GroupingOption != LogItemGroupingOptions.NoGrouping;
-            if (doGrouping)
-            {
-                var groups = LogItems.GroupBy(x => x.GetGroupValueId(GroupBy.GroupingOption, GroupBy.FieldId));
-                foreach (var group in groups)
-                {
-                    var groupableVm = group.First().CreateGrouping(GroupBy.GroupingOption, GroupBy.FieldId);
-                    foreach (var item in group)
-                    {
-                        item.GroupableField = groupableVm;
-                    }
-                }
-            }
-
-            if (DoGrouping == doGrouping)
-            {
-                OnPropertyChanged(nameof(DoGrouping));
-            }
-            else
-            {
-                DoGrouping = doGrouping;
-            }
-        }).DisposeWith(_subscriptions);
+        this.WhenChanged(x => x.GroupBy)
+            .Subscribe(_ => RefreshGrouping())
+            .DisposeWith(_subscriptions);
         SelectedLogItems.WhenCollectionChanged()
             .Subscribe(_ => SelectedLogItem = SelectedLogItems.FirstOrDefault())
             .DisposeWith(_subscriptions);
         this.WhenChanged(x => x.SelectedLogItem)
             .Subscribe(_ => SelectedLogArtifacts = SelectedLogItem?.Artifacts)
             .DisposeWith(_subscriptions);
+    }
+
+    private void RefreshGrouping()
+    {
+        var doGrouping = GroupBy.GroupingOption != LogItemGroupingOptions.NoGrouping;
+        if (doGrouping)
+        {
+            var groups = LogItems.GroupBy(x => x.GetGroupValueId(GroupBy.GroupingOption, GroupBy.FieldId));
+            foreach (var group in groups)
+            {
+                var groupableVm = group.First().CreateGrouping(GroupBy.GroupingOption, GroupBy.FieldId);
+                foreach (var item in group)
+                {
+                    item.GroupableField = groupableVm;
+                }
+            }
+        }
+
+        if (DoGrouping == doGrouping)
+        {
+            OnPropertyChanged(nameof(DoGrouping));
+        }
+        else
+        {
+            DoGrouping = doGrouping;
+        }
     }
 
     public void ResetGrouping()
@@ -238,7 +259,9 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
         _refreshFilteredItemsSuspended = true;
 
-        Search.Reconcile(LogItems.Count, logs);
+        var resetSelected = !_isReloadingProfile
+            && LogItems.Count == 0;
+        Search.Reconcile(resetSelected, logs);
 
         var fields = _logContainer.GetFields();
         var hasFields = fields.GetFieldCount() > 0;
@@ -281,10 +304,8 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
 
     private void RemoveLogs(ICollection<LogRecord> logs)
     {
-        if (!logs.Any())
-        {
+        if (logs.Count == 0)
             return;
-        }
 
         using (var suppressed = LogItems.DelayNotifications())
         {
@@ -324,36 +345,9 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         );
 
         // `MessageParsingColumns` needs to be updated in a UI thread to avoid WPF binding errors.
-        DynamicColumnsViewModel? messageParsingColumnsToSet = null;
-
-        // TODO: Cover with unit tests
-        if (_filterContext.Filter.MessageParsings.Length > 0
-            || MessageParsingColumns is not null)
-        {
-            // TODO: Check if there were changes in `_filterContext.Filter.MessageParsings`
-            //       to prevent re-initialization in case of no changes.
-
-            var messageParsings = _filterContext.Filter.MessageParsings;
-            var extractedColumns = (from messageParsing in messageParsings
-                                    from extractedColumn in _messageParsingHandler.RetrieveColumns(messageParsing)
-                                    select (messageParsing, extractedColumn)).ToArray();
-
-            foreach (var logItem in LogItems)
-            {
-                logItem.MessageParsingEntries = new DynamicColumnEntriesViewModel(() =>
-                {
-                    List<string> parsedEntriesCombined = new();
-                    foreach (var messageParsing in messageParsings)
-                    {
-                        var parsedEntries = _messageParsingHandler.ParseMessage(messageParsing, logItem.Record);
-                        parsedEntriesCombined.AddRange(parsedEntries);
-                    }
-                    return parsedEntriesCombined;
-                });
-            }
-
-            messageParsingColumnsToSet = new DynamicColumnsViewModel(extractedColumns.Select(x => x.extractedColumn).ToArray());
-        }
+        DynamicColumnsViewModel? messageParsingColumnsToSet = MessageParsingColumns is not null
+            ? _messageParsingHelper.CreateDynamicMessageParsingEntries(_filterContext.Filter, LogItems)
+            : null;
 
         _uiDispatcher.InvokeAsync(() =>
         {
