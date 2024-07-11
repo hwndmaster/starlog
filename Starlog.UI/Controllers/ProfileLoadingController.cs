@@ -35,6 +35,13 @@ public interface IProfileLoadingController
     Task LoadProfileAsync(Profile profile);
 
     Task ShowAnonymousProfileLoadSettingsViewAsync(string path);
+
+    /// <summary>
+    ///   Indicates whether the current profile is fully loaded in Logs view and ready to work with.
+    ///   Switches to <c>false</c> in the controller implementation, but switches back to <c>true</c>
+    ///   in <see cref="LogsViewModel"/>.
+    /// </summary>
+    bool IsCurrentProfileReady { get; set; }
 }
 
 internal sealed class ProfileLoadingController : IProfileLoadingController
@@ -71,6 +78,9 @@ internal sealed class ProfileLoadingController : IProfileLoadingController
         _mainViewModel = mainViewModel.NotNull();
         _settingsQuery = settingsQuery.NotNull();
         _profileSettingsViewModelFactory = profileSettingsViewModelFactory.NotNull();
+
+        // This controller is singleton, therefore no point in handling disposal.
+        _currentProfile.ProfileClosed.SubscribeNoDisposal(_ => IsCurrentProfileReady = false);
     }
 
     public async Task AutoLoadProfileAsync()
@@ -145,4 +155,6 @@ internal sealed class ProfileLoadingController : IProfileLoadingController
         customDialog.Content = new AnonymousProfileLoadSettingsView { DataContext = viewModel };
         await _dialogCoordinator.ShowMetroDialogAsync(_mainViewModel.Value, customDialog);
     }
+
+    public bool IsCurrentProfileReady { get; set; }
 }

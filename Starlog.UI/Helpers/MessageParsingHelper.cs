@@ -13,7 +13,9 @@ public class MessageParsingHelper(
         Guard.NotNull(logItems);
 
         if (filterContext.MessageParsings.Length == 0)
-            return null;
+        {
+            return new DynamicColumnsViewModel([]);
+        }
 
         // TODO: Check if there were changes in `filterContext.MessageParsings`
         //       to prevent re-initialization in case of no changes.

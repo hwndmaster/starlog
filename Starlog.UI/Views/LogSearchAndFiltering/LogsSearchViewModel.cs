@@ -4,6 +4,7 @@ using System.Reactive.Subjects;
 using System.Text.RegularExpressions;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
+using Genius.Starlog.UI.Controllers;
 using MahApps.Metro.Controls;
 
 namespace Genius.Starlog.UI.Views.LogSearchAndFiltering;
@@ -35,7 +36,7 @@ public sealed class LogsSearchViewModel : DisposableViewModelBase, ILogsSearchVi
 
     private readonly Subject<Unit> _searchChanged = new();
 
-    public LogsSearchViewModel()
+    public LogsSearchViewModel(IProfileLoadingController profileLoadingController)
     {
         // Actions:
         SetTimeRangeTo1MinuteCommand = new ActionCommand(_ => SetTimeRange(OneMinuteTicks));
@@ -58,6 +59,7 @@ public sealed class LogsSearchViewModel : DisposableViewModelBase, ILogsSearchVi
 
         // Subscriptions:
         this.WhenAnyChanged(x => x.Text, x => x.SelectedDateTimeFromTicks, x => x.SelectedDateTimeToTicks)
+            .Where(_ => profileLoadingController.IsCurrentProfileReady)
             .Throttle(TimeSpan.FromMilliseconds(50))
             .Subscribe(_ => _searchChanged.OnNext(Unit.Default))
             .DisposeWith(Disposer);

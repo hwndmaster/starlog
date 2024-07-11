@@ -41,6 +41,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
     private readonly IUiDispatcher _uiDispatcher;
     private readonly Disposer _subscriptions = new();
     private readonly int _predefinedGroupByOptionsCount;
+    private readonly List<Guid> _previouslySelectedMessageParsings = [];
     private LogRecordMatcherContext? _filterContext;
     private bool _profileLoadingUpdateSuspended;
     private bool _refreshFilteredItemsSuspended;
@@ -151,6 +152,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
                         RefreshGrouping();
                     }
 
+                    profileLoadingController.IsCurrentProfileReady = true;
                     IsProfileReady = true;
                     _profileLoadingUpdateSuspended = false;
                 });
@@ -345,8 +347,10 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         );
 
         // `MessageParsingColumns` needs to be updated in a UI thread to avoid WPF binding errors.
+        var messageParsingsNeedsUpdate = !_previouslySelectedMessageParsings
+            .SequenceEqual(_filterContext.Filter.MessageParsings.Select(x => x.Id).Order());
         DynamicColumnsViewModel? messageParsingColumnsToSet =
-            _filterContext.Filter.MessageParsings.Length > 0 || MessageParsingColumns is not null
+            messageParsingsNeedsUpdate || MessageParsingColumns is not null
                 ? _messageParsingHelper.CreateDynamicMessageParsingEntries(_filterContext.Filter, LogItems)
                 : null;
 
@@ -354,6 +358,7 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         {
             if (messageParsingColumnsToSet is not null)
             {
+                _previouslySelectedMessageParsings.ReplaceItems(_filterContext.Filter.MessageParsings.Select(x => x.Id).Order());
                 MessageParsingColumns = messageParsingColumnsToSet;
             }
 
