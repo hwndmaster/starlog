@@ -5,7 +5,7 @@ namespace Genius.Starlog.Core.TestingUtil;
 public sealed class TestProfileSettings : ProfileSettingsBase
 {
     public TestProfileSettings()
-        : base(new Fixture().Create<LogCodec>())
+        : base(new LogCodec(Guid.NewGuid(), Guid.NewGuid().ToString()))
     {
     }
 

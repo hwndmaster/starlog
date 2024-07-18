@@ -14,13 +14,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Genius.Starlog.Core.Tests.LogFlow;
 
-// This test is not fully 'unit' due to the use of `ProfileLoaderFactory`
+// This test is not fully 'unit' due to the use of `ProfileLoaderFactory` and `FileBasedProfileLoader`
 [Trait(TestCategory.Trait, TestCategory.Integration)]
 public sealed class CurrentProfileLogContainerTests : IDisposable
 {
     private record FileWithContentRecord(string FullPath, byte[] Content, LogReadingResult Result);
 
     private const string LOGFILE_EXTENSION = ".log";
+    private const int SAMPLE_FILES_PER_FOLDER = 3;
 
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly TestDirectoryMonitor _directoryMonitor = new();
@@ -39,7 +40,6 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public CurrentProfileLogContainerTests()
     {
         new SupportMutableValueTypesCustomization().Customize(_fixture);
-
         var profileLoaderFactory = new ProfileLoaderFactory(
             _directoryMonitor, _eventBus, _fileService, _fileWatcherFactory,
             _logCodecContainerMock,
@@ -53,7 +53,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
             Name = _fixture.Create<string>(),
             Settings = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
             {
-                Path = _fixture.Create<string>(),
+                Paths = [_fixture.Create<string>()],
                 LogsLookupPattern = "*" + LOGFILE_EXTENSION
             }
         };
@@ -64,10 +64,22 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadProfileAsync_WhenForFolder_ThenProfileLoaded_AndEventsPublished()
+    public async Task LoadProfileAsync_ThenProfileLoaded_AndEventsPublished()
     {
         // Arrange
-        var files = SampleFiles(_sampleProfile);
+        var profileSettings = (PlainTextProfileSettings)_sampleProfile!.Settings;
+        var pathForTwoMoreFiles = _fixture.Create<string>();
+        var pathForOneExtraFile = _fixture.Create<string>();
+        string[] extraFiles = [
+            // Assuming the pre-existing `profileSettings.Paths` points to a single folder.
+            // Adding two files to be located in a second folder:
+            Path.Combine(pathForTwoMoreFiles, _fixture.Create<string>() + LOGFILE_EXTENSION),
+            Path.Combine(pathForTwoMoreFiles, _fixture.Create<string>() + LOGFILE_EXTENSION),
+            // And one extra file to be located in a third folder:
+            Path.Combine(pathForOneExtraFile, _fixture.Create<string>() + LOGFILE_EXTENSION)
+        ];
+        profileSettings.Paths = [..profileSettings.Paths, ..extraFiles];
+        var files = SampleFilesFromProfileSettings(_sampleProfile);
 
         int logsAddedHandled = 0;
         int logsRemovedHandled = 0;
@@ -83,7 +95,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
 
         // Pre-verify
         Assert.Null(_sut.Profile);
-        Assert.Equal(0, _fileWatcherFactory.InstancesCreated);
+        Assert.Empty(_fileWatcherFactory.InstancesCreated);
 
         // Act
         await _sut.LoadProfileAsync(_sampleProfile);
@@ -93,24 +105,41 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         _eventBus.AssertNoEventOfType<ProfileLoadingErrorEvent>();
         Assert.Equal(_sampleProfile, _sut.Profile);
         Assert.Equal(_sampleProfile, profileSelected);
-        Assert.Equal(files.Length, logsAddedHandled);
-        Assert.Equal(files.Length, sourcesAdded.Count);
+        Assert.Equal(files.Count, logsAddedHandled);
+        Assert.Equal(files.Count, sourcesAdded.Count);
         Assert.Equivalent(sourcesAdded, _sut.GetSources(), strict: true);
-        Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
-        Assert.True(_fileWatcherFactory.RecentlyCreatedInstance.IsListening);
-        Assert.Equal(_sampleProfile.Settings.Source, _fileWatcherFactory.RecentlyCreatedInstance.ListeningPath);
-        Assert.Equal(1, _fileWatcherFactory.InstancesCreated);
         Assert.Equal(0, logsRemovedHandled);
         Assert.Equal(0, fileRemovedHandled);
+
+        // For 3+2+1 files we have only 3 directories to watch
+        Assert.Equal(3, _fileWatcherFactory.InstancesCreated.Length);
+        Assert.True(_fileWatcherFactory.InstancesCreated.All(x => x.IsListening));
+        Assert.Equal([
+            profileSettings.Paths[0],
+            pathForTwoMoreFiles,
+            pathForOneExtraFile,
+        ], _fileWatcherFactory.InstancesCreated.Select(x => x.ListeningPath));
+        Assert.Equal([
+            // takes `LogsLookupPattern` from settings for folders:
+            $"*{LOGFILE_EXTENSION}",
+            // takes `LogsLookupPattern` from settings for multiple files in one folder:
+            $"*{LOGFILE_EXTENSION}",
+            // takes the file name if it is the only file in the monitored folder:
+            Path.GetFileName(extraFiles[^1])
+        ], _fileWatcherFactory.InstancesCreated.Select(x => x.ListeningFilter));
+
+        // TODO: When https://trello.com/c/AzgJqQPA is done, here we need to check which directories are being monitored (3 in total by this scenario)
         Assert.True(_directoryMonitor.MonitoringStarted); // DirectoryMonitor is being started for folders
+
+        Assert.Equal(6, _sut.SourcesCount); // 3 files from original folder + 2 files from second folder + 1 file from 3rd folder.
     }
 
     [Fact]
-    public async Task LoadProfileAsync_WhenForFile_ThenProfileLoaded_AndDirectoryMonitorNotStarted()
+    public async Task LoadProfileAsync_WhenOnlyForFile_ThenProfileLoaded_AndDirectoryMonitorNotStarted()
     {
         // Arrange
-        var file = SampleFile(_sampleProfile, true, 0);
-        ((PlainTextProfileSettings)_sampleProfile!.Settings).Path = file.FullPath;
+        var file = SampleFilesFromProfileSettings(_sampleProfile, true);
+        ((PlainTextProfileSettings)_sampleProfile!.Settings).Paths = [file[0].FullPath];
 
         // Act
         await _sut.LoadProfileAsync(_sampleProfile);
@@ -122,7 +151,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         Assert.NotNull(_fileWatcherFactory.RecentlyCreatedInstance);
         Assert.True(_fileWatcherFactory.RecentlyCreatedInstance.IsListening);
         Assert.Equal(Path.GetDirectoryName(_sampleProfile.Settings.Source), _fileWatcherFactory.RecentlyCreatedInstance.ListeningPath);
-        Assert.Equal(1, _fileWatcherFactory.InstancesCreated);
+        Assert.Single(_fileWatcherFactory.InstancesCreated);
         Assert.False(_directoryMonitor.MonitoringStarted); // DirectoryMonitor is not started for files
     }
 
@@ -139,10 +168,36 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     }
 
     [Fact]
+    public async Task LoadProfileAsync_WhenSomePathsDoNotExist_ThenWarningPopulated()
+    {
+        // Arrange
+        var settings = (PlainTextProfileSettings)_sampleProfile.Settings;
+        settings.Paths = [_fixture.Create<string>(), _fixture.Create<string>()];
+        var filesToBeLoaded = SampleFilesFromProfileSettings(_sampleProfile);
+        List<LogSourceBase> sourcesAdded = new();
+        using var __ = _sut.SourceAdded.Subscribe(sourcesAdded.Add);
+        // Adding non-existing paths:
+        settings.Paths = [..settings.Paths, _fixture.Create<string>(), _fixture.Create<string>()];
+
+        // Act
+        await _sut.LoadProfileAsync(_sampleProfile);
+
+        // Verify
+        Assert.Equal(_sampleProfile, _sut.Profile);
+        var @event = _eventBus.GetSingleEvent<ProfileLoadingErrorEvent>();
+        Assert.Equal(_sampleProfile, @event.Profile);
+        Assert.DoesNotContain(settings.Paths[0], @event.Reason);
+        Assert.DoesNotContain(settings.Paths[1], @event.Reason);
+        Assert.Contains(settings.Paths[2], @event.Reason);
+        Assert.Contains(settings.Paths[3], @event.Reason);
+        Assert.Equal(sourcesAdded.Select(x => x.Name), filesToBeLoaded.Select(x => x.FullPath));
+    }
+
+    [Fact]
     public async Task CloseProfile_HappyFlowScenario()
     {
         // Arrange
-        SampleFiles(_sampleProfile);
+        SampleFilesFromProfileSettings(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
         var profileClosed = false;
         using var _ = _sut.ProfileClosed.Subscribe(_ => profileClosed = true);
@@ -167,14 +222,16 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         Assert.Equal(0, _sut.GetFields().GetFieldCount());
         Assert.Empty(_sut.GetLogLevels());
         Assert.False(_fileWatcherFactory.RecentlyCreatedInstance.IsListening);
-        Assert.Equal(1, _fileWatcherFactory.InstancesCreated);
+        Assert.Single(_fileWatcherFactory.InstancesCreated);
     }
 
     [Fact]
     public async Task GetFiles_HappyFlowScenario()
     {
         // Arrange & Pre-verify
-        var files = SampleFiles(_sampleProfile);
+        var files = SampleFilesFromProfileSettings(_sampleProfile)
+            .OrderBy(x => x.FullPath)
+            .ToArray();
         Assert.Empty(_sut.GetSources());
         await _sut.LoadProfileAsync(_sampleProfile);
 
@@ -199,7 +256,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task GetLogs_HappyFlowScenario()
     {
         // Arrange & Pre-verify
-        var files = SampleFiles(_sampleProfile);
+        var files = SampleFilesFromProfileSettings(_sampleProfile);
         Assert.Empty(_sut.GetLogs());
         await _sut.LoadProfileAsync(_sampleProfile);
 
@@ -214,7 +271,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task GetFields_HappyFlowScenario()
     {
         // Arrange & Pre-verify
-        SampleFiles(_sampleProfile);
+        SampleFilesFromProfileSettings(_sampleProfile);
         var fields = _sut.GetFields();
         Assert.Equal(0, fields.GetFieldCount());
 
@@ -242,7 +299,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task GetLogLevels_HappyFlowScenario()
     {
         // Arrange & Pre-verify
-        var files = SampleFiles(_sampleProfile);
+        var files = SampleFilesFromProfileSettings(_sampleProfile);
         Assert.Empty(_sut.GetLogLevels());
         await _sut.LoadProfileAsync(_sampleProfile);
 
@@ -257,10 +314,10 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task FileWatcher_CreatedOrChanged_WhenFileCreated_ThenLoaded()
     {
         // Arrange
-        var files = SampleFiles(_sampleProfile);
+        SampleFilesFromProfileSettings(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
 
-        var addedFile = SampleFile(_sampleProfile, null, files.Length);
+        var addedFile = SampleFilesFromProfileSettings(_sampleProfile)[0];
         List<LogRecord> logsAdded = new();
         List<LogSourceBase> sourcesAdded = new();
         using var _ = _sut.LogsAdded.Subscribe(logs => logsAdded.AddRange(logs));
@@ -282,9 +339,10 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     {
         // Arrange
         var profileDirectory = _sampleProfile.Settings.Source;
-        var profileFile = SampleFile(_sampleProfile, null, fileIndex: 0);
-        var addedFile = SampleFile(_sampleProfile, null, fileIndex: 1);
-        ((PlainTextProfileSettings)_sampleProfile.Settings).Path = profileFile.FullPath;
+        var files = SampleFilesFromProfileSettings(_sampleProfile);
+        var profileFile = files[0];
+        var addedFile = files[1];
+        ((PlainTextProfileSettings)_sampleProfile.Settings).Paths = [profileFile.FullPath];
         await _sut.LoadProfileAsync(_sampleProfile);
 
         List<LogRecord> logsAdded = new();
@@ -305,7 +363,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task FileWatcher_CreatedOrChanged_WhenFileUpdated_ThenLoaded()
     {
         // Arrange
-        var files = SampleFiles(_sampleProfile);
+        var files = SampleFilesFromProfileSettings(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
 
         List<LogRecord> logsAdded = [];
@@ -341,7 +399,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task FileWatcher_Renamed_ThenRenamedInLocalCollections()
     {
         // Arrange
-        var files = SampleFiles(_sampleProfile);
+        var files = SampleFilesFromProfileSettings(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
         var oldFilePath = files[0].FullPath;
         var newFilePath = Path.Combine(_sampleProfile.Settings.Source, _fixture.Create<string>());
@@ -371,7 +429,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task FileWatcher_Removed_ThenRemovedFromLocalCollections()
     {
         // Arrange
-        var files = SampleFiles(_sampleProfile);
+        var files = SampleFilesFromProfileSettings(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
         var fileRemoved = files[1];
         string? sourceRemoved = null;
@@ -396,7 +454,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     public async Task FileWatcher_Error_ThenHandledWithLogger()
     {
         // Arrange
-        SampleFiles(_sampleProfile);
+        SampleFilesFromProfileSettings(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
         var exception = new InvalidOperationException(_fixture.Create<string>());
 
@@ -421,7 +479,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
             autoResetEvent.Set();
         });
 
-        SampleFiles(_sampleProfile);
+        SampleFilesFromProfileSettings(_sampleProfile);
         await _sut.LoadProfileAsync(_sampleProfile);
         var lastReadSize = _fileService.GetDirectorySize(_sampleProfile.Settings.Source, ((PlainTextProfileSettings)_sampleProfile.Settings).LogsLookupPattern, recursive: true);
 
@@ -456,18 +514,29 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
         }
     }
 
-    private FileWithContentRecord[] SampleFiles(Profile profile)
-    {
-        return Enumerable.Range(0, 3).Select(fileIndex => SampleFile(profile, true, fileIndex)).OrderBy(x => x.FullPath).ToArray();
-    }
-
-    private FileWithContentRecord SampleFile(Profile profile, bool? readFileArtifacts, int fileIndex)
+    private List<FileWithContentRecord> SampleFilesFromProfileSettings(Profile profile, bool? readFileArtifacts = null)
     {
         A.CallTo(() => _logCodecProcessorMock.MayContainSourceArtifacts(profile.Settings)).Returns(true);
 
-        var fileName = _fixture.Create<string>() + LOGFILE_EXTENSION;
-        var sampleContent = _fixture.CreateMany<byte>(_fixture.Create<int>()).ToArray();
-        var fullPath = Path.Combine(profile.Settings.Source, fileName);
+        List<FileWithContentRecord> records = [];
+        foreach (var source in profile.Settings.Source.Split(',', StringSplitOptions.TrimEntries))
+        {
+            var isFileBasedSource = source.EndsWith(LOGFILE_EXTENSION, StringComparison.Ordinal);
+
+            for (var i = 0; i < (isFileBasedSource ? 1 : SAMPLE_FILES_PER_FOLDER); i++)
+            {
+                records.Add(SampleFile(profile, readFileArtifacts, source, i));
+            }
+        }
+        return records;
+    }
+
+    private FileWithContentRecord SampleFile(Profile profile, bool? readFileArtifacts, string source, int fileIndex)
+    {
+        var isFileBasedSource = source.EndsWith(LOGFILE_EXTENSION, StringComparison.Ordinal);
+        var sampleContent = _fixture.Create<byte[]>();
+        var fileName = isFileBasedSource ? source : _fixture.Create<string>() + LOGFILE_EXTENSION;
+        var fullPath = isFileBasedSource ? source : Path.Combine(source, fileName);
         _fileService.AddFile(fullPath, sampleContent);
         var sampleResults = SampleLogReadingResult(fullPath, fileIndex);
         var record = new FileWithContentRecord(fullPath, sampleContent, sampleResults);

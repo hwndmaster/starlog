@@ -85,7 +85,7 @@ internal sealed class ConsoleController : IConsoleController
         // TODO: To cover with unit tests
         if (settings is PlainTextProfileSettings plainTextProfileSettings)
         {
-            plainTextProfileSettings.Path = options.Path;
+            plainTextProfileSettings.Paths = [options.Path];
 
             // TODO: Might be worth taking it to `processor.ReadFromCommandLineArguments()`
             if (options.FileArtifactLinesCount is not null)

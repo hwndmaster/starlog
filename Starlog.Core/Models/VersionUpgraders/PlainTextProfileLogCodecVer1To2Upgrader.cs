@@ -1,4 +1,5 @@
 using Genius.Atom.Data.Persistence;
+using Genius.Starlog.Core.Models.Legacy;
 using Genius.Starlog.Core.Repositories;
 
 namespace Genius.Starlog.Core.Models.VersionUpgraders;

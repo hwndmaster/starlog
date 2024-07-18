@@ -65,9 +65,9 @@ internal sealed class MainController : IMainController
         // TODO: Cover cases with unit tests, including `else`
         if (profile.Settings is PlainTextProfileSettings plainTextProfileSettings)
         {
-            var path = _fileService.IsDirectory(plainTextProfileSettings.Path)
-                ? plainTextProfileSettings.Path
-                : Path.GetDirectoryName(plainTextProfileSettings.Path);
+            var path = _fileService.IsDirectory(plainTextProfileSettings.Paths[0])
+                ? plainTextProfileSettings.Paths[0]
+                : Path.GetDirectoryName(plainTextProfileSettings.Paths[0]);
             if (path is null)
                 return;
             Process.Start("explorer.exe", path);

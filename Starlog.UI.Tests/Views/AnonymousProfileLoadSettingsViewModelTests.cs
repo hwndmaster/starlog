@@ -26,7 +26,7 @@ public sealed class AnonymousProfileLoadSettingsViewModelTests
         var logCodec = new LogCodec(Guid.NewGuid(), PlainTextProfileSettings.CodecName);
         var profileSettings = new PlainTextProfileSettings(logCodec)
         {
-            Path = _fixture.Create<string>()
+            Paths = _fixture.CreateMany<string>().ToArray()
         };
         A.CallTo(() => _logCodecContainerFake.GetLogCodecs()).Returns([logCodec]);
         A.CallTo(() => _logCodecContainerFake.CreateProfileSettings(logCodec)).Returns(profileSettings);
@@ -40,7 +40,7 @@ public sealed class AnonymousProfileLoadSettingsViewModelTests
         _sut = new AnonymousProfileLoadSettingsViewModel(
             _logCodecContainerFake,
             vmFactoryMock,
-            _fixture.Create<string>(),
+            _fixture.CreateMany<string>().ToArray(),
             closeCommand,
             confirmCommand);
     }

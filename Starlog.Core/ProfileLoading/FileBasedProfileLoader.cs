@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Reactive;
 using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure.Events;
@@ -51,28 +52,48 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         if (profile.Settings is not IFileBasedProfileSettings fileBasedProfileSettings)
             throw new InvalidOperationException("Profile is not file based as expected in this routine");
 
-        if (!_fileService.PathExists(fileBasedProfileSettings.Path))
-            throw new InvalidOperationException($"The path '{fileBasedProfileSettings.Path}' couldn't be found.");
-
-        var isFileBasedProfile = !_fileService.IsDirectory(fileBasedProfileSettings.Path);
-
-        IEnumerable<string> files;
-        if (isFileBasedProfile)
+        var nonExistingPaths = fileBasedProfileSettings.Paths.Where(x => !_fileService.PathExists(x)).ToArray();
+        if (nonExistingPaths.Length > 0)
         {
-            files = fileBasedProfileSettings.Path.Split('|').ToArray();
+            if (nonExistingPaths.Length == fileBasedProfileSettings.Paths.Length)
+            {
+                throw new InvalidOperationException($"None of the paths ({string.Join(", ", nonExistingPaths)}) were found.");
+            }
+            else
+            {
+                _eventBus.Publish(new ProfileLoadingErrorEvent(profile, "The following paths were ignored since they do not exist: " + string.Join(", ", nonExistingPaths)));
+            }
         }
-        else
-        {
-            files = _fileService.EnumerateFiles(fileBasedProfileSettings.Path, fileBasedProfileSettings.LogsLookupPattern, new EnumerationOptions());
-        }
+
+        var existingPaths = fileBasedProfileSettings.Paths.Except(nonExistingPaths);
+        var files = existingPaths.SelectMany(x =>
+            {
+                if (_fileService.IsDirectory(x))
+                {
+                    return _fileService.EnumerateFiles(x, fileBasedProfileSettings.LogsLookupPattern, new EnumerationOptions());
+                }
+                else
+                {
+                    return [x];
+                }
+            });
         var tasks = files.Select(async file => await LoadFileAsync(profile, file, logContainer));
         await Task.WhenAll(tasks);
+
+        var pathsToWatch = (from path in existingPaths
+                            let isFileBasedProfile = !_fileService.IsDirectory(path)
+                            let pathTrim = path.TrimEnd('\\', '/')
+                            let watchPath = isFileBasedProfile ? Path.GetDirectoryName(pathTrim).NotNull() : pathTrim
+                            select (watchPath, isFileBasedProfile, pathTrim))
+                           .GroupBy(x => (x.watchPath, x.isFileBasedProfile), x => x.pathTrim);
 
         return new FilesBasedProfileState
         {
             Profile = profile,
-            IsFileBasedProfile = isFileBasedProfile,
-            Settings = fileBasedProfileSettings
+            Settings = fileBasedProfileSettings,
+            WatchingDirectories = pathsToWatch.Select(x =>
+                new FilesBasedProfileState.WatchingDirectory(x.Key.watchPath, x.Key.isFileBasedProfile, x.Key.isFileBasedProfile ? x.ToImmutableArray() : []))
+                .ToImmutableArray(),
         };
     }
 
@@ -81,34 +102,46 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
         if (profileState is not FilesBasedProfileState filesBasedProfileState)
             throw new InvalidOperationException("Cannot start profile monitoring, since it is not file based.");
 
-        var isFileBasedProfile = !_fileService.IsDirectory(filesBasedProfileState.Settings.Path);
-
         var disposer = new Disposer();
-        var watchPath = isFileBasedProfile ? Path.GetDirectoryName(filesBasedProfileState.Settings.Path).NotNull() : filesBasedProfileState.Settings.Path;
-        var watchFilter = isFileBasedProfile ? Path.GetFileName(filesBasedProfileState.Settings.Path) : filesBasedProfileState.Settings.LogsLookupPattern;
-        var fileWatcher = (_fileSystemWatcherFactory.Create(watchPath, watchFilter, increaseBuffer: true)
-            ?? throw new InvalidOperationException("Couldn't run file watcher for the path: " + watchPath))
-            .DisposeWith(disposer);
 
-        fileWatcher.Created.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
-        fileWatcher.Changed.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
-        fileWatcher.Renamed.Subscribe(args => FileWatcher_Renamed(logContainer, args)).DisposeWith(disposer);
-        fileWatcher.Deleted.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
-        fileWatcher.Error.Subscribe(FileWatcher_Error).DisposeWith(disposer);
-
-        if (!isFileBasedProfile)
+        foreach (var pathToWatch in filesBasedProfileState.WatchingDirectories)
         {
-            _directoryMonitor.StartMonitoring(filesBasedProfileState.Settings.Path, filesBasedProfileState.Settings.LogsLookupPattern)
+            var watchFilter = pathToWatch switch
+            {
+                { IsFileBased: true, ForFiles.Length: 1 } => Path.GetFileName(pathToWatch.ForFiles[0]),
+                { IsFileBased: true, ForFiles.Length: >1 } => filesBasedProfileState.Settings.LogsLookupPattern,
+                { IsFileBased: false } => filesBasedProfileState.Settings.LogsLookupPattern,
+                _ => null
+            };
+            if (watchFilter is null)
+            {
+                _logger.LogError("Could not initialize a watchFilter. Path = '{Path}', ForFiles.Length = {ForFilesLen}", pathToWatch.Path, pathToWatch.ForFiles.Length);
+                continue;
+            }
+            var fileWatcher = (_fileSystemWatcherFactory.Create(pathToWatch.Path, watchFilter, increaseBuffer: true)
+                ?? throw new InvalidOperationException("Couldn't run file watcher for the path: " + pathToWatch.Path))
                 .DisposeWith(disposer);
-            _directoryMonitor.Pulse.Subscribe(size =>
-                DirectoryMonitor_PulseAsync(filesBasedProfileState, size, unknownChangesDetectedSubject).RunAndForget())
-                .DisposeWith(disposer);
+
+            fileWatcher.Created.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
+            fileWatcher.Changed.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
+            fileWatcher.Renamed.Subscribe(args => FileWatcher_Renamed(logContainer, args)).DisposeWith(disposer);
+            fileWatcher.Deleted.Subscribe(args => FileWatcher_CreatedOrChangedOrDeleted(filesBasedProfileState, logContainer, args)).DisposeWith(disposer);
+            fileWatcher.Error.Subscribe(FileWatcher_Error).DisposeWith(disposer);
+
+            if (!pathToWatch.IsFileBased)
+            {
+                // Currently DirectoryMonitor supports only one folder to monitor.
+                // Since recent, a profile may have multiple folders included.
+                // For now only the last directory be monitored.
+                _directoryMonitor.StartMonitoring(pathToWatch.Path, filesBasedProfileState.Settings.LogsLookupPattern)
+                    .DisposeWith(disposer);
+                _directoryMonitor.Pulse.Subscribe(size =>
+                    DirectoryMonitor_PulseAsync(filesBasedProfileState, size, unknownChangesDetectedSubject).RunAndForget())
+                    .DisposeWith(disposer);
+            }
         }
 
-        if (!filesBasedProfileState.IsFileBasedProfile)
-        {
-            UpdateLastReadSize(filesBasedProfileState);
-        }
+        UpdateLastReadSize(filesBasedProfileState);
 
         return disposer;
     }
@@ -204,7 +237,15 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
 
         UpdateLastReadSize(profileState);
 
-        if (profileState.IsFileBasedProfile && !e.FullPath.Equals(profileState.Settings.Path))
+        // TODO: Cover the logic change with unit tests
+        // The handling will take place in one of the cases:
+        // 1) If the operating file belongs to a profile's directory
+        // 2) If the operating file is one of the profile's listed path.
+        var operatingDirectory = _fileService.IsDirectory(e.FullPath) ? e.FullPath : Path.GetDirectoryName(e.FullPath).NotNull();
+        if (!profileState.WatchingDirectories.Any(
+            x => (!x.IsFileBased && operatingDirectory.Equals(x.Path)) // 1
+            || (x.IsFileBased && x.ForFiles.Any(ff => ff.Equals(e.FullPath, StringComparison.OrdinalIgnoreCase))) // 2
+        ))
         {
             return;
         }
@@ -252,13 +293,13 @@ internal sealed class FileBasedProfileLoader : IProfileLoader
 
     private void UpdateLastReadSize(FilesBasedProfileState profileState)
     {
-        if (profileState.IsFileBasedProfile)
+        var lastReadSize = profileState.Settings.Paths.Sum(x =>
         {
-            // Not relevant for file-based profiles
-            return;
-        }
+            if (_fileService.IsDirectory(x))
+                return _fileService.GetDirectorySize(x, profileState.Settings.LogsLookupPattern, recursive: true);
+            return _fileService.GetFileDetails(x).Length;
+        });
 
-        var lastReadSize = _fileService.GetDirectorySize(profileState.Settings.Path, profileState.Settings.LogsLookupPattern, recursive: true);
         lock (profileState)
         {
             profileState.LastReadSize = lastReadSize;

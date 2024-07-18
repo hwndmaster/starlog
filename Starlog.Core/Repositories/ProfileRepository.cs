@@ -75,9 +75,9 @@ internal sealed class ProfileRepository : RepositoryBase<Profile>, IProfileRepos
 
             // Copy Path from Profile to PlainTextProfileSettings for profiles created before 05-Feb-2024
 #pragma warning disable CS0618 // Type or member is obsolete
-            if (!string.IsNullOrEmpty(entity.Path) && string.IsNullOrEmpty(plainTextSettings.Path))
+            if (!string.IsNullOrEmpty(entity.Path) && plainTextSettings.Paths.Length == 0)
             {
-                plainTextSettings.Path = entity.Path;
+                plainTextSettings.Paths = [entity.Path];
             }
 #pragma warning restore CS0618 // Type or member is obsolete
         }

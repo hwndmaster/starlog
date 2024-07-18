@@ -71,9 +71,9 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
                 }),
             new DropAreaViewModel("Open immediately", (dropObj) =>
                 {
-                    if (dropObj is string[] fileDrop)
+                    if (dropObj is string[] filesDrop)
                     {
-                        profileLoadingController.ShowAnonymousProfileLoadSettingsViewAsync(fileDrop[0]).RunAndForget();
+                        profileLoadingController.ShowAnonymousProfileLoadSettingsViewAsync(filesDrop).RunAndForget();
                     }
                 })
         };

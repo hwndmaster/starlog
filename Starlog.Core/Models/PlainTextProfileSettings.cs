@@ -19,14 +19,14 @@ public sealed class PlainTextProfileSettings : ProfileSettingsBase, IFileBasedPr
         return new PlainTextProfileSettings(LogCodec)
         {
             LinePatternId = LinePatternId,
-            Path = Path,
+            Paths = Paths,
             FileArtifactLinesCount = FileArtifactLinesCount,
             LogsLookupPattern = LogsLookupPattern,
             DateTimeFormat = DateTimeFormat
         };
     }
 
-    public override string Source => Path;
+    public override string Source => string.Join(", ", Paths);
 
     /// <summary>
     ///   The pattern which is used to parse each line of the log file.
@@ -36,7 +36,7 @@ public sealed class PlainTextProfileSettings : ProfileSettingsBase, IFileBasedPr
     /// <summary>
     ///   The path where the log files will be loaded from.
     /// </summary>
-    public required string Path { get; set; }
+    public required string[] Paths { get; set; }
 
     /// <summary>
     ///   Indicates the number of how many lines in each log file are dedicated for the file artifacts.

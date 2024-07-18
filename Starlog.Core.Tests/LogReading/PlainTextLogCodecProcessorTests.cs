@@ -239,7 +239,7 @@ public sealed class PlainTextLogCodecProcessorTests
         });
         var profileLogCodec = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
         {
-            Path = _fixture.Create<string>()
+            Paths = [_fixture.Create<string>()]
         };
         string[] codecSettings = [lineRegexName];
 
@@ -257,7 +257,7 @@ public sealed class PlainTextLogCodecProcessorTests
         // Arrange
         var profileLogCodec = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
         {
-            Path = _fixture.Create<string>()
+            Paths = [_fixture.Create<string>()]
         };
         string[] codecSettings = Array.Empty<string>();
 
@@ -289,7 +289,7 @@ public sealed class PlainTextLogCodecProcessorTests
         });
         var profileLogCodec = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
         {
-            Path = _fixture.Create<string>(),
+            Paths = [_fixture.Create<string>()],
             LinePatternId = patternId
         };
         string[] codecSettings = [anotherLineRegexName];
@@ -342,7 +342,7 @@ public sealed class PlainTextLogCodecProcessorTests
             Name = _fixture.Create<string>(),
             Settings = new PlainTextProfileSettings(_fixture.Create<LogCodec>())
             {
-                Path = _fixture.Create<string>(),
+                Paths = [_fixture.Create<string>()],
                 FileArtifactLinesCount = 2,
                 LinePatternId = pattern.Id,
             }

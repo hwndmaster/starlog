@@ -34,7 +34,7 @@ public interface IProfileLoadingController
     /// <returns>A task for awaiting the operation completion.</returns>
     Task LoadProfileAsync(Profile profile);
 
-    Task ShowAnonymousProfileLoadSettingsViewAsync(string path);
+    Task ShowAnonymousProfileLoadSettingsViewAsync(string[] paths);
 
     /// <summary>
     ///   Indicates whether the current profile is fully loaded in Logs view and ready to work with.
@@ -145,11 +145,11 @@ internal sealed class ProfileLoadingController : IProfileLoadingController
         .ConfigureAwait(false);
     }
 
-    public async Task ShowAnonymousProfileLoadSettingsViewAsync(string path)
+    public async Task ShowAnonymousProfileLoadSettingsViewAsync(string[] paths)
     {
         var customDialog = new CustomDialog { Title = "Set up logs" };
         var viewModel = _profileSettingsViewModelFactory.CreateAnonymousProfileLoadSettings(
-            path,
+            paths,
             new ActionCommand(async _ => await _dialogCoordinator.HideMetroDialogAsync(_mainViewModel.Value, customDialog)),
             new ActionCommand<ProfileSettingsBase>(LoadProfileSettingsAsync));
         customDialog.Content = new AnonymousProfileLoadSettingsView { DataContext = viewModel };

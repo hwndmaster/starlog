@@ -5,7 +5,7 @@ public interface IFileBasedProfileSettings
     /// <summary>
     ///   The path where the log files will be loaded from.
     /// </summary>
-    string Path { get; set; }
+    string[] Paths { get; set; }
 
     /// <summary>
     ///   Defines a lookup pattern for log files.

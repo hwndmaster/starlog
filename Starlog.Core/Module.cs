@@ -20,6 +20,7 @@ using Genius.Starlog.Core.Serialization;
 using Genius.Starlog.Core.Comparison;
 using Genius.Starlog.Core.ProfileLoading;
 using Genius.Starlog.Core.Clients;
+using Genius.Starlog.Core.Models.Legacy;
 
 namespace Genius.Starlog.Core;
 
@@ -161,7 +162,8 @@ public static class Module
         typeDiscriminators.AddMapping<ProfileSettingsLegacy>("profile-settings"); // For backwards compatibility only
         typeDiscriminators.AddMapping<PlainTextProfileLogCodecV1>("plaintext-profile-log-codec"); // For backwards compatibility only
         typeDiscriminators.AddMapping<PlainTextProfileLogCodecV2, PlainTextProfileLogCodecV1, PlainTextProfileLogCodecVer1To2Upgrader>("plaintext-profile-log-codec", 2); // For backwards compatibility only
-        typeDiscriminators.AddMapping<PlainTextProfileSettings, ProfileSettingsLegacy, ProfileSettingsLegacyUpgrader>("plaintext-profile-settings", 3);
+        typeDiscriminators.AddMapping<PlainTextProfileSettingsV3, ProfileSettingsLegacy, ProfileSettingsLegacyUpgrader>("plaintext-profile-settings", 3);
+        typeDiscriminators.AddMapping<PlainTextProfileSettings, PlainTextProfileSettingsV3, ProfileSettingsLegacyUpgrader>("plaintext-profile-settings", 4);
 #pragma warning restore CS0618 // Type or member is obsolete
         typeDiscriminators.AddMapping<XmlProfileSettings>("xml-profile-settings");
         typeDiscriminators.AddMapping<WindowsEventProfileSettings>("winevent-profile-settings");

@@ -1,4 +1,4 @@
-namespace Genius.Starlog.Core.Models;
+namespace Genius.Starlog.Core.Models.Legacy;
 
 /// <summary>
 ///   Used for backwards compatibility only.

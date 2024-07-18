@@ -20,8 +20,40 @@ public sealed class ProfileHarness
 
     public Profile CreateProfile(bool setAsCurrent = false)
     {
-        var profile = _fixture.Create<Profile>();
+        var profile = new Profile
+        {
+            Id = Guid.NewGuid(),
+            Name = Guid.NewGuid().ToString(),
+            Settings = new TestProfileSettings(),
+            Filters = [
+                new TestProfileFilter(),
+                new TestProfileFilter(),
+                new TestProfileFilter(),
+            ],
+            MessageParsings = [
+                new MessageParsing
+                {
+                    Name = Guid.NewGuid().ToString(),
+                    Method = _fixture.Create<PatternType>(),
+                    Pattern = Guid.NewGuid().ToString()
+                },
+                new MessageParsing
+                {
+                    Name = Guid.NewGuid().ToString(),
+                    Method = _fixture.Create<PatternType>(),
+                    Pattern = Guid.NewGuid().ToString()
+                },
+                new MessageParsing
+                {
+                    Name = Guid.NewGuid().ToString(),
+                    Method = _fixture.Create<PatternType>(),
+                    Pattern = Guid.NewGuid().ToString()
+                }
+            ]
+        };
+
         A.CallTo(() => _profileQueryMock.FindByIdAsync(profile.Id)).Returns(profile);
+
         if (setAsCurrent)
         {
             _currentProfile.LoadProfileAsync(profile).GetAwaiter().GetResult();

@@ -41,7 +41,7 @@ public sealed class PlainTextProfileSettingsViewModel : ProfileSettingsBaseViewM
         _plainTextProfileSettings.FileArtifactLinesCount = FileArtifactLinesCount;
         _plainTextProfileSettings.LinePatternId = LinePattern.Id;
         _plainTextProfileSettings.LogsLookupPattern = LogsLookupPattern;
-        _plainTextProfileSettings.Path = Path;
+        _plainTextProfileSettings.Paths = [Path];
 
         return true;
     }
@@ -54,7 +54,7 @@ public sealed class PlainTextProfileSettingsViewModel : ProfileSettingsBaseViewM
         LinePattern = LinePatterns.FirstOrDefault(x => x.Id == _plainTextProfileSettings.LinePatternId)
             ?? LinePatterns[0];
         LogsLookupPattern = _plainTextProfileSettings.LogsLookupPattern;
-        Path = _plainTextProfileSettings.Path;
+        Path = _plainTextProfileSettings.Paths[0];
     }
 
     internal override void CopySettingsFrom(ProfileSettingsBaseViewModel otherProfileSettings)

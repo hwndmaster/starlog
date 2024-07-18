@@ -35,7 +35,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         Assert.Equal(sut.FileArtifactLinesCount, profileSettings.FileArtifactLinesCount);
         Assert.Equal(sut.LinePattern.Id, profileSettings.LinePatternId);
         Assert.Equal(sut.LogsLookupPattern, profileSettings.LogsLookupPattern);
-        Assert.Equal(sut.Path, profileSettings.Path);
+        Assert.Equal(sut.Path, profileSettings.Paths[0]);
         Assert.Equal(
             _patternValues.Select(x => (x.Name, x.Pattern, x.Type)),
             sut.LinePatterns.Select(x => (x.Name, x.Pattern, x.Type))
@@ -86,7 +86,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         Assert.NotEqual(sut.FileArtifactLinesCount, profileSettings.FileArtifactLinesCount);
         Assert.NotEqual(sut.LinePattern.Id, profileSettings.LinePatternId);
         Assert.NotEqual(sut.LogsLookupPattern, profileSettings.LogsLookupPattern);
-        Assert.NotEqual(sut.Path, profileSettings.Path);
+        Assert.NotEqual(sut.Path, profileSettings.Paths[0]);
 
         // Act
         sut.CommitChanges();
@@ -96,7 +96,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         Assert.Equal(sut.FileArtifactLinesCount, profileSettings.FileArtifactLinesCount);
         Assert.Equal(sut.LinePattern.Id, profileSettings.LinePatternId);
         Assert.Equal(sut.LogsLookupPattern, profileSettings.LogsLookupPattern);
-        Assert.Equal(sut.Path, profileSettings.Path);
+        Assert.Equal(sut.Path, profileSettings.Paths[0]);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         Assert.NotEqual(sut.FileArtifactLinesCount, profileSettings.FileArtifactLinesCount);
         Assert.NotEqual(sut.LinePattern.Id, profileSettings.LinePatternId);
         Assert.NotEqual(sut.LogsLookupPattern, profileSettings.LogsLookupPattern);
-        Assert.NotEqual(sut.Path, profileSettings.Path);
+        Assert.NotEqual(sut.Path, profileSettings.Paths[0]);
     }
 
     private PlainTextProfileSettings SetupSettings()
@@ -130,7 +130,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
             FileArtifactLinesCount = _fixture.Create<int>(),
             LinePatternId = _patternValues[1].Id,
             LogsLookupPattern = _fixture.Create<string>(),
-            Path = _fixture.Create<string>()
+            Paths = [_fixture.Create<string>()]
         };
     }
 

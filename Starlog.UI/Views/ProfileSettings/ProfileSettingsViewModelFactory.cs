@@ -9,7 +9,7 @@ namespace Genius.Starlog.UI.Views;
 
 public interface IProfileSettingsViewModelFactory
 {
-    AnonymousProfileLoadSettingsViewModel CreateAnonymousProfileLoadSettings(string path,
+    AnonymousProfileLoadSettingsViewModel CreateAnonymousProfileLoadSettings(string[] paths,
         IActionCommand closeCommand,
         IActionCommand<ProfileSettingsBase> confirmCommand);
     ProfileSettingsBaseViewModel CreateLogCodec(LogCodec logCodec, ProfileSettingsBase? profileSettings);
@@ -42,12 +42,12 @@ internal sealed class ProfileSettingsViewModelFactory : IProfileSettingsViewMode
         _ui = ui.NotNull();
     }
 
-    public AnonymousProfileLoadSettingsViewModel CreateAnonymousProfileLoadSettings(string path, IActionCommand closeCommand, IActionCommand<ProfileSettingsBase> confirmCommand)
+    public AnonymousProfileLoadSettingsViewModel CreateAnonymousProfileLoadSettings(string[] paths, IActionCommand closeCommand, IActionCommand<ProfileSettingsBase> confirmCommand)
     {
         return new AnonymousProfileLoadSettingsViewModel(
             _logCodecContainer,
             this,
-            path,
+            paths,
             closeCommand,
             confirmCommand);
     }

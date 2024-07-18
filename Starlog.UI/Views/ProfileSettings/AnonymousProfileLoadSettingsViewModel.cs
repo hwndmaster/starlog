@@ -8,7 +8,7 @@ public sealed class AnonymousProfileLoadSettingsViewModel : ViewModelBase
     public AnonymousProfileLoadSettingsViewModel(
         ILogCodecContainer logCodecContainer,
         IProfileSettingsViewModelFactory vmFactory,
-        string path,
+        string[] paths,
         IActionCommand closeCommand,
         IActionCommand<ProfileSettingsBase> confirmCommand)
     {
@@ -19,7 +19,7 @@ public sealed class AnonymousProfileLoadSettingsViewModel : ViewModelBase
         // Members initialization:
         var logCodec = logCodecContainer.GetLogCodecs().First(x => x.Name.Equals(PlainTextProfileSettings.CodecName, StringComparison.OrdinalIgnoreCase));
         var profileSettings = logCodecContainer.CreateProfileSettings(logCodec);
-        ((PlainTextProfileSettings)profileSettings).Path = path;
+        ((PlainTextProfileSettings)profileSettings).Paths = paths;
         ProfileSettings = vmFactory.CreateProfileSettings(profileSettings);
 
         // Actions:
