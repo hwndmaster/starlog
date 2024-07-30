@@ -64,9 +64,9 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
         {
             new DropAreaViewModel("Create a new profile", (dropObj) =>
                 {
-                    if (dropObj is string[] fileDrop)
+                    if (dropObj is string[] filesDrop)
                     {
-                        _controller.ShowAddProfileForPath(fileDrop[0]);
+                        _controller.ShowAddProfileForPaths(filesDrop);
                     }
                 }),
             new DropAreaViewModel("Open immediately", (dropObj) =>
@@ -168,8 +168,9 @@ public sealed class ProfilesViewModel : TabViewModelBase, IProfilesViewModel
     private async Task ReloadListAsync()
     {
         IsAddEditProfileVisible = false;
-        var profileVms = (await _profileQuery.GetAllAsync())
-            .Select(x => _viewModelFactory.CreateProfile(x))
+        var profiles = await _profileQuery.GetAllAsync();
+        var profileVms = profiles
+            .Select(_viewModelFactory.CreateProfile)
             .ToList();
         Profiles.ReplaceItems(profileVms);
 

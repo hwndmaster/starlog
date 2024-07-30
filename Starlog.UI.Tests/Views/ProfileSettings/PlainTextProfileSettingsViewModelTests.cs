@@ -35,7 +35,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         Assert.Equal(sut.FileArtifactLinesCount, profileSettings.FileArtifactLinesCount);
         Assert.Equal(sut.LinePattern.Id, profileSettings.LinePatternId);
         Assert.Equal(sut.LogsLookupPattern, profileSettings.LogsLookupPattern);
-        Assert.Equal(sut.Path, profileSettings.Paths[0]);
+        Assert.Equal(sut.Paths, profileSettings.Paths[0]);
         Assert.Equal(
             _patternValues.Select(x => (x.Name, x.Pattern, x.Type)),
             sut.LinePatterns.Select(x => (x.Name, x.Pattern, x.Type))
@@ -56,7 +56,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         Assert.NotEqual(sut.FileArtifactLinesCount, copyFrom.FileArtifactLinesCount);
         Assert.NotEqual(sut.LinePattern.Id, copyFrom.LinePattern.Id);
         Assert.NotEqual(sut.LogsLookupPattern, copyFrom.LogsLookupPattern);
-        Assert.NotEqual(sut.Path, copyFrom.Path);
+        Assert.NotEqual(sut.Paths, copyFrom.Paths);
 
         // Act
         sut.CopySettingsFrom(copyFrom);
@@ -66,7 +66,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         Assert.Equal(sut.FileArtifactLinesCount, copyFrom.FileArtifactLinesCount);
         Assert.Equal(sut.LinePattern.Id, copyFrom.LinePattern.Id);
         Assert.Equal(sut.LogsLookupPattern, copyFrom.LogsLookupPattern);
-        Assert.Equal(sut.Path, copyFrom.Path);
+        Assert.Equal(sut.Paths, copyFrom.Paths);
     }
 
     [Fact]
@@ -79,14 +79,14 @@ public sealed class PlainTextProfileSettingsViewModelTests
         sut.FileArtifactLinesCount = _fixture.Create<int>();
         sut.LinePattern = sut.LinePatterns[2]; // [1] is preset in `SetupSettings()`
         sut.LogsLookupPattern = _fixture.Create<string>();
-        sut.Path = @"C:\"; // Need to satisfy `PathExistsValidationRule`
+        sut.Paths = @"C:\"; // Need to satisfy `PathExistsValidationRule`
 
         // Pre-verify
         Assert.NotEqual(sut.DateTimeFormat, profileSettings.DateTimeFormat);
         Assert.NotEqual(sut.FileArtifactLinesCount, profileSettings.FileArtifactLinesCount);
         Assert.NotEqual(sut.LinePattern.Id, profileSettings.LinePatternId);
         Assert.NotEqual(sut.LogsLookupPattern, profileSettings.LogsLookupPattern);
-        Assert.NotEqual(sut.Path, profileSettings.Paths[0]);
+        Assert.NotEqual(sut.Paths, profileSettings.Paths[0]);
 
         // Act
         sut.CommitChanges();
@@ -96,7 +96,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         Assert.Equal(sut.FileArtifactLinesCount, profileSettings.FileArtifactLinesCount);
         Assert.Equal(sut.LinePattern.Id, profileSettings.LinePatternId);
         Assert.Equal(sut.LogsLookupPattern, profileSettings.LogsLookupPattern);
-        Assert.Equal(sut.Path, profileSettings.Paths[0]);
+        Assert.Equal(sut.Paths, profileSettings.Paths[0]);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         sut.FileArtifactLinesCount = _fixture.Create<int>();
         sut.LinePattern = sut.LinePatterns[2]; // [1] is preset in `SetupSettings()`
         sut.LogsLookupPattern = _fixture.Create<string>();
-        sut.Path = _fixture.Create<string>(); // Need to fail the `PathExistsValidationRule` rule.
+        sut.Paths = _fixture.Create<string>(); // Need to fail the `PathExistsValidationRule` rule.
 
         // Act
         sut.CommitChanges();
@@ -119,7 +119,7 @@ public sealed class PlainTextProfileSettingsViewModelTests
         Assert.NotEqual(sut.FileArtifactLinesCount, profileSettings.FileArtifactLinesCount);
         Assert.NotEqual(sut.LinePattern.Id, profileSettings.LinePatternId);
         Assert.NotEqual(sut.LogsLookupPattern, profileSettings.LogsLookupPattern);
-        Assert.NotEqual(sut.Path, profileSettings.Paths[0]);
+        Assert.NotEqual(sut.Paths, profileSettings.Paths[0]);
     }
 
     private PlainTextProfileSettings SetupSettings()

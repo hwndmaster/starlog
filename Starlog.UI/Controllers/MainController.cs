@@ -17,7 +17,7 @@ public interface IMainController
 
     void Locate(Profile profile);
     void SetBusy(bool isBusy);
-    void ShowAddProfileForPath(string path);
+    void ShowAddProfileForPaths(string[] paths);
     void ShowLogsTab();
     Task ShowShareViewAsync(IReadOnlyCollection<ILogItemViewModel> items);
 
@@ -99,13 +99,13 @@ internal sealed class MainController : IMainController
     }
 
     // TODO: To cover with unit tests
-    public void ShowAddProfileForPath(string path)
+    public void ShowAddProfileForPaths(string[] paths)
     {
         var tab = GetProfilesTab();
         tab.IsAddEditProfileVisible = false;
         tab.OpenAddProfileFlyoutCommand.Execute(null);
-        tab.EditingProfile!.Name = Path.GetFileNameWithoutExtension(path);
-        tab.EditingProfile!.ProfileSettings.SelectPlainTextForPath(path);
+        tab.EditingProfile!.Name = Path.GetFileNameWithoutExtension(paths[0]);
+        tab.EditingProfile!.ProfileSettings.SelectPlainTextForPaths(paths);
     }
 
     public void ShowLogsTab()

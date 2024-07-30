@@ -9,8 +9,8 @@
     <Grid>
         <StackPanel Orientation="Vertical" Style="{StaticResource FormPanel}">
             <DockPanel>
-                <Label>Profile path:</Label>
-                <TextBox Text="{Binding Path}" />
+                <Label>Profile paths:</Label>
+                <TextBox Text="{Binding Paths}" />
             </DockPanel>
             <DockPanel>
                 <Label>Line pattern:</Label>

@@ -19,8 +19,8 @@ public sealed class PlainTextProfileSettingsViewModel : ProfileSettingsBaseViewM
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(DateTimeFormat)));
         AddValidationRule(new NotNullValidationRule(nameof(LinePattern)));
         AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(LogsLookupPattern)));
-        AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Path)));
-        AddValidationRule(new PathExistsValidationRule(nameof(Path)));
+        AddValidationRule(new StringNotNullOrEmptyValidationRule(nameof(Paths)));
+        AddValidationRule(new PathExistsValidationRule(nameof(Paths), acceptMultiplePaths: true));
 
         var patterns = settingsQuery.NotNull().Get().PlainTextLogCodecLinePatterns;
         foreach (var pattern in patterns)
@@ -41,7 +41,7 @@ public sealed class PlainTextProfileSettingsViewModel : ProfileSettingsBaseViewM
         _plainTextProfileSettings.FileArtifactLinesCount = FileArtifactLinesCount;
         _plainTextProfileSettings.LinePatternId = LinePattern.Id;
         _plainTextProfileSettings.LogsLookupPattern = LogsLookupPattern;
-        _plainTextProfileSettings.Paths = [Path];
+        _plainTextProfileSettings.Paths = Paths.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
         return true;
     }
@@ -54,7 +54,7 @@ public sealed class PlainTextProfileSettingsViewModel : ProfileSettingsBaseViewM
         LinePattern = LinePatterns.FirstOrDefault(x => x.Id == _plainTextProfileSettings.LinePatternId)
             ?? LinePatterns[0];
         LogsLookupPattern = _plainTextProfileSettings.LogsLookupPattern;
-        Path = _plainTextProfileSettings.Paths[0];
+        Paths = string.Join(',', _plainTextProfileSettings.Paths);
     }
 
     internal override void CopySettingsFrom(ProfileSettingsBaseViewModel otherProfileSettings)
@@ -66,7 +66,7 @@ public sealed class PlainTextProfileSettingsViewModel : ProfileSettingsBaseViewM
         FileArtifactLinesCount = settings.FileArtifactLinesCount;
         LinePattern = LinePatterns.FirstOrDefault(x => x.Id == settings.LinePattern.Id) ?? LinePatterns[0];
         LogsLookupPattern = settings.LogsLookupPattern;
-        Path = string.IsNullOrEmpty(settings.Path) ? Path : settings.Path;
+        Paths = string.IsNullOrEmpty(settings.Paths) ? Paths : settings.Paths;
     }
 
     public string DateTimeFormat
@@ -95,7 +95,7 @@ public sealed class PlainTextProfileSettingsViewModel : ProfileSettingsBaseViewM
         set => RaiseAndSetIfChanged(value);
     }
 
-    public string Path
+    public string Paths
     {
         get => GetOrDefault<string>();
         set => RaiseAndSetIfChanged(value);

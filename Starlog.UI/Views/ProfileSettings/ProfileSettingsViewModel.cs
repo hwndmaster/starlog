@@ -14,7 +14,7 @@ public interface IProfileSettingsViewModel
     ProfileSettingsBase? CommitChanges();
     void CopyFrom(IProfileSettingsViewModel source);
     void ResetForm();
-    void SelectPlainTextForPath(string path);
+    void SelectPlainTextForPaths(string[] paths);
     string Source { get; }
 }
 
@@ -103,10 +103,10 @@ public sealed class ProfileSettingsViewModel : DisposableViewModelBase, IProfile
         SelectedProfileSettings.CopySettingsFrom(sourceClass.SelectedProfileSettings);
     }
 
-    public void SelectPlainTextForPath(string path)
+    public void SelectPlainTextForPaths(string[] paths)
     {
         SelectedProfileSettings = ProfileSettings.First(x => x.ProfileSettings is PlainTextProfileSettings);
-        ((PlainTextProfileSettingsViewModel)SelectedProfileSettings).Path = path;
+        ((PlainTextProfileSettingsViewModel)SelectedProfileSettings).Paths = string.Join(',', paths);
     }
 
     /// <summary>

@@ -28,7 +28,7 @@ public class ProfileSettingsLegacyUpgrader
 
         return new PlainTextProfileSettings(value.LogCodec)
         {
-            Paths = [value.Path],
+            Paths = string.IsNullOrEmpty(value.Path) ? [] : [value.Path],
             LinePatternId = value.LinePatternId,
             FileArtifactLinesCount = value.FileArtifactLinesCount,
             LogsLookupPattern = value.LogsLookupPattern,
