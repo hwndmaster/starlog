@@ -24,11 +24,11 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     private const int SAMPLE_FILES_PER_FOLDER = 3;
 
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly TestDirectoryMonitor _directoryMonitor = new();
-    private readonly TestFileService _fileService = new();
-    private readonly TestFileSystemWatcherFactory _fileWatcherFactory = new();
-    private readonly TestEventBus _eventBus = new();
-    private readonly TestSynchronousScheduler _scheduler = new();
+    private readonly FakeDirectoryMonitor _directoryMonitor = new();
+    private readonly FakeFileService _fileService = new();
+    private readonly FakeFileSystemWatcherFactory _fileWatcherFactory = new();
+    private readonly FakeEventBus _eventBus = new();
+    private readonly FakeSynchronousScheduler _scheduler = new();
     private readonly TestLogger<FileBasedProfileLoader> _fileBasedProfileLogger = new();
     private readonly ILogCodecContainerInternal _logCodecContainerMock = A.Fake<ILogCodecContainerInternal>();
 

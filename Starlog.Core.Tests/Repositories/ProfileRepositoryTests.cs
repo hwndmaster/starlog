@@ -10,7 +10,7 @@ namespace Genius.Starlog.Core.Tests.Repositories;
 public sealed class ProfileRepositoryTests
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly TestEventBus _eventBus = new();
+    private readonly FakeEventBus _eventBus = new();
     private readonly IJsonPersister _persisterMock = A.Fake<IJsonPersister>();
 
     [Fact]

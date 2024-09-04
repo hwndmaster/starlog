@@ -11,7 +11,7 @@ namespace Genius.Starlog.Core.Tests;
 public sealed class MessageParsingHandlerTests : IDisposable
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly TestEventBus _eventBus = new();
+    private readonly FakeEventBus _eventBus = new();
     private readonly ProfileHarness _profileHarness = new();
     private readonly FilterHarness _filterHarness = new();
     private readonly IQuickFilterProvider _quickFilterProviderFake = A.Fake<IQuickFilterProvider>();
@@ -104,7 +104,7 @@ public sealed class MessageParsingHandlerTests : IDisposable
     {
         // Arrange
         var messageParsing = SampleMessageParsingWithMethodRegex();
-        var logRecord = new LogRecord() with { Message = "blablabla", LogArtifacts = "Baz-Foo" };
+        var logRecord = new LogRecord() with { Message = "Lorem Ipsum", LogArtifacts = "Baz-Foo" };
 
         // Act
         var result = _sut.ParseMessage(messageParsing, logRecord).ToArray();
@@ -136,7 +136,7 @@ public sealed class MessageParsingHandlerTests : IDisposable
     {
         // Arrange
         _profileHarness.CreateProfile(setAsCurrent: true);
-        var quickFilters = _profileHarness.Fixture.CreateMany<TestProfileFilter>().ToArray();
+        var quickFilters = _profileHarness.Fixture.CreateMany<FakeProfileFilter>().ToArray();
         A.CallTo(() => _quickFilterProviderFake.GetQuickFilters()).Returns(quickFilters);
         var messageParsing = SampleMessageParsingWithMethodRegex();
         messageParsing.Filters = new [] { quickFilters[1].Id };
@@ -174,7 +174,7 @@ public sealed class MessageParsingHandlerTests : IDisposable
     {
         // Arrange
         var messageParsing = SampleMessageParsingWithMethodRegex();
-        var logRecord = new LogRecord() with { Message = "blablabla_without_hypens" };
+        var logRecord = new LogRecord() with { Message = "Lorem Ipsum Without Hyphens" };
 
         // Act
         var result = _sut.ParseMessage(messageParsing, logRecord).ToArray();

@@ -10,7 +10,7 @@ public sealed class ErrorsViewModelTests : IDisposable
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly ProfileHarness _profileHarness = new();
-    private readonly TestEventBus _eventBus = new();
+    private readonly FakeEventBus _eventBus = new();
     private readonly ErrorsViewModel _sut;
 
     public ErrorsViewModelTests()

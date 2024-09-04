@@ -17,14 +17,39 @@ using Genius.Starlog.UI.Views.LogSearchAndFiltering;
 
 namespace Genius.Starlog.UI.Views;
 
+/// <summary>
+///   A view model which contains the state and the behavior of the Logs tab.
+/// </summary>
 public interface ILogsViewModel : ITabViewModel, IDisposable
 {
+    /// <summary>
+    ///   Resets the grouping to the default state (no grouping).
+    /// </summary>
     void ResetGrouping();
+
+    /// <summary>
+    ///   Cleans up all previously added bookmarks.
+    /// </summary>
     void UnBookmarkAll();
 
+    /// <summary>
+    ///   A view model containing the state of the Filter bar.
+    /// </summary>
     ILogsFilteringViewModel Filtering { get; }
+
+    /// <summary>
+    ///   A collection containing all log items.
+    /// </summary>
     DelayedObservableCollection<ILogItemViewModel> LogItems { get; }
+
+    /// <summary>
+    ///   A view model containing the state of the Search bar.
+    /// </summary>
     ILogsSearchViewModel Search { get; }
+
+    /// <summary>
+    ///   Represents the currently selected log items.
+    /// </summary>
     ObservableCollection<ILogItemViewModel> SelectedLogItems { get; }
 }
 
@@ -437,6 +462,11 @@ public sealed class LogsViewModel : TabViewModelBase, ILogsViewModel
         set => RaiseAndSetIfChanged(value);
     }
 
+    /// <summary>
+    ///   Indicates a flag whether to do an automatic scrolling
+    ///   to the end of the datagrid when new items arriving.
+    ///   Also called "Follow Tail mode".
+    /// </summary>
     public bool AutoScroll
     {
         get => GetOrDefault(false);

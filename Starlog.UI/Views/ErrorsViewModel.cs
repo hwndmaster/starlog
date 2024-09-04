@@ -5,6 +5,9 @@ using Genius.Starlog.Core.Messages;
 
 namespace Genius.Starlog.UI.Views;
 
+/// <summary>
+///   A view model which contains the state and the behavior of the Errors flyout window.
+/// </summary>
 public interface IErrorsViewModel : IViewModel
 {
     bool HasAnyError { get; }

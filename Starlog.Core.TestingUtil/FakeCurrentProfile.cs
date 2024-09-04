@@ -4,7 +4,7 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.Core.TestingUtil;
 
-public sealed class TestCurrentProfile : ICurrentProfile
+public sealed class FakeCurrentProfile : ICurrentProfile
 {
     private readonly Subject<Unit> _profileClosedSubject = new();
     private readonly Subject<Profile> _profileChangedSubject = new();

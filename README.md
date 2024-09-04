@@ -6,7 +6,7 @@ A simple log files reader.
 
 *To be done later.*
 
-Check out a [screenshot galley](Docs/gallery.md).
+Check out a [screenshot gallery](Docs/gallery.md).
 
 ## Command line interface (CLI)
 

@@ -4,6 +4,9 @@ using Genius.Starlog.UI.Views.Comparison;
 
 namespace Genius.Starlog.UI.Views;
 
+/// <summary>
+///   A view model of the main window of the application.
+/// </summary>
 public interface IMainViewModel : IViewModel
 {
     ImmutableArray<ITabViewModel> Tabs { get; }

@@ -116,7 +116,7 @@ public sealed class ConsoleControllerTests
         var template = new ProfileSettingsTemplate
         {
             Name = options.Template!,
-            Settings = new TestProfileSettings()
+            Settings = new FakeProfileSettings()
         };
         A.CallTo(() => _templatesQueryMock.GetAllAsync()).Returns([template]);
 
@@ -124,7 +124,7 @@ public sealed class ConsoleControllerTests
         await _sut.LoadPathAsync(options);
 
         // Verify
-        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(A<TestProfileSettings>.That.Matches(
+        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(A<FakeProfileSettings>.That.Matches(
             y => y.LogCodec == template.Settings.LogCodec && y.IsCloned))).MustHaveHappenedOnceExactly();
     }
 
@@ -140,7 +140,7 @@ public sealed class ConsoleControllerTests
         {
             Id = templateId,
             Name = _fixture.Create<string>(),
-            Settings = new TestProfileSettings()
+            Settings = new FakeProfileSettings()
         };
         A.CallTo(() => _templatesQueryMock.FindByIdAsync(templateId)).Returns(template);
 
@@ -148,7 +148,7 @@ public sealed class ConsoleControllerTests
         await _sut.LoadPathAsync(options);
 
         // Verify
-        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(A<TestProfileSettings>.That.Matches(
+        A.CallTo(() => _profileLoadingControllerMock.LoadProfileSettingsAsync(A<FakeProfileSettings>.That.Matches(
             y => y.LogCodec == template.Settings.LogCodec && y.IsCloned))).MustHaveHappenedOnceExactly();
     }
 }

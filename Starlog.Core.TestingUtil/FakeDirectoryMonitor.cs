@@ -1,9 +1,9 @@
 using System.Reactive.Subjects;
 using Genius.Atom.Infrastructure;
 
-namespace Genius.Starlog.Core.Tests;
+namespace Genius.Starlog.Core.TestingUtil;
 
-internal sealed class TestDirectoryMonitor : IDirectoryMonitor
+internal sealed class FakeDirectoryMonitor : IDirectoryMonitor
 {
     public bool MonitoringStarted { get; private set; }
     private readonly Subject<long> _pulse = new();

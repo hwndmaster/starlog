@@ -14,6 +14,9 @@ public enum LogItemGroupingOptions
     ByField
 }
 
+/// <summary>
+///   A view model which contains the state and the behavior of a particular log item.
+/// </summary>
 public interface ILogItemViewModel : IViewModel
 {
     void HandleSourceRenamed(LogSourceBase newRecord);

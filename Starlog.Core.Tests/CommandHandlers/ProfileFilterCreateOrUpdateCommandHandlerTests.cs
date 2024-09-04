@@ -45,11 +45,11 @@ public sealed class ProfileFilterCreateOrUpdateCommandHandlerTests
         var profile = _harness.CreateProfile();
         var profileFiltersCount = profile.Filters.Count;
         var updatingProfileFilterId = _harness.Fixture.Create<Guid>();
-        profile.Filters[0] = new TestProfileFilter(updatingProfileFilterId);
+        profile.Filters[0] = new FakeProfileFilter(updatingProfileFilterId);
         var command = new ProfileFilterCreateOrUpdateCommand
         {
             ProfileId = profile.Id,
-            ProfileFilter = new TestProfileFilter(updatingProfileFilterId)
+            ProfileFilter = new FakeProfileFilter(updatingProfileFilterId)
         };
 
         // Act

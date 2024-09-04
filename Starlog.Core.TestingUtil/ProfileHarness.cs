@@ -10,7 +10,7 @@ public sealed class ProfileHarness
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
     private readonly IProfileRepository _profileRepoMock = A.Fake<IProfileRepository>();
     private readonly IProfileQueryService _profileQueryMock = A.Fake<IProfileQueryService>();
-    private readonly TestCurrentProfile _currentProfile = new();
+    private readonly FakeCurrentProfile _currentProfile = new();
     private readonly IEventBus _eventBusMock = A.Fake<IEventBus>();
 
     public ProfileHarness()
@@ -24,11 +24,11 @@ public sealed class ProfileHarness
         {
             Id = Guid.NewGuid(),
             Name = Guid.NewGuid().ToString(),
-            Settings = new TestProfileSettings(),
+            Settings = new FakeProfileSettings(),
             Filters = [
-                new TestProfileFilter(),
-                new TestProfileFilter(),
-                new TestProfileFilter(),
+                new FakeProfileFilter(),
+                new FakeProfileFilter(),
+                new FakeProfileFilter(),
             ],
             MessageParsings = [
                 new MessageParsing

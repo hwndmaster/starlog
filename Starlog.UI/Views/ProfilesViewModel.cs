@@ -13,6 +13,9 @@ using Genius.Starlog.UI.Controllers;
 
 namespace Genius.Starlog.UI.Views;
 
+/// <summary>
+///   A view model which contains the state and the behavior of the Profiles tab.
+/// </summary>
 public interface IProfilesViewModel : ITabViewModel, IDisposable
 {
     DelayedObservableCollection<IProfileViewModel> Profiles { get; }

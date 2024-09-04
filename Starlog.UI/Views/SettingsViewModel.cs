@@ -10,6 +10,9 @@ using ReactiveUI;
 
 namespace Genius.Starlog.UI.Views;
 
+/// <summary>
+///   A view model which contains the state and the behavior of the Settings tab.
+/// </summary>
 public interface ISettingsViewModel : ITabViewModel
 { }
 

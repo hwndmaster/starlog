@@ -3,7 +3,7 @@ using Genius.Starlog.Core.ProfileLoading;
 
 namespace Genius.Starlog.Core.TestingUtil;
 
-internal sealed class TestProfileLoaderFactory : IProfileLoaderFactory
+internal sealed class FakeProfileLoaderFactory : IProfileLoaderFactory
 {
     public IProfileLoader? InstanceToReturn { get; set; }
 

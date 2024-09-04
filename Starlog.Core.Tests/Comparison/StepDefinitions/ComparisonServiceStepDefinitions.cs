@@ -14,7 +14,7 @@ namespace Genius.Starlog.Core.Tests.Comparison;
 public sealed class ComparisonServiceStepDefinitions
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly TestProfileLoaderFactory _profileLoaderFactory = new();
+    private readonly FakeProfileLoaderFactory _profileLoaderFactory = new();
     private readonly ComparisonService _sut;
 
     private readonly ScenarioContext _scenarioContext;

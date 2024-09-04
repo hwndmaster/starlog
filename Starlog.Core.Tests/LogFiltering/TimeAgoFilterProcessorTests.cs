@@ -1,4 +1,3 @@
-using Genius.Atom.Infrastructure;
 using Genius.Atom.Infrastructure.TestingUtil;
 using Genius.Starlog.Core.LogFiltering;
 using Genius.Starlog.Core.LogFlow;
@@ -9,7 +8,7 @@ namespace Genius.Starlog.Core.Tests.LogFiltering;
 public sealed class TimeAgoFilterProcessorTests
 {
     private readonly IFixture _fixture = InfrastructureTestHelper.CreateFixture(useMutableValueTypeGenerator: true);
-    private readonly TestDateTime _dateTime = new();
+    private readonly FakeDateTime _dateTime = new();
     private readonly TimeAgoFilterProcessor _sut;
 
     public TimeAgoFilterProcessorTests()

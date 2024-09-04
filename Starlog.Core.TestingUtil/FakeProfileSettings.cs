@@ -2,21 +2,21 @@ using Genius.Starlog.Core.Models;
 
 namespace Genius.Starlog.Core.TestingUtil;
 
-public sealed class TestProfileSettings : ProfileSettingsBase
+public sealed class FakeProfileSettings : ProfileSettingsBase
 {
-    public TestProfileSettings()
+    public FakeProfileSettings()
         : base(new LogCodec(Guid.NewGuid(), Guid.NewGuid().ToString()))
     {
     }
 
-    public TestProfileSettings(LogCodec logCodec)
+    public FakeProfileSettings(LogCodec logCodec)
         : base(logCodec)
     {
     }
 
     internal override ProfileSettingsBase CloneInternal()
     {
-        return new TestProfileSettings(LogCodec)
+        return new FakeProfileSettings(LogCodec)
         {
             IsCloned = true
         };

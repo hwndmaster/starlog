@@ -22,7 +22,7 @@ public sealed class MainControllerTests
     {
         _sut = new(_clipboardHelperMock,
             _dialogCoordinatorMock,
-            new TestFileService(),
+            new FakeFileService(),
             _uiMock,
             new Lazy<IMainViewModel>(() => _mainViewModelMock));
     }

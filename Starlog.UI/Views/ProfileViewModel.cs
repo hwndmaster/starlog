@@ -11,6 +11,9 @@ using Genius.Starlog.UI.Views.ProfileSettings;
 
 namespace Genius.Starlog.UI.Views;
 
+/// <summary>
+///   A view model which contains the state and the behavior of a particular profile.
+/// </summary>
 public interface IProfileViewModel : ISelectable
 {
     void CopyFrom(IProfileViewModel source, string? nameSuffix = null);

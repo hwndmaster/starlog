@@ -11,8 +11,8 @@ namespace Genius.Starlog.Core.Tests.CommandHandlers;
 
 public sealed class ReportProfileOpeningCommandHandlerTests
 {
-    private readonly TestDateTime _dateTime = new();
-    private readonly TestEventBus _eventBus = new();
+    private readonly FakeDateTime _dateTime = new();
+    private readonly FakeEventBus _eventBus = new();
     private readonly IProfileQueryService _profileQueryMock = A.Fake<IProfileQueryService>();
     private readonly IProfileRepository _profileRepoMock = A.Fake<IProfileRepository>();
     private readonly ISettingsRepository _settingsRepoMock = A.Fake<ISettingsRepository>();
@@ -46,6 +46,7 @@ public sealed class ReportProfileOpeningCommandHandlerTests
         await _sut.ProcessAsync(command);
 
         // Verify
+        Assert.NotNull(actualProfile);
         Assert.Equal(lastOpenedTimeExpected, actualProfile.LastOpened);
         A.CallTo(() => _settingsRepoMock.Store(settings)).MustHaveHappened();
         Assert.Equal(command.ProfileId, settings.AutoLoadProfile);

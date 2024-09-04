@@ -17,10 +17,10 @@ namespace Genius.Starlog.UI.Tests.Controllers;
 public sealed class ProfileLoadingControllerTests
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly TestCommandBus _commandBus = new();
+    private readonly FakeCommandBus _commandBus = new();
     private readonly ICurrentProfile _currentProfileMock = A.Fake<ICurrentProfile>();
     private readonly IDialogCoordinator _dialogCoordinatorMock = A.Fake<IDialogCoordinator>();
-    private readonly TestEventBus _eventBus = new();
+    private readonly FakeEventBus _eventBus = new();
     private readonly IMainController _mainControllerMock = A.Fake<IMainController>();
     private readonly IMainViewModel _mainViewModelMock = A.Fake<IMainViewModel>();
     private readonly IProfileSettingsViewModelFactory _profileSettingsViewModelFactoryMock = A.Fake<IProfileSettingsViewModelFactory>();
