@@ -7,19 +7,19 @@ namespace Genius.Starlog.Core.Tests.LogReading.PlainTextLogCodecParsers;
 public sealed class PlainTextLogCodecLineMaskPatternParserTests
 {
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
-    private readonly TestLogger<PlainTextLogCodecLineMaskPatternParser> _logger = new();
+    private readonly FakeLogger<PlainTextLogCodecLineMaskPatternParser> _logger = new();
 
     [Fact]
     public void Parse_HappyFlowScenario()
     {
         // Arrange
-        const string pattern = "%{datetime} %{level} %{thread} %{logger} - %{message}";
-        const string dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
-        const string line = "12-34-56 11:22:33.444 INFO 888 Component1 - Some Message with 123 numbers, 50% percents + $[y]mb\\ols!";
-        var sut = CreateSystemUnderTest(dateTimeFormat, pattern);
+        const string Pattern = "%{datetime} %{level} %{thread} %{logger} - %{message}";
+        const string DateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
+        const string Line = "12-34-56 11:22:33.444 INFO 888 Component1 - Some Message with 123 numbers, 50% percents + $[y]mb\\ols!";
+        var sut = CreateSystemUnderTest(DateTimeFormat, Pattern);
 
         // Act
-        var result = sut.Parse(line);
+        var result = sut.Parse(Line);
 
         // Verify
         Assert.NotNull(result);
@@ -36,9 +36,9 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
     public void Parse_WhenInvalidGroup_ReturnsNull()
     {
         // Arrange
-        const string pattern = @"%{datetime %{level} %{thread} %{logger} - %{message}";
-        const string dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
-        var sut = CreateSystemUnderTest(dateTimeFormat, pattern);
+        const string Pattern = @"%{datetime %{level} %{thread} %{logger} - %{message}";
+        const string DateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
+        var sut = CreateSystemUnderTest(DateTimeFormat, Pattern);
 
         // Act
         var result = sut.Parse(_fixture.Create<string>());
@@ -52,9 +52,9 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
     public void Parse_WhenInvalidGroupAtTheEndOfLine_ReturnsNull()
     {
         // Arrange
-        const string pattern = @"%{datetime} %{level} %{thread} %{logger} - %{message";
-        const string dateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
-        var sut = CreateSystemUnderTest(dateTimeFormat, pattern);
+        const string Pattern = @"%{datetime} %{level} %{thread} %{logger} - %{message";
+        const string DateTimeFormat = "dd-MM-yy HH:mm:ss.fff";
+        var sut = CreateSystemUnderTest(DateTimeFormat, Pattern);
 
         // Act
         var result = sut.Parse(_fixture.Create<string>());
@@ -66,6 +66,6 @@ public sealed class PlainTextLogCodecLineMaskPatternParserTests
 
     private PlainTextLogCodecLineMaskPatternParser CreateSystemUnderTest(string dateTimeFormat, string pattern)
     {
-        return new PlainTextLogCodecLineMaskPatternParser(dateTimeFormat, pattern, new MaskPatternParser(new TestLogger<MaskPatternParser>()), _logger);
+        return new PlainTextLogCodecLineMaskPatternParser(dateTimeFormat, pattern, new MaskPatternParser(new FakeLogger<MaskPatternParser>()), _logger);
     }
 }

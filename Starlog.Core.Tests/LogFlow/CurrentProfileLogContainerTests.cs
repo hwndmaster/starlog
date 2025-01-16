@@ -29,7 +29,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
     private readonly FakeFileSystemWatcherFactory _fileWatcherFactory = new();
     private readonly FakeEventBus _eventBus = new();
     private readonly FakeSynchronousScheduler _scheduler = new();
-    private readonly TestLogger<FileBasedProfileLoader> _fileBasedProfileLogger = new();
+    private readonly FakeLogger<FileBasedProfileLoader> _fileBasedProfileLogger = new();
     private readonly ILogCodecContainerInternal _logCodecContainerMock = A.Fake<ILogCodecContainerInternal>();
 
     private readonly CurrentProfileLogContainer _sut;
@@ -44,7 +44,7 @@ public sealed class CurrentProfileLogContainerTests : IDisposable
             _directoryMonitor, _eventBus, _fileService, _fileWatcherFactory,
             _logCodecContainerMock,
             _fileBasedProfileLogger,
-            new TestLogger<WindowsEventProfileLoader>(),
+            new FakeLogger<WindowsEventProfileLoader>(),
             _scheduler);
         _sut = new CurrentProfileLogContainer(_eventBus, profileLoaderFactory);
 

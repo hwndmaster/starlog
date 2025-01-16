@@ -106,6 +106,6 @@ public sealed class ProfileRepositoryTests
         A.CallTo(() => _persisterMock.LoadCollection<Profile>(A<string>.Ignored))
             .Returns(profiles);
         return new ProfileRepository(_eventBus, _persisterMock,
-            new TestLogger<ProfileRepository>(), A.Fake<ISettingsRepository>());
+            new FakeLogger<ProfileRepository>(), A.Fake<ISettingsRepository>());
     }
 }

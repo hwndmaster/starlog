@@ -15,7 +15,7 @@ public sealed class ConsoleControllerTests
     private readonly ILogCodecContainer _logCodecContainerMock = A.Fake<ILogCodecContainer>();
     private readonly IProfileSettingsTemplateQueryService _templatesQueryMock = A.Fake<IProfileSettingsTemplateQueryService>();
     private readonly IProfileLoadingController _profileLoadingControllerMock = A.Fake<IProfileLoadingController>();
-    private readonly TestLogger<ConsoleController> _logger = new();
+    private readonly FakeLogger<ConsoleController> _logger = new();
     private readonly Fixture _fixture = InfrastructureTestHelper.CreateFixture();
 
     private readonly ConsoleController _sut;

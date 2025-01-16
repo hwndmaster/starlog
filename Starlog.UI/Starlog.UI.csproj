@@ -5,6 +5,9 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>Starlog</AssemblyName>
     <ApplicationIcon>Assets/Logo.ico</ApplicationIcon>
+
+    <!-- TODO: This seems to be important, even if it previously is set in Atom.Build props -->
+    <TargetFramework>net8.0-windows10.0.19041</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

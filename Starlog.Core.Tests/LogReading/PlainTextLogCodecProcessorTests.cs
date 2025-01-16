@@ -18,8 +18,8 @@ public sealed class PlainTextLogCodecProcessorTests
     {
         _sut = new(
             _settingsQueryFake,
-            new MaskPatternParser(new TestLogger<MaskPatternParser>()),
-            new TestLogger<PlainTextLogCodecLineMaskPatternParser>());
+            new MaskPatternParser(new FakeLogger<MaskPatternParser>()),
+            new FakeLogger<PlainTextLogCodecLineMaskPatternParser>());
     }
 
     [Fact]

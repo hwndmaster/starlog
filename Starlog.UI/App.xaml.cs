@@ -75,6 +75,8 @@ public partial class App : Application
         mainWindow.Loaded += (_, __) => mainController.NotifyMainWindowIsLoaded();
         mainWindow.Show();
 
+        //this.MainWindow = mainWindow;
+
         consoleParser.Process(e?.Args ?? Array.Empty<string>());
         Task.Run(() => profileLoadingController.AutoLoadProfileAsync()).RunAndForget();
     }

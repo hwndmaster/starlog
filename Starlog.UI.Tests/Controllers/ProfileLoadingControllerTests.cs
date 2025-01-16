@@ -25,7 +25,7 @@ public sealed class ProfileLoadingControllerTests
     private readonly IMainViewModel _mainViewModelMock = A.Fake<IMainViewModel>();
     private readonly IProfileSettingsViewModelFactory _profileSettingsViewModelFactoryMock = A.Fake<IProfileSettingsViewModelFactory>();
     private readonly ISettingsQueryService _settingsQueryMock = A.Fake<ISettingsQueryService>();
-    private readonly TestLogger<ProfileLoadingController> _logger = new();
+    private readonly FakeLogger<ProfileLoadingController> _logger = new();
 
     private readonly ProfileLoadingController _sut;
 

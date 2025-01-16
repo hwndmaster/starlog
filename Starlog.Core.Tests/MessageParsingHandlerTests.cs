@@ -20,7 +20,7 @@ public sealed class MessageParsingHandlerTests : IDisposable
     public MessageParsingHandlerTests()
     {
         _sut = new(_profileHarness.CurrentProfile, _eventBus,
-            new MaskPatternParser(new TestLogger<MaskPatternParser>()),
+            new MaskPatternParser(new FakeLogger<MaskPatternParser>()),
             _filterHarness.LogFilterContainer,
             _quickFilterProviderFake);
     }

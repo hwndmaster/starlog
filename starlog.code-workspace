@@ -1,0 +1,48 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/bin/": true,
+			"**/obj/": true,
+			"build/": true,
+			"**/TestResults/": true
+		},
+		"coverage-gutters.coverageBaseDir": "./TestCoverage",
+		"coverage-gutters.coverageFileNames": [ "lcov.info" ],
+		"editor.tabSize": 4,
+		"cSpell.words": [
+			"Regexes",
+			"Starlog",
+			"Upgrader",
+			"Upgraders"
+		],
+		"dotnet.defaultSolution": "Starlog.sln",
+		"commands.workspaceCommands": {
+			"Starlog": {
+				"nestedItems": {
+					"Build with .log (Detailed)": {
+						"command": "commands.runInTerminal",
+						"args": "dotnet build /flp:v=detailed /flp:logfile=Build.log",
+						"icon": "notebook-kernel-select",
+						"iconColor": "terminal.ansiGreen"
+					},
+					"Build with .log (Diagnostics)": {
+						"command": "commands.runInTerminal",
+						"args": "dotnet build /flp:v=diag /flp:logfile=Build.log",
+						"icon": "notebook-kernel-select",
+						"iconColor": "terminal.ansiGreen"
+					},
+					"Run": {
+						"command": "commands.runInTerminal",
+						"args": "c:\\Dev\\Src\\starlog\\build\\net8.0-windows10.0.19041\\Starlog.exe",
+						"icon": "debug-start"
+					},
+				}
+			}
+		}
+	}
+}

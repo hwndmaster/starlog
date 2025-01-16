@@ -4,7 +4,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
     <FrameworkPackageVersion>8.0.0</FrameworkPackageVersion>
-    <AtomPackageVersion>0.0.41</AtomPackageVersion>
+    <AtomPackageVersion>0.0.43</AtomPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -52,5 +52,6 @@
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.10.48" />
     <PackageVersion Include="Roslynator.Analyzers" Version="4.12.4" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="9.29.0.95321" />
+    <PackageVersion Include="Genius.Atom.Analyzers" Version="0.0.2-beta03" />
   </ItemGroup>
 </Project>

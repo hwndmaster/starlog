@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "genius.atom.build": {
+      "version": "0.0.43",
+      "commands": [
+        "atom-build"
+      ],
+      "rollForward": false
+    }
+  }
+}
